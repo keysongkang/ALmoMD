@@ -279,6 +279,7 @@ class almd:
             if rank == 0:
                 self.index = check_index(self.index)
             self.index = comm.bcast(self.index, root=0)
+        comm.Barrier()
 
         # If we get the signal from check_progress, the script will be terminated.
         if signal == 1:

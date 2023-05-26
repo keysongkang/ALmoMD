@@ -39,7 +39,7 @@ def single_print(string):
 
         
 def check_mkdir(dir_name):
-    """Function [mpi_print]
+    """Function [check_mkdir]
     Check the existance of the directory.
     If it does not exist, create it.
 
@@ -53,7 +53,7 @@ def check_mkdir(dir_name):
         
         
 def rm_mkdir(dir_name):
-    """Function [mpi_print]
+    """Function [rm_mkdir]
     Check the existance of the directory.
     If it exists, remove it.
 
@@ -64,6 +64,20 @@ def rm_mkdir(dir_name):
     """
     if os.path.exists('./'+dir_name):
         os.system('rm -r ./'+dir_name)
+
+
+def rm_file(dir_name):
+    """Function [rm_file]
+    Check the existance of the file.
+    If it exists, remove it.
+
+    Parameters:
+
+    dir_name: str
+        The name of the target file
+    """
+    if os.path.exists('./'+dir_name):
+        os.system('rm ./'+dir_name)
         
         
 def job_dependency(job_str):

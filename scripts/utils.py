@@ -10,7 +10,7 @@ import ase.units as units
 from ase import Atoms
 from ase.data import atomic_numbers
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
-from libs.lib_util import check_mkdir
+from libs.lib_util import check_mkdir, rm_file
 
 def aims2son(temperature):
     """Function [aims2son]
@@ -223,9 +223,15 @@ def split_son(num_split, E_gs):
     
     # Check the existance of trajectory_test.son and trajectory_train.son files,
     # because it is annoying when we mixuse these files with different sampling
-    if os.path.exists('trajectory_test.son') or os.path.exists('trajectory_train.son'):
-        print('There is already a trajectory_test.son or trajectory_train.son file.')
+    if os.path.exists('trajectory_test.son') and os.path.exists('trajectory_train.son'):
+        print('The files trajectory_test.son and trajectory_train.son already exist.')
+        # May need to prepare for the conversion of SON file to NPZ file
+        metadata, test_data = son.load('trajectory_test.son')
     else:
+        print('Collect samples for training and testing data.')
+        rm_file('trajectory_test.son')
+        rm_file('trajectory_train.son')
+        rm_file('data/data-test.npz')
         for test_item in test_data:
             son.dump(test_item, 'trajectory_test.son')   # Save testing data into trajectory_test.son file
         for train_item in train_data:
@@ -237,7 +243,7 @@ def split_son(num_split, E_gs):
 
     # Check if the data-test.npz file exists
     if os.path.exists('data/data-test.npz'):
-        print('There is already data-test.npz file.')
+        print('The file data-test.npz already exists.')
     else:
         # Prepare the empty lists for properties
         E_test      = [] # Total energy

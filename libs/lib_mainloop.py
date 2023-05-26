@@ -261,7 +261,7 @@ def MLMD_main(
     criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,\
     criteria_UncertRel_F_avg, criteria_UncertRel_F_std,\
     criteria_Etot_step_avg, criteria_Etot_step_std\
-    = get_criteria(temperature, pressure, index, steps_init, size, rank)
+    = get_criteria(temperature, pressure, index, steps_init)
     
     # Open a trajectory file to store the sampled configurations
     if index == 'init': ##!! I think there is no more index = 'init'
@@ -304,8 +304,7 @@ def MLMD_main(
             compressibility=compressibility, taut=taut, taup=taup,
             mask=mask, loginterval=loginterval, steps=loginterval,
             nstep=nstep, nmodel=nmodel, logfile=logfile,
-            trajectory=trajectory, calculator=calc_MLIP,
-            comm=comm, size=size, rank=rank
+            trajectory=trajectory, calculator=calc_MLIP
         )
         
         # Get new configuration and velocities for next step

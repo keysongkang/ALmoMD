@@ -203,6 +203,7 @@ class almd:
         if rank == 0:
             check_mkdir('data')
             check_mkdir(workpath)
+        comm.Barrier()
 
         # As it is an initialization step,
         # the total number of training and validation data matches the initial settings
@@ -216,6 +217,7 @@ class almd:
                 self.temperature, self.pressure, workpath
             )
         del traj  # Remove it to reduce the memory usage
+        comm.Barrier()
 
         # Training process: Run NequIP
         execute_train_job(
@@ -304,6 +306,7 @@ class almd:
         if rank == 0:
             check_mkdir('data')
             check_mkdir(workpath)
+        comm.Barrier()
 
         # Get calculators from previously trained MLIP and its total energy of ground state structure
         E_ref, calc_MLIP = get_train_job(
@@ -419,6 +422,7 @@ class almd:
         if rank == 0:
             check_mkdir('data')
             check_mkdir(workpath)
+        comm.Barrier()
 
         # Generate first set of training data in npz files from trajectory file
         if rank == 0:
@@ -476,6 +480,7 @@ class almd:
                 traj, self.ntrain_init, self.nval_init, self.nstep, self.E_gs, index, self.temperature,
                 self.pressure, workpath
             )
+        comm.Barrier()
 
         # Training process: Run NequIP
         execute_train_job(
@@ -504,6 +509,7 @@ class almd:
                     traj, self.ntrain, self.nval, self.nstep, self.E_gs, index, self.temperature,
                     self.pressure, workpath, traj_idx
                 )
+            comm.Barrier()
 
             # Training process: Run NequIP
             execute_train_job(

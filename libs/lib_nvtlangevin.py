@@ -95,7 +95,7 @@ def NVTLangevin(
         
         # Get averaged forces and velocities
         if forces is None:
-            forces = get_forces(struc, nstep, nmodel, calculator, comm, size, rank)
+            forces = get_forces(struc, nstep, nmodel, calculator)
         # Velocity is already calculated based on averaged forces
         # in the previous step
         velocity = struc.get_velocities()
@@ -140,7 +140,7 @@ def NVTLangevin(
         # Log MD information at regular intervals
         if idx % loginterval == 0:
             info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-                struc, nstep, nmodel, calculator, comm, size, rank
+                struc, nstep, nmodel, calculator
                 )
             if rank == 0:
                 file_log = open(logfile, 'a')
@@ -181,6 +181,7 @@ def get_forces(
 
     # Extract MPI infos
     comm = MPI.COMM_WORLD
+    size = comm.Get_size()
     rank = comm.Get_rank()
 
     # Get calculators from trained models and corresponding predicted forces
@@ -240,6 +241,7 @@ def get_MDinfo_temp(
 
     # Extract MPI infos
     comm = MPI.COMM_WORLD
+    size = comm.Get_size()
     rank = comm.Get_rank()
 
     # Get calculators from trained models and corresponding predicted quantities

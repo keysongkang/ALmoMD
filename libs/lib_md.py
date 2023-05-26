@@ -71,10 +71,7 @@ def runMD(
             trajectory = trajectory,
             nstep = nstep,
             nmodel = nmodel,
-            calculator = calculator,
-            comm = comm,
-            size = size,
-            rank = rank
+            calculator = calculator
         )
     else:
         mpi_print(f'The ensemble model is not determined.', rank)

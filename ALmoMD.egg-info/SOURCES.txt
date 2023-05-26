@@ -22,7 +22,6 @@ libs/lib_md.py
 libs/lib_npz.py
 libs/lib_nvtlangevin.py
 libs/lib_progress.py
-libs/lib_struc.py
 libs/lib_termination.py
 libs/lib_train.py
 libs/lib_util.py

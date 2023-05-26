@@ -44,8 +44,8 @@ def termination(temperature, pressure, crtria_cnvg, NumAtoms):
             result_min = min(result_uncert[-3:])
 
             # Currently criteria is written by eV/atom
-            if np.absolute(result_max-result_min) < crtria_cnvg*NumAtoms and
-            result_max !=result_min:
+            if np.absolute(result_max - result_min) < crtria_cnvg * NumAtoms and \
+            result_max != result_min:
                 single_print(
                     f'Converged result at temperature {temperature}K\n:'
                     +f'{np.absolute(result_max-result_min)}'

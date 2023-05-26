@@ -1,0 +1,2 @@
+[console_scripts]
+fhi-almd = almd.cli:main

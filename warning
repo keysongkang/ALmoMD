@@ -1,0 +1,2022 @@
+./almd/cli.py:182:30: F821 undefined name 'parser'
+./build/lib/almd/cli.py:182:30: F821 undefined name 'parser'
+./build/lib/libs/lib_criteria.py:5:11: E272 multiple spaces before keyword
+./build/lib/libs/lib_criteria.py:6:19: E272 multiple spaces before keyword
+./build/lib/libs/lib_criteria.py:13:80: E501 line too long (140 > 79 characters)
+./build/lib/libs/lib_criteria.py:14:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:15:80: E501 line too long (108 > 79 characters)
+./build/lib/libs/lib_criteria.py:16:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:18:80: E501 line too long (144 > 79 characters)
+./build/lib/libs/lib_criteria.py:19:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:20:80: E501 line too long (138 > 79 characters)
+./build/lib/libs/lib_criteria.py:21:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:23:80: E501 line too long (144 > 79 characters)
+./build/lib/libs/lib_criteria.py:24:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:25:80: E501 line too long (202 > 79 characters)
+./build/lib/libs/lib_criteria.py:26:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:28:80: E501 line too long (140 > 79 characters)
+./build/lib/libs/lib_criteria.py:29:80: E501 line too long (144 > 79 characters)
+./build/lib/libs/lib_criteria.py:30:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:32:5: E128 continuation line under-indented for visual indent
+./build/lib/libs/lib_criteria.py:32:80: E501 line too long (155 > 79 characters)
+./build/lib/libs/lib_criteria.py:33:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:36:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:37:1: E302 expected 2 blank lines, found 1
+./build/lib/libs/lib_criteria.py:54:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:56:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:58:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:59:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:86:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:87:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:95:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:95:73: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_criteria.py:103:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:114:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:124:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:135:80: E501 line too long (87 > 79 characters)
+./build/lib/libs/lib_criteria.py:135:87: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_criteria.py:136:19: E128 continuation line under-indented for visual indent
+./build/lib/libs/lib_criteria.py:141:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:154:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:156:80: E501 line too long (81 > 79 characters)
+./build/lib/libs/lib_criteria.py:159:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:160:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:162:80: E501 line too long (87 > 79 characters)
+./build/lib/libs/lib_criteria.py:162:87: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_criteria.py:164:50: E231 missing whitespace after ','
+./build/lib/libs/lib_criteria.py:165:40: E231 missing whitespace after ','
+./build/lib/libs/lib_criteria.py:166:50: E231 missing whitespace after ','
+./build/lib/libs/lib_criteria.py:167:40: E231 missing whitespace after ','
+./build/lib/libs/lib_criteria.py:168:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:171:29: E221 multiple spaces before operator
+./build/lib/libs/lib_criteria.py:172:29: E221 multiple spaces before operator
+./build/lib/libs/lib_criteria.py:175:29: E221 multiple spaces before operator
+./build/lib/libs/lib_criteria.py:176:29: E221 multiple spaces before operator
+./build/lib/libs/lib_criteria.py:191:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:193:80: E501 line too long (88 > 79 characters)
+./build/lib/libs/lib_criteria.py:194:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:195:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:197:80: E501 line too long (84 > 79 characters)
+./build/lib/libs/lib_criteria.py:199:1: E302 expected 2 blank lines, found 1
+./build/lib/libs/lib_criteria.py:203:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:204:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:206:80: E501 line too long (111 > 79 characters)
+./build/lib/libs/lib_criteria.py:207:80: E501 line too long (133 > 79 characters)
+./build/lib/libs/lib_criteria.py:208:80: E501 line too long (132 > 79 characters)
+./build/lib/libs/lib_criteria.py:212:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:214:80: E501 line too long (190 > 79 characters)
+./build/lib/libs/lib_criteria.py:216:80: E501 line too long (190 > 79 characters)
+./build/lib/libs/lib_criteria.py:220:80: E501 line too long (190 > 79 characters)
+./build/lib/libs/lib_criteria.py:227:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:229:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:229:80: E501 line too long (100 > 79 characters)
+./build/lib/libs/lib_criteria.py:231:50: E703 statement ends with a semicolon
+./build/lib/libs/lib_criteria.py:232:80: E501 line too long (98 > 79 characters)
+./build/lib/libs/lib_criteria.py:233:25: E701 multiple statements on one line (colon)
+./build/lib/libs/lib_criteria.py:233:44: E703 statement ends with a semicolon
+./build/lib/libs/lib_criteria.py:235:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:237:80: E501 line too long (80 > 79 characters)
+./build/lib/libs/lib_criteria.py:240:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:248:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:248:61: E225 missing whitespace around operator
+./build/lib/libs/lib_criteria.py:248:62: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_criteria.py:249:80: E501 line too long (98 > 79 characters)
+./build/lib/libs/lib_criteria.py:250:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:253:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_criteria.py:253:61: E225 missing whitespace around operator
+./build/lib/libs/lib_criteria.py:253:62: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_criteria.py:254:80: E501 line too long (98 > 79 characters)
+./build/lib/libs/lib_criteria.py:255:1: W293 blank line contains whitespace
+./build/lib/libs/lib_criteria.py:256:27: W292 no newline at end of file
+./build/lib/libs/lib_dft.py:2:1: F401 'ase.io.write as atoms_write' imported but unused
+./build/lib/libs/lib_dft.py:8:19: E272 multiple spaces before keyword
+./build/lib/libs/lib_dft.py:13:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_dft.py:14:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_dft.py:16:1: W293 blank line contains whitespace
+./build/lib/libs/lib_dft.py:18:17: F541 f-string is missing placeholders
+./build/lib/libs/lib_dft.py:24:1: W293 blank line contains whitespace
+./build/lib/libs/lib_dft.py:29:1: W293 blank line contains whitespace
+./build/lib/libs/lib_dft.py:30:31: F541 f-string is missing placeholders
+./build/lib/libs/lib_dft.py:31:80: E501 line too long (83 > 79 characters)
+./build/lib/libs/lib_dft.py:39:80: E501 line too long (80 > 79 characters)
+./build/lib/libs/lib_dft.py:42:1: W293 blank line contains whitespace
+./build/lib/libs/lib_dft.py:44:1: W293 blank line contains whitespace
+./build/lib/libs/lib_dft.py:45:1: W293 blank line contains whitespace
+./build/lib/libs/lib_dft.py:50:24: F541 f-string is missing placeholders
+./build/lib/libs/lib_dft.py:50:80: E501 line too long (241 > 79 characters)
+./build/lib/libs/lib_dft.py:50:96: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:50:162: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:50:228: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:52:24: F541 f-string is missing placeholders
+./build/lib/libs/lib_dft.py:52:80: E501 line too long (290 > 79 characters)
+./build/lib/libs/lib_dft.py:52:91: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:52:162: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:52:233: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:53:24: F541 f-string is missing placeholders
+./build/lib/libs/lib_dft.py:53:80: E501 line too long (302 > 79 characters)
+./build/lib/libs/lib_dft.py:53:100: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:53:187: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:53:274: E231 missing whitespace after ','
+./build/lib/libs/lib_dft.py:54:21: W292 no newline at end of file
+./build/lib/libs/lib_mainloop.py:6:1: F401 'copy' imported but unused
+./build/lib/libs/lib_mainloop.py:12:14: E272 multiple spaces before keyword
+./build/lib/libs/lib_mainloop.py:14:19: E272 multiple spaces before keyword
+./build/lib/libs/lib_mainloop.py:15:17: E272 multiple spaces before keyword
+./build/lib/libs/lib_mainloop.py:16:80: E501 line too long (93 > 79 characters)
+./build/lib/libs/lib_mainloop.py:28:13: F841 local variable 'traj_ther' is assigned to but never used
+./build/lib/libs/lib_mainloop.py:30:80: E501 line too long (111 > 79 characters)
+./build/lib/libs/lib_mainloop.py:31:26: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:31:28: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:32:21: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:32:23: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:33:20: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:33:22: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:34:27: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:34:29: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:37:80: E501 line too long (83 > 79 characters)
+./build/lib/libs/lib_mainloop.py:39:17: E265 block comment should start with '# '
+./build/lib/libs/lib_mainloop.py:40:80: E501 line too long (80 > 79 characters)
+./build/lib/libs/lib_mainloop.py:41:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:43:80: E501 line too long (94 > 79 characters)
+./build/lib/libs/lib_mainloop.py:46:80: E501 line too long (109 > 79 characters)
+./build/lib/libs/lib_mainloop.py:51:26: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:51:80: E501 line too long (81 > 79 characters)
+./build/lib/libs/lib_mainloop.py:52:66: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:52:66: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:53:80: E501 line too long (83 > 79 characters)
+./build/lib/libs/lib_mainloop.py:54:27: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:54:50: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:54:69: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:58:80: E501 line too long (90 > 79 characters)
+./build/lib/libs/lib_mainloop.py:58:90: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:59:80: E501 line too long (90 > 79 characters)
+./build/lib/libs/lib_mainloop.py:60:23: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:60:46: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:60:65: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:62:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:63:5: F841 local variable 'workpath' is assigned to but never used
+./build/lib/libs/lib_mainloop.py:66:16: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:67:19: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:78:58: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:78:58: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:80:19: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:80:40: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:80:58: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:83:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:83:80: E501 line too long (92 > 79 characters)
+./build/lib/libs/lib_mainloop.py:86:80: E501 line too long (89 > 79 characters)
+./build/lib/libs/lib_mainloop.py:88:80: E501 line too long (84 > 79 characters)
+./build/lib/libs/lib_mainloop.py:98:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:103:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:116:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:117:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:118:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:119:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:120:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:121:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:124:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:124:80: E501 line too long (88 > 79 characters)
+./build/lib/libs/lib_mainloop.py:127:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:127:80: E501 line too long (96 > 79 characters)
+./build/lib/libs/lib_mainloop.py:132:13: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:132:74: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:134:39: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:134:54: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:136:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:137:5: F841 local variable 'workpath' is assigned to but never used
+./build/lib/libs/lib_mainloop.py:138:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:142:16: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:143:19: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:144:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:154:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:155:46: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:156:80: E501 line too long (85 > 79 characters)
+./build/lib/libs/lib_mainloop.py:157:19: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:157:40: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:157:58: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:160:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:160:80: E501 line too long (91 > 79 characters)
+./build/lib/libs/lib_mainloop.py:161:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:163:80: E501 line too long (119 > 79 characters)
+./build/lib/libs/lib_mainloop.py:164:80: E501 line too long (141 > 79 characters)
+./build/lib/libs/lib_mainloop.py:165:80: E501 line too long (140 > 79 characters)
+./build/lib/libs/lib_mainloop.py:167:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:169:63: E261 at least two spaces before inline comment
+./build/lib/libs/lib_mainloop.py:176:80: E501 line too long (89 > 79 characters)
+./build/lib/libs/lib_mainloop.py:178:80: E501 line too long (84 > 79 characters)
+./build/lib/libs/lib_mainloop.py:192:80: E501 line too long (107 > 79 characters)
+./build/lib/libs/lib_mainloop.py:194:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:197:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:197:75: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:201:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_mainloop.py:201:74: W291 trailing whitespace
+./build/lib/libs/lib_mainloop.py:202:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:206:80: E501 line too long (126 > 79 characters)
+./build/lib/libs/lib_mainloop.py:207:80: E501 line too long (98 > 79 characters)
+./build/lib/libs/lib_mainloop.py:211:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:212:73: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:215:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:226:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:229:5: F841 local variable 'signal' is assigned to but never used
+./build/lib/libs/lib_mainloop.py:231:71: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:232:66: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:234:6: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:234:26: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:239:70: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:240:66: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:241:9: F821 undefined name 'ntotal_init'
+./build/lib/libs/lib_mainloop.py:241:65: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:243:6: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:243:25: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:244:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:245:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:254:13: F841 local variable 'traj_ther' is assigned to but never used
+./build/lib/libs/lib_mainloop.py:256:80: E501 line too long (111 > 79 characters)
+./build/lib/libs/lib_mainloop.py:257:26: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:257:28: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:258:21: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:258:23: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:259:20: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:259:22: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:260:27: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:260:29: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:263:22: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:264:62: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:264:62: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_mainloop.py:266:23: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:266:46: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:266:65: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:270:80: E501 line too long (90 > 79 characters)
+./build/lib/libs/lib_mainloop.py:270:90: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_mainloop.py:271:80: E501 line too long (90 > 79 characters)
+./build/lib/libs/lib_mainloop.py:272:23: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:272:46: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_mainloop.py:272:65: E703 statement ends with a semicolon
+./build/lib/libs/lib_mainloop.py:274:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:275:5: F841 local variable 'workpath' is assigned to but never used
+./build/lib/libs/lib_mainloop.py:276:12: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:277:15: E221 multiple spaces before operator
+./build/lib/libs/lib_mainloop.py:287:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:294:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:299:1: W293 blank line contains whitespace
+./build/lib/libs/lib_mainloop.py:300:22: W292 no newline at end of file
+./build/lib/libs/lib_md.py:17:18: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:17:20: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:18:21: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:18:23: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:19:24: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:19:26: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:20:21: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:20:23: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:21:18: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:21:20: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:22:24: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:22:26: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:23:20: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:23:22: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:24:23: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:24:25: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:25:18: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:25:20: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:26:19: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:26:21: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:27:23: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:27:25: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:28:17: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:28:19: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:29:17: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:29:19: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:30:17: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:30:19: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_md.py:33:19: F541 f-string is missing placeholders
+./build/lib/libs/lib_md.py:42:12: E221 multiple spaces before operator
+./build/lib/libs/lib_md.py:43:5: F841 local variable 'workpath' is assigned to but never used
+./build/lib/libs/lib_md.py:43:13: E221 multiple spaces before operator
+./build/lib/libs/lib_md.py:44:1: W293 blank line contains whitespace
+./build/lib/libs/lib_md.py:46:1: W293 blank line contains whitespace
+./build/lib/libs/lib_md.py:50:38: E231 missing whitespace after ','
+./build/lib/libs/lib_md.py:50:51: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_md.py:51:1: W293 blank line contains whitespace
+./build/lib/libs/lib_md.py:53:23: F541 f-string is missing placeholders
+./build/lib/libs/lib_md.py:57:17: F541 f-string is missing placeholders
+./build/lib/libs/lib_md.py:61:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_md.py:62:78: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_md.py:66:17: F541 f-string is missing placeholders
+./build/lib/libs/lib_md.py:71:13: F541 f-string is missing placeholders
+./build/lib/libs/lib_md.py:75:72: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_md.py:76:74: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_md.py:80:13: F541 f-string is missing placeholders
+./build/lib/libs/lib_md.py:83:1: W293 blank line contains whitespace
+./build/lib/libs/lib_md.py:84:22: W292 no newline at end of file
+./build/lib/libs/lib_npz.py:5:14: E272 multiple spaces before keyword
+./build/lib/libs/lib_npz.py:6:1: F401 'ase.io.read as atoms_read' imported but unused
+./build/lib/libs/lib_npz.py:6:12: E272 multiple spaces before keyword
+./build/lib/libs/lib_npz.py:8:19: E272 multiple spaces before keyword
+./build/lib/libs/lib_npz.py:16:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:16:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:17:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:17:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:18:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:18:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:19:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:19:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:20:15: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:20:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:21:14: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:21:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:22:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:23:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:25:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:26:50: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:28:23: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./build/lib/libs/lib_npz.py:31:49: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:31:60: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:31:75: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:37:80: E501 line too long (85 > 79 characters)
+./build/lib/libs/lib_npz.py:37:85: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:38:68: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:39:71: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:40:63: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:41:69: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:42:67: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:44:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:48:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:50:27: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:51:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:51:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:52:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:53:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:53:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:54:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:55:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:55:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:56:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:57:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:57:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:58:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:59:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:60:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:61:32: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:61:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:62:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:63:52: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:64:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:66:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:67:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:68:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:69:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:71:32: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:73:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:76:31: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:77:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:78:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:79:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:80:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:81:49: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:82:47: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:83:52: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:89:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:94:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:94:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:95:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:95:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:96:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:96:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:97:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:97:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:98:15: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:98:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:99:14: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:99:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:100:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:101:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:103:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:104:50: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:106:23: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./build/lib/libs/lib_npz.py:109:49: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:109:60: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:109:75: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:115:80: E501 line too long (85 > 79 characters)
+./build/lib/libs/lib_npz.py:115:85: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:116:68: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:117:71: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:118:63: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:119:69: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:120:67: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:122:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:126:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:128:27: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:129:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:129:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:130:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:131:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:131:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:132:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:133:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:133:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:134:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:135:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:135:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:136:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:137:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:138:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:139:32: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:139:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:140:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:141:52: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:142:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:144:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:145:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:146:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:147:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:149:32: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:151:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:154:31: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:155:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:156:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:157:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:158:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:159:49: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:160:47: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:161:52: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:167:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:172:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:172:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:173:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:173:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:174:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:174:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:175:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:175:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:176:15: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:176:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:177:14: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:177:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:178:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:182:45: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:182:56: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:182:71: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:186:80: E501 line too long (84 > 79 characters)
+./build/lib/libs/lib_npz.py:186:84: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:187:77: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:188:75: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:189:80: E501 line too long (139 > 79 characters)
+./build/lib/libs/lib_npz.py:189:139: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:190:73: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:195:22: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:196:22: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:197:22: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:198:22: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:200:24: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:213:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:214:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:219:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:219:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:220:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:220:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:221:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:221:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:222:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:222:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:223:15: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:223:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:224:14: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:224:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:225:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:227:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:228:50: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:230:23: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./build/lib/libs/lib_npz.py:233:49: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:233:63: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:233:78: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:238:80: E501 line too long (146 > 79 characters)
+./build/lib/libs/lib_npz.py:239:71: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:240:66: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:241:75: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:242:67: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:243:73: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:244:71: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:247:80: E501 line too long (121 > 79 characters)
+./build/lib/libs/lib_npz.py:252:80: E501 line too long (92 > 79 characters)
+./build/lib/libs/lib_npz.py:252:92: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:253:80: E501 line too long (85 > 79 characters)
+./build/lib/libs/lib_npz.py:253:85: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:254:80: E501 line too long (83 > 79 characters)
+./build/lib/libs/lib_npz.py:254:83: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:255:76: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:256:80: E501 line too long (81 > 79 characters)
+./build/lib/libs/lib_npz.py:256:81: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:257:79: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:261:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:265:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:267:27: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:268:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:268:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:269:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:270:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:270:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:271:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:272:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:272:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:273:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:274:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:274:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:275:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:276:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:277:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:278:32: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:278:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:279:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:281:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:282:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:283:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:284:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:286:32: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:287:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:290:31: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:291:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:292:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:293:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:294:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:295:49: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:302:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:303:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:304:1: E303 too many blank lines (3)
+./build/lib/libs/lib_npz.py:308:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:308:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:309:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:309:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:310:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:310:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:311:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:311:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:312:15: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:312:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:313:14: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:313:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:314:13: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:314:22: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:315:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:319:45: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:319:56: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:319:71: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:323:80: E501 line too long (84 > 79 characters)
+./build/lib/libs/lib_npz.py:323:84: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:324:77: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:325:75: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:326:80: E501 line too long (139 > 79 characters)
+./build/lib/libs/lib_npz.py:326:139: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:327:73: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:333:22: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:334:22: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:335:22: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:336:22: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:338:24: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:351:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:353:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:354:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:359:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:359:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:360:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:360:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:361:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:361:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:362:12: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:362:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:363:15: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:363:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:364:14: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:364:46: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:365:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:367:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:368:50: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:370:23: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./build/lib/libs/lib_npz.py:373:58: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:373:80: E501 line too long (100 > 79 characters)
+./build/lib/libs/lib_npz.py:373:85: E231 missing whitespace after ','
+./build/lib/libs/lib_npz.py:373:100: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:377:80: E501 line too long (88 > 79 characters)
+./build/lib/libs/lib_npz.py:377:88: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:378:80: E501 line too long (81 > 79 characters)
+./build/lib/libs/lib_npz.py:378:81: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:379:79: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:380:80: E501 line too long (143 > 79 characters)
+./build/lib/libs/lib_npz.py:380:143: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:381:77: E703 statement ends with a semicolon
+./build/lib/libs/lib_npz.py:385:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:389:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:391:27: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:392:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:392:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:393:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:394:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:394:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:395:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:396:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:396:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:397:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:398:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:398:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:399:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:400:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:401:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:402:32: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:402:50: E211 whitespace before '('
+./build/lib/libs/lib_npz.py:403:17: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_npz.py:405:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:406:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:407:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:408:30: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:410:32: E221 multiple spaces before operator
+./build/lib/libs/lib_npz.py:411:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:414:31: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:415:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:416:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:417:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:418:43: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:419:49: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_npz.py:426:1: W293 blank line contains whitespace
+./build/lib/libs/lib_npz.py:427:5: E303 too many blank lines (2)
+./build/lib/libs/lib_npz.py:427:20: W292 no newline at end of file
+./build/lib/libs/lib_nvtlangevin.py:16:80: E501 line too long (83 > 79 characters)
+./build/lib/libs/lib_nvtlangevin.py:20:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:22:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_nvtlangevin.py:26:75: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_nvtlangevin.py:27:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_nvtlangevin.py:28:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_nvtlangevin.py:29:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_nvtlangevin.py:35:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:42:80: E501 line too long (85 > 79 characters)
+./build/lib/libs/lib_nvtlangevin.py:43:80: E501 line too long (83 > 79 characters)
+./build/lib/libs/lib_nvtlangevin.py:46:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:48:80: E501 line too long (83 > 79 characters)
+./build/lib/libs/lib_nvtlangevin.py:50:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:58:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:61:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:65:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:68:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:71:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:78:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:84:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:87:13: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_nvtlangevin.py:87:80: E501 line too long (81 > 79 characters)
+./build/lib/libs/lib_nvtlangevin.py:92:76: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_nvtlangevin.py:93:73: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_nvtlangevin.py:94:73: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_nvtlangevin.py:95:73: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_nvtlangevin.py:96:58: E221 multiple spaces before operator
+./build/lib/libs/lib_nvtlangevin.py:101:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:116:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_nvtlangevin.py:116:80: E501 line too long (87 > 79 characters)
+./build/lib/libs/lib_nvtlangevin.py:116:80: E231 missing whitespace after ','
+./build/lib/libs/lib_nvtlangevin.py:130:33: W291 trailing whitespace
+./build/lib/libs/lib_nvtlangevin.py:146:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:148:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_nvtlangevin.py:150:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_nvtlangevin.py:152:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_nvtlangevin.py:154:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_nvtlangevin.py:167:1: W293 blank line contains whitespace
+./build/lib/libs/lib_nvtlangevin.py:175:28: W292 no newline at end of file
+./build/lib/libs/lib_progress.py:1:1: F401 'ase.io.trajectory.Trajectory' imported but unused
+./build/lib/libs/lib_progress.py:7:1: F401 'libs.lib_util.check_mkdir' imported but unused
+./build/lib/libs/lib_progress.py:7:1: F401 'libs.lib_util.mpi_print' imported but unused
+./build/lib/libs/lib_progress.py:7:19: E272 multiple spaces before keyword
+./build/lib/libs/lib_progress.py:8:1: F401 'libs.lib_struc.check_struc' imported but unused
+./build/lib/libs/lib_progress.py:8:20: E272 multiple spaces before keyword
+./build/lib/libs/lib_progress.py:9:23: E272 multiple spaces before keyword
+./build/lib/libs/lib_progress.py:10:1: F401 'libs.lib_train.get_train_job' imported but unused
+./build/lib/libs/lib_progress.py:10:20: E272 multiple spaces before keyword
+./build/lib/libs/lib_progress.py:11:1: F401 'libs.lib_npz.generate_npz_DFT' imported but unused
+./build/lib/libs/lib_progress.py:11:18: E272 multiple spaces before keyword
+./build/lib/libs/lib_progress.py:12:1: F401 'libs.lib_md.check_runMD' imported but unused
+./build/lib/libs/lib_progress.py:12:17: E272 multiple spaces before keyword
+./build/lib/libs/lib_progress.py:13:1: F401 'libs.lib_termination.termination' imported but unused
+./build/lib/libs/lib_progress.py:26:1: W293 blank line contains whitespace
+./build/lib/libs/lib_progress.py:29:80: E501 line too long (107 > 79 characters)
+./build/lib/libs/lib_progress.py:30:80: E501 line too long (80 > 79 characters)
+./build/lib/libs/lib_progress.py:33:1: W293 blank line contains whitespace
+./build/lib/libs/lib_progress.py:38:51: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_progress.py:44:80: E501 line too long (88 > 79 characters)
+./build/lib/libs/lib_progress.py:45:22: E225 missing whitespace around operator
+./build/lib/libs/lib_progress.py:50:58: E231 missing whitespace after ','
+./build/lib/libs/lib_progress.py:59:1: W293 blank line contains whitespace
+./build/lib/libs/lib_progress.py:60:80: E501 line too long (151 > 79 characters)
+./build/lib/libs/lib_progress.py:60:151: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_progress.py:61:36: E127 continuation line over-indented for visual indent
+./build/lib/libs/lib_progress.py:61:80: E501 line too long (188 > 79 characters)
+./build/lib/libs/lib_progress.py:61:188: E703 statement ends with a semicolon
+./build/lib/libs/lib_progress.py:62:1: W293 blank line contains whitespace
+./build/lib/libs/lib_progress.py:63:40: E712 comparison to True should be 'if cond is True:' or 'if cond:'
+./build/lib/libs/lib_progress.py:66:80: E501 line too long (92 > 79 characters)
+./build/lib/libs/lib_progress.py:70:80: E501 line too long (132 > 79 characters)
+./build/lib/libs/lib_progress.py:79:80: E501 line too long (84 > 79 characters)
+./build/lib/libs/lib_progress.py:80:18: E225 missing whitespace around operator
+./build/lib/libs/lib_progress.py:84:1: W293 blank line contains whitespace
+./build/lib/libs/lib_progress.py:87:1: W293 blank line contains whitespace
+./build/lib/libs/lib_progress.py:91:9: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_progress.py:92:41: E231 missing whitespace after ','
+./build/lib/libs/lib_progress.py:92:54: E702 multiple statements on one line (semicolon)
+./build/lib/libs/lib_progress.py:96:1: W293 blank line contains whitespace
+./build/lib/libs/lib_progress.py:103:46: E231 missing whitespace after ','
+./build/lib/libs/lib_progress.py:108:1: W293 blank line contains whitespace
+./build/lib/libs/lib_progress.py:109:17: W292 no newline at end of file
+./build/lib/libs/lib_struc.py:5:19: E272 multiple spaces before keyword
+./build/lib/libs/lib_struc.py:11:18: F541 f-string is missing placeholders
+./build/lib/libs/lib_struc.py:17:22: F541 f-string is missing placeholders
+./build/lib/libs/lib_struc.py:21:22: F541 f-string is missing placeholders
+./build/lib/libs/lib_struc.py:22:1: W293 blank line contains whitespace
+./build/lib/libs/lib_struc.py:23:13: E221 multiple spaces before operator
+./build/lib/libs/lib_struc.py:25:1: W293 blank line contains whitespace
+./build/lib/libs/lib_struc.py:27:1: W293 blank line contains whitespace
+./build/lib/libs/lib_struc.py:28:1: W293 blank line contains whitespace
+./build/lib/libs/lib_struc.py:30:61: E261 at least two spaces before inline comment
+./build/lib/libs/lib_struc.py:30:80: E501 line too long (103 > 79 characters)
+./build/lib/libs/lib_struc.py:34:1: W293 blank line contains whitespace
+./build/lib/libs/lib_struc.py:35:23: W292 no newline at end of file
+./build/lib/libs/lib_termination.py:4:19: E272 multiple spaces before keyword
+./build/lib/libs/lib_termination.py:10:65: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_termination.py:12:42: E231 missing whitespace after ','
+./build/lib/libs/lib_termination.py:19:13: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_termination.py:19:26: E225 missing whitespace around operator
+./build/lib/libs/lib_termination.py:22:22: E225 missing whitespace around operator
+./build/lib/libs/lib_termination.py:27:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:5:1: F401 'copy' imported but unused
+./build/lib/libs/lib_train.py:9:19: E272 multiple spaces before keyword
+./build/lib/libs/lib_train.py:16:11: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:17:16: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:18:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:29:60: E502 the backslash is redundant between brackets
+./build/lib/libs/lib_train.py:51:27: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:60:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:64:12: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:64:19: E261 at least two spaces before inline comment
+./build/lib/libs/lib_train.py:73:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:74:80: E501 line too long (82 > 79 characters)
+./build/lib/libs/lib_train.py:74:82: E703 statement ends with a semicolon
+./build/lib/libs/lib_train.py:75:16: E703 statement ends with a semicolon
+./build/lib/libs/lib_train.py:76:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:85:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:87:16: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:94:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_train.py:95:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_train.py:95:6: F541 f-string is missing placeholders
+./build/lib/libs/lib_train.py:95:6: E225 missing whitespace around operator
+./build/lib/libs/lib_train.py:95:29: F541 f-string is missing placeholders
+./build/lib/libs/lib_train.py:96:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_train.py:96:6: E225 missing whitespace around operator
+./build/lib/libs/lib_train.py:97:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_train.py:97:6: E225 missing whitespace around operator
+./build/lib/libs/lib_train.py:98:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_train.py:98:6: E225 missing whitespace around operator
+./build/lib/libs/lib_train.py:99:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_train.py:99:6: E225 missing whitespace around operator
+./build/lib/libs/lib_train.py:100:5: E122 continuation line missing indentation or outdented
+./build/lib/libs/lib_train.py:100:6: E225 missing whitespace around operator
+./build/lib/libs/lib_train.py:101:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:104:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:109:14: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:118:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:119:80: E501 line too long (97 > 79 characters)
+./build/lib/libs/lib_train.py:120:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:121:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:127:5: F841 local variable 'E_inter' is assigned to but never used
+./build/lib/libs/lib_train.py:127:12: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:127:19: E261 at least two spaces before inline comment
+./build/lib/libs/lib_train.py:128:5: F841 local variable 'job_dependency' is assigned to but never used
+./build/lib/libs/lib_train.py:129:16: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:130:1: W293 blank line contains whitespace
+./build/lib/libs/lib_train.py:156:27: E221 multiple spaces before operator
+./build/lib/libs/lib_train.py:163:55: E703 statement ends with a semicolon
+./build/lib/libs/lib_train.py:164:38: W292 no newline at end of file
+./build/lib/libs/lib_util.py:7:9: E272 multiple spaces before keyword
+./build/lib/libs/lib_util.py:8:14: E272 multiple spaces before keyword
+./build/lib/libs/lib_util.py:21:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:23:38: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./build/lib/libs/lib_util.py:25:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:26:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:30:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:31:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:34:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:40:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:44:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:45:29: W605 invalid escape sequence '\d'
+./build/lib/libs/lib_util.py:49:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:51:80: E501 line too long (102 > 79 characters)
+./build/lib/libs/lib_util.py:53:80: E501 line too long (101 > 79 characters)
+./build/lib/libs/lib_util.py:55:80: E501 line too long (87 > 79 characters)
+./build/lib/libs/lib_util.py:56:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:57:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:69:24: E231 missing whitespace after ','
+./build/lib/libs/lib_util.py:75:80: E501 line too long (104 > 79 characters)
+./build/lib/libs/lib_util.py:77:80: E501 line too long (107 > 79 characters)
+./build/lib/libs/lib_util.py:81:80: E501 line too long (92 > 79 characters)
+./build/lib/libs/lib_util.py:84:80: E501 line too long (97 > 79 characters)
+./build/lib/libs/lib_util.py:85:80: E501 line too long (97 > 79 characters)
+./build/lib/libs/lib_util.py:85:92: E231 missing whitespace after ','
+./build/lib/libs/lib_util.py:96:80: E501 line too long (123 > 79 characters)
+./build/lib/libs/lib_util.py:102:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:105:18: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_util.py:105:20: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_util.py:106:13: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_util.py:106:15: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_util.py:107:12: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_util.py:107:14: E251 unexpected spaces around keyword / parameter equals
+./build/lib/libs/lib_util.py:109:1: W293 blank line contains whitespace
+./build/lib/libs/lib_util.py:132:80: E501 line too long (90 > 79 characters)
+./build/lib/libs/lib_util.py:134:80: E501 line too long (218 > 79 characters)
+./build/lib/scripts/DFT_init.py:3:1: F403 'from read_input import *' used; unable to detect undefined names
+./build/lib/scripts/DFT_init.py:4:1: F401 'libs.lib_util.job_dependency' imported but unused
+./build/lib/scripts/DFT_init.py:8:1: E302 expected 2 blank lines, found 1
+./build/lib/scripts/DFT_init.py:14:23: F405 'initialize_inputs' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:22:22: F405 'cutoff_ther' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:25:26: F405 'temperature' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:25:41: F405 'pressure' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:28:20: F405 'ntrain_init' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:29:18: F405 'nval_init' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:33:24: F405 'ntrain_init' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:33:37: F405 'nval_init' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:33:48: F405 'nstep' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:33:55: F405 'E_gs' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:33:68: F405 'temperature' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:34:13: F405 'init_temp' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:34:24: F405 'step_temp' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:34:35: F405 'pressure' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:39:35: F405 'rmax' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:39:41: F405 'lmax' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:39:47: F405 'nfeatures' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:40:19: F405 'nstep' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/DFT_init.py:40:26: F405 'nmodel' may be undefined, or defined from star imports: read_input
+./build/lib/scripts/almd.py:14:80: E501 line too long (81 > 79 characters)
+./build/lib/scripts/almd.py:15:80: E501 line too long (115 > 79 characters)
+./build/lib/scripts/almd.py:18:23: E272 multiple spaces before keyword
+./build/lib/scripts/almd.py:19:23: E272 multiple spaces before keyword
+./build/lib/scripts/almd.py:20:1: F401 'libs.lib_criteria.get_criteria' imported but unused
+./build/lib/scripts/almd.py:20:1: F401 'libs.lib_criteria.get_average' imported but unused
+./build/lib/scripts/almd.py:20:23: E272 multiple spaces before keyword
+./build/lib/scripts/almd.py:21:1: F401 'libs.lib_termination.termination' imported but unused
+./build/lib/scripts/almd.py:25:1: F401 'matplotlib.ticker as tck' imported but unused
+./build/lib/scripts/almd.py:26:1: F401 'matplotlib.ticker.MultipleLocator' imported but unused
+./build/lib/scripts/almd.py:36:9: F841 local variable 'size' is assigned to but never used
+./build/lib/scripts/almd.py:37:9: F841 local variable 'rank' is assigned to but never used
+./build/lib/scripts/almd.py:70:1: W293 blank line contains whitespace
+./build/lib/scripts/almd.py:73:1: W293 blank line contains whitespace
+./build/lib/scripts/almd.py:84:1: W293 blank line contains whitespace
+./build/lib/scripts/almd.py:100:22: F821 undefined name 'nval_init'
+./build/lib/scripts/almd.py:104:46: F821 undefined name 'nval_init'
+./build/lib/scripts/almd.py:104:69: F821 undefined name 'E_gs'
+./build/lib/scripts/almd.py:104:80: E501 line too long (98 > 79 characters)
+./build/lib/scripts/almd.py:116:1: W293 blank line contains whitespace
+./build/lib/scripts/almd.py:130:80: E501 line too long (82 > 79 characters)
+./build/lib/scripts/almd.py:131:80: E501 line too long (89 > 79 characters)
+./build/lib/scripts/almd.py:132:80: E501 line too long (81 > 79 characters)
+./build/lib/scripts/almd.py:133:80: E501 line too long (101 > 79 characters)
+./build/lib/scripts/almd.py:134:80: E501 line too long (100 > 79 characters)
+./build/lib/scripts/almd.py:135:80: E501 line too long (82 > 79 characters)
+./build/lib/scripts/almd.py:162:80: E501 line too long (80 > 79 characters)
+./build/lib/scripts/almd.py:168:80: E501 line too long (84 > 79 characters)
+./build/lib/scripts/almd.py:174:80: E501 line too long (112 > 79 characters)
+./build/lib/scripts/almd.py:175:80: E501 line too long (179 > 79 characters)
+./build/lib/scripts/almd.py:178:80: E501 line too long (115 > 79 characters)
+./build/lib/scripts/almd.py:179:80: E501 line too long (113 > 79 characters)
+./build/lib/scripts/almd.py:180:80: E501 line too long (99 > 79 characters)
+./build/lib/scripts/almd.py:185:80: E501 line too long (112 > 79 characters)
+./build/lib/scripts/almd.py:186:80: E501 line too long (124 > 79 characters)
+./build/lib/scripts/almd.py:190:80: E501 line too long (94 > 79 characters)
+./build/lib/scripts/almd.py:193:80: E501 line too long (104 > 79 characters)
+./build/lib/scripts/almd.py:196:5: E303 too many blank lines (2)
+./build/lib/scripts/almd.py:210:80: E501 line too long (82 > 79 characters)
+./build/lib/scripts/almd.py:211:80: E501 line too long (89 > 79 characters)
+./build/lib/scripts/almd.py:212:80: E501 line too long (81 > 79 characters)
+./build/lib/scripts/almd.py:213:80: E501 line too long (101 > 79 characters)
+./build/lib/scripts/almd.py:214:80: E501 line too long (100 > 79 characters)
+./build/lib/scripts/almd.py:215:80: E501 line too long (82 > 79 characters)
+./build/lib/scripts/almd.py:231:13: F821 undefined name 'single_print'
+./build/lib/scripts/almd.py:243:80: E501 line too long (80 > 79 characters)
+./build/lib/scripts/almd.py:250:80: E501 line too long (92 > 79 characters)
+./build/lib/scripts/almd.py:256:80: E501 line too long (85 > 79 characters)
+./build/lib/scripts/almd.py:268:5: E303 too many blank lines (2)
+./build/lib/scripts/almd.py:285:80: E501 line too long (108 > 79 characters)
+./build/lib/scripts/almd.py:305:80: E501 line too long (102 > 79 characters)
+./build/lib/scripts/almd.py:316:5: F811 redefinition of unused 'run_dft_rand' from line 268
+./build/lib/scripts/almd.py:316:5: E303 too many blank lines (2)
+./build/lib/scripts/almd.py:333:80: E501 line too long (108 > 79 characters)
+./build/lib/scripts/almd.py:353:80: E501 line too long (102 > 79 characters)
+./build/lib/scripts/almd.py:364:5: E303 too many blank lines (2)
+./build/lib/scripts/almd.py:369:20: F541 f-string is missing placeholders
+./build/lib/scripts/almd.py:371:9: F841 local variable 'NumAtom' is assigned to but never used
+./build/lib/scripts/almd.py:373:80: E501 line too long (83 > 79 characters)
+./build/lib/scripts/almd.py:380:80: E501 line too long (83 > 79 characters)
+./build/lib/scripts/almd.py:382:80: E501 line too long (82 > 79 characters)
+./build/lib/scripts/almd.py:384:80: E501 line too long (110 > 79 characters)
+./build/lib/scripts/almd.py:397:80: E501 line too long (84 > 79 characters)
+./build/lib/scripts/almd.py:401:80: E501 line too long (106 > 79 characters)
+./build/lib/scripts/almd.py:402:59: E128 continuation line under-indented for visual indent
+./build/lib/scripts/almd.py:402:80: E501 line too long (111 > 79 characters)
+./build/lib/scripts/almd.py:409:80: E501 line too long (80 > 79 characters)
+./build/lib/scripts/almd.py:415:80: E501 line too long (103 > 79 characters)
+./build/lib/scripts/almd.py:416:80: E501 line too long (99 > 79 characters)
+./build/lib/scripts/almd.py:419:80: E501 line too long (103 > 79 characters)
+./build/lib/scripts/almd.py:439:80: E501 line too long (92 > 79 characters)
+./build/lib/scripts/almd.py:440:80: E501 line too long (95 > 79 characters)
+./build/lib/scripts/almd.py:453:80: E501 line too long (95 > 79 characters)
+./build/lib/scripts/almd.py:465:9: F841 local variable 'UncertAbs_E' is assigned to but never used
+./build/lib/scripts/almd.py:467:80: E501 line too long (88 > 79 characters)
+./build/lib/scripts/almd.py:471:80: E501 line too long (80 > 79 characters)
+./build/lib/scripts/default_inputs.py:40:80: E501 line too long (94 > 79 characters)
+./build/lib/scripts/default_inputs.py:43:80: E501 line too long (81 > 79 characters)
+./build/lib/scripts/default_inputs.py:46:1: W391 blank line at end of file
+./build/lib/scripts/input_initialization.py:1:1: F403 'from scripts.default_inputs import *' used; unable to detect undefined names
+./build/lib/scripts/input_initialization.py:1:1: F401 'scripts.default_inputs.*' imported but unused
+./build/lib/scripts/input_initialization.py:3:1: E302 expected 2 blank lines, found 1
+./build/lib/scripts/input_initialization.py:17:1: W391 blank line at end of file
+./build/lib/scripts/utils.py:3:1: F401 'sys' imported but unused
+./build/lib/scripts/utils.py:6:1: F401 'argparse' imported but unused
+./build/lib/scripts/utils.py:9:1: F401 'ase.units' imported but unused
+./build/lib/scripts/utils.py:15:1: E302 expected 2 blank lines, found 1
+./build/lib/scripts/utils.py:39:80: E501 line too long (85 > 79 characters)
+./build/lib/scripts/utils.py:42:80: E501 line too long (104 > 79 characters)
+./build/lib/scripts/utils.py:44:80: E501 line too long (107 > 79 characters)
+./build/lib/scripts/utils.py:48:80: E501 line too long (92 > 79 characters)
+./build/lib/scripts/utils.py:51:80: E501 line too long (97 > 79 characters)
+./build/lib/scripts/utils.py:52:80: E501 line too long (97 > 79 characters)
+./build/lib/scripts/utils.py:52:92: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:53:80: E501 line too long (88 > 79 characters)
+./build/lib/scripts/utils.py:53:84: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:65:80: E501 line too long (123 > 79 characters)
+./build/lib/scripts/utils.py:76:80: E501 line too long (100 > 79 characters)
+./build/lib/scripts/utils.py:86:80: E501 line too long (90 > 79 characters)
+./build/lib/scripts/utils.py:87:80: E501 line too long (122 > 79 characters)
+./build/lib/scripts/utils.py:88:62: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:88:77: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:88:80: E501 line too long (188 > 79 characters)
+./build/lib/scripts/utils.py:88:93: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:88:109: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:88:124: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:88:140: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:88:156: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:88:171: E231 missing whitespace after ','
+./build/lib/scripts/utils.py:102:80: E501 line too long (94 > 79 characters)
+./build/lib/scripts/utils.py:153:1: W293 blank line contains whitespace
+./build/lib/scripts/utils.py:154:80: E501 line too long (87 > 79 characters)
+./build/lib/scripts/utils.py:155:80: E501 line too long (85 > 79 characters)
+./build/lib/scripts/utils.py:166:15: E221 multiple spaces before operator
+./build/lib/scripts/utils.py:167:15: E221 multiple spaces before operator
+./build/lib/scripts/utils.py:168:15: E221 multiple spaces before operator
+./build/lib/scripts/utils.py:169:15: E221 multiple spaces before operator
+./build/lib/scripts/utils.py:170:18: E221 multiple spaces before operator
+./build/lib/scripts/utils.py:171:17: E221 multiple spaces before operator
+./build/lib/scripts/utils.py:174:68: E703 statement ends with a semicolon
+./build/lib/scripts/utils.py:175:61: E703 statement ends with a semicolon
+./build/lib/scripts/utils.py:176:59: E703 statement ends with a semicolon
+./build/lib/scripts/utils.py:177:80: E501 line too long (123 > 79 characters)
+./build/lib/scripts/utils.py:177:123: E703 statement ends with a semicolon
+./build/lib/scripts/utils.py:178:57: E703 statement ends with a semicolon
+./build/lib/scripts/utils.py:180:1: W293 blank line contains whitespace
+./build/lib/scripts/utils.py:191:1: W293 blank line contains whitespace
+./build/lib/scripts/utils.py:194:1: W391 blank line at end of file
+./libs/lib_criteria.py:14:80: E501 line too long (87 > 79 characters)
+./libs/lib_criteria.py:43:5: E266 too many leading '#' for block comment
+./libs/lib_criteria.py:43:80: E501 line too long (83 > 79 characters)
+./libs/lib_criteria.py:46:80: E501 line too long (122 > 79 characters)
+./libs/lib_criteria.py:47:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:48:80: E501 line too long (108 > 79 characters)
+./libs/lib_criteria.py:52:80: E501 line too long (126 > 79 characters)
+./libs/lib_criteria.py:53:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:54:80: E501 line too long (138 > 79 characters)
+./libs/lib_criteria.py:58:80: E501 line too long (126 > 79 characters)
+./libs/lib_criteria.py:59:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:60:80: E501 line too long (202 > 79 characters)
+./libs/lib_criteria.py:61:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:62:5: E265 block comment should start with '# '
+./libs/lib_criteria.py:64:80: E501 line too long (122 > 79 characters)
+./libs/lib_criteria.py:65:80: E501 line too long (126 > 79 characters)
+./libs/lib_criteria.py:66:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:68:5: E128 continuation line under-indented for visual indent
+./libs/lib_criteria.py:68:80: E501 line too long (155 > 79 characters)
+./libs/lib_criteria.py:69:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:72:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:76:1: E303 too many blank lines (4)
+./libs/lib_criteria.py:104:80: E501 line too long (80 > 79 characters)
+./libs/lib_criteria.py:117:80: E501 line too long (87 > 79 characters)
+./libs/lib_criteria.py:131:5: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:133:5: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:135:5: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:136:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:141:1: E303 too many blank lines (3)
+./libs/lib_criteria.py:169:80: E501 line too long (80 > 79 characters)
+./libs/lib_criteria.py:182:80: E501 line too long (84 > 79 characters)
+./libs/lib_criteria.py:202:5: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:203:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:235:80: E501 line too long (80 > 79 characters)
+./libs/lib_criteria.py:243:5: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:243:73: E502 the backslash is redundant between brackets
+./libs/lib_criteria.py:251:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:262:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:272:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:283:80: E501 line too long (87 > 79 characters)
+./libs/lib_criteria.py:283:87: E502 the backslash is redundant between brackets
+./libs/lib_criteria.py:284:19: E128 continuation line under-indented for visual indent
+./libs/lib_criteria.py:289:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:302:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:304:80: E501 line too long (81 > 79 characters)
+./libs/lib_criteria.py:307:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:308:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:310:80: E501 line too long (87 > 79 characters)
+./libs/lib_criteria.py:310:87: E502 the backslash is redundant between brackets
+./libs/lib_criteria.py:312:50: E231 missing whitespace after ','
+./libs/lib_criteria.py:313:40: E231 missing whitespace after ','
+./libs/lib_criteria.py:314:50: E231 missing whitespace after ','
+./libs/lib_criteria.py:315:40: E231 missing whitespace after ','
+./libs/lib_criteria.py:316:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:319:29: E221 multiple spaces before operator
+./libs/lib_criteria.py:320:29: E221 multiple spaces before operator
+./libs/lib_criteria.py:323:29: E221 multiple spaces before operator
+./libs/lib_criteria.py:324:29: E221 multiple spaces before operator
+./libs/lib_criteria.py:339:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:341:80: E501 line too long (88 > 79 characters)
+./libs/lib_criteria.py:342:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:343:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:345:80: E501 line too long (84 > 79 characters)
+./libs/lib_criteria.py:347:1: E302 expected 2 blank lines, found 1
+./libs/lib_criteria.py:351:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:352:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:354:80: E501 line too long (111 > 79 characters)
+./libs/lib_criteria.py:355:80: E501 line too long (133 > 79 characters)
+./libs/lib_criteria.py:356:80: E501 line too long (132 > 79 characters)
+./libs/lib_criteria.py:360:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:362:80: E501 line too long (190 > 79 characters)
+./libs/lib_criteria.py:364:80: E501 line too long (190 > 79 characters)
+./libs/lib_criteria.py:368:80: E501 line too long (190 > 79 characters)
+./libs/lib_criteria.py:375:5: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:377:5: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:377:80: E501 line too long (100 > 79 characters)
+./libs/lib_criteria.py:379:50: E703 statement ends with a semicolon
+./libs/lib_criteria.py:380:80: E501 line too long (98 > 79 characters)
+./libs/lib_criteria.py:381:25: E701 multiple statements on one line (colon)
+./libs/lib_criteria.py:381:44: E703 statement ends with a semicolon
+./libs/lib_criteria.py:383:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:385:80: E501 line too long (80 > 79 characters)
+./libs/lib_criteria.py:388:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:396:9: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:396:61: E225 missing whitespace around operator
+./libs/lib_criteria.py:396:62: E502 the backslash is redundant between brackets
+./libs/lib_criteria.py:397:80: E501 line too long (98 > 79 characters)
+./libs/lib_criteria.py:398:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:401:9: E122 continuation line missing indentation or outdented
+./libs/lib_criteria.py:401:61: E225 missing whitespace around operator
+./libs/lib_criteria.py:401:62: E502 the backslash is redundant between brackets
+./libs/lib_criteria.py:402:80: E501 line too long (98 > 79 characters)
+./libs/lib_criteria.py:403:1: W293 blank line contains whitespace
+./libs/lib_criteria.py:404:27: W292 no newline at end of file
+./libs/lib_dft.py:2:1: F401 'ase.io.write as atoms_write' imported but unused
+./libs/lib_dft.py:8:19: E272 multiple spaces before keyword
+./libs/lib_dft.py:13:5: E122 continuation line missing indentation or outdented
+./libs/lib_dft.py:14:5: E122 continuation line missing indentation or outdented
+./libs/lib_dft.py:16:1: W293 blank line contains whitespace
+./libs/lib_dft.py:18:17: F541 f-string is missing placeholders
+./libs/lib_dft.py:24:1: W293 blank line contains whitespace
+./libs/lib_dft.py:29:1: W293 blank line contains whitespace
+./libs/lib_dft.py:30:31: F541 f-string is missing placeholders
+./libs/lib_dft.py:31:80: E501 line too long (83 > 79 characters)
+./libs/lib_dft.py:39:80: E501 line too long (80 > 79 characters)
+./libs/lib_dft.py:42:1: W293 blank line contains whitespace
+./libs/lib_dft.py:44:1: W293 blank line contains whitespace
+./libs/lib_dft.py:45:1: W293 blank line contains whitespace
+./libs/lib_dft.py:50:24: F541 f-string is missing placeholders
+./libs/lib_dft.py:50:80: E501 line too long (241 > 79 characters)
+./libs/lib_dft.py:50:96: E231 missing whitespace after ','
+./libs/lib_dft.py:50:162: E231 missing whitespace after ','
+./libs/lib_dft.py:50:228: E231 missing whitespace after ','
+./libs/lib_dft.py:52:24: F541 f-string is missing placeholders
+./libs/lib_dft.py:52:80: E501 line too long (290 > 79 characters)
+./libs/lib_dft.py:52:91: E231 missing whitespace after ','
+./libs/lib_dft.py:52:162: E231 missing whitespace after ','
+./libs/lib_dft.py:52:233: E231 missing whitespace after ','
+./libs/lib_dft.py:53:24: F541 f-string is missing placeholders
+./libs/lib_dft.py:53:80: E501 line too long (302 > 79 characters)
+./libs/lib_dft.py:53:100: E231 missing whitespace after ','
+./libs/lib_dft.py:53:187: E231 missing whitespace after ','
+./libs/lib_dft.py:53:274: E231 missing whitespace after ','
+./libs/lib_dft.py:54:21: W292 no newline at end of file
+./libs/lib_mainloop.py:6:1: F401 'copy' imported but unused
+./libs/lib_mainloop.py:12:14: E272 multiple spaces before keyword
+./libs/lib_mainloop.py:14:19: E272 multiple spaces before keyword
+./libs/lib_mainloop.py:15:17: E272 multiple spaces before keyword
+./libs/lib_mainloop.py:16:80: E501 line too long (93 > 79 characters)
+./libs/lib_mainloop.py:28:13: F841 local variable 'traj_ther' is assigned to but never used
+./libs/lib_mainloop.py:30:80: E501 line too long (111 > 79 characters)
+./libs/lib_mainloop.py:31:26: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:31:28: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:32:21: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:32:23: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:33:20: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:33:22: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:34:27: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:34:29: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:37:80: E501 line too long (83 > 79 characters)
+./libs/lib_mainloop.py:39:17: E265 block comment should start with '# '
+./libs/lib_mainloop.py:40:80: E501 line too long (80 > 79 characters)
+./libs/lib_mainloop.py:41:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:43:80: E501 line too long (94 > 79 characters)
+./libs/lib_mainloop.py:46:80: E501 line too long (109 > 79 characters)
+./libs/lib_mainloop.py:51:26: E221 multiple spaces before operator
+./libs/lib_mainloop.py:51:80: E501 line too long (81 > 79 characters)
+./libs/lib_mainloop.py:52:66: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:52:66: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:53:80: E501 line too long (83 > 79 characters)
+./libs/lib_mainloop.py:54:27: E221 multiple spaces before operator
+./libs/lib_mainloop.py:54:50: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:54:69: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:58:80: E501 line too long (90 > 79 characters)
+./libs/lib_mainloop.py:58:90: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:59:80: E501 line too long (90 > 79 characters)
+./libs/lib_mainloop.py:60:23: E221 multiple spaces before operator
+./libs/lib_mainloop.py:60:46: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:60:65: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:62:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:63:5: F841 local variable 'workpath' is assigned to but never used
+./libs/lib_mainloop.py:66:16: E221 multiple spaces before operator
+./libs/lib_mainloop.py:67:19: E221 multiple spaces before operator
+./libs/lib_mainloop.py:78:58: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:78:58: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:80:19: E221 multiple spaces before operator
+./libs/lib_mainloop.py:80:40: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:80:58: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:83:9: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:83:80: E501 line too long (92 > 79 characters)
+./libs/lib_mainloop.py:86:80: E501 line too long (89 > 79 characters)
+./libs/lib_mainloop.py:88:80: E501 line too long (84 > 79 characters)
+./libs/lib_mainloop.py:98:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:103:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:116:5: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:117:5: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:118:5: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:119:5: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:120:5: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:121:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:124:9: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:124:80: E501 line too long (88 > 79 characters)
+./libs/lib_mainloop.py:127:9: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:127:80: E501 line too long (96 > 79 characters)
+./libs/lib_mainloop.py:132:13: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:132:74: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:134:39: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:134:54: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:136:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:137:5: F841 local variable 'workpath' is assigned to but never used
+./libs/lib_mainloop.py:138:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:142:16: E221 multiple spaces before operator
+./libs/lib_mainloop.py:143:19: E221 multiple spaces before operator
+./libs/lib_mainloop.py:144:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:154:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:155:46: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:156:80: E501 line too long (85 > 79 characters)
+./libs/lib_mainloop.py:157:19: E221 multiple spaces before operator
+./libs/lib_mainloop.py:157:40: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:157:58: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:160:9: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:160:80: E501 line too long (91 > 79 characters)
+./libs/lib_mainloop.py:161:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:163:80: E501 line too long (119 > 79 characters)
+./libs/lib_mainloop.py:164:80: E501 line too long (141 > 79 characters)
+./libs/lib_mainloop.py:165:80: E501 line too long (140 > 79 characters)
+./libs/lib_mainloop.py:167:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:169:63: E261 at least two spaces before inline comment
+./libs/lib_mainloop.py:176:80: E501 line too long (89 > 79 characters)
+./libs/lib_mainloop.py:178:80: E501 line too long (84 > 79 characters)
+./libs/lib_mainloop.py:192:80: E501 line too long (107 > 79 characters)
+./libs/lib_mainloop.py:194:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:197:5: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:197:75: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:201:5: E122 continuation line missing indentation or outdented
+./libs/lib_mainloop.py:201:74: W291 trailing whitespace
+./libs/lib_mainloop.py:202:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:206:80: E501 line too long (126 > 79 characters)
+./libs/lib_mainloop.py:207:80: E501 line too long (98 > 79 characters)
+./libs/lib_mainloop.py:211:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:212:73: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:215:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:226:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:229:5: F841 local variable 'signal' is assigned to but never used
+./libs/lib_mainloop.py:231:71: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:232:66: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:234:6: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:234:26: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:239:70: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:240:66: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:241:9: F821 undefined name 'ntotal_init'
+./libs/lib_mainloop.py:241:65: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:243:6: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:243:25: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:244:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:245:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:254:13: F841 local variable 'traj_ther' is assigned to but never used
+./libs/lib_mainloop.py:256:80: E501 line too long (111 > 79 characters)
+./libs/lib_mainloop.py:257:26: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:257:28: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:258:21: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:258:23: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:259:20: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:259:22: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:260:27: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:260:29: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:263:22: E221 multiple spaces before operator
+./libs/lib_mainloop.py:264:62: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:264:62: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_mainloop.py:266:23: E221 multiple spaces before operator
+./libs/lib_mainloop.py:266:46: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:266:65: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:270:80: E501 line too long (90 > 79 characters)
+./libs/lib_mainloop.py:270:90: E502 the backslash is redundant between brackets
+./libs/lib_mainloop.py:271:80: E501 line too long (90 > 79 characters)
+./libs/lib_mainloop.py:272:23: E221 multiple spaces before operator
+./libs/lib_mainloop.py:272:46: E702 multiple statements on one line (semicolon)
+./libs/lib_mainloop.py:272:65: E703 statement ends with a semicolon
+./libs/lib_mainloop.py:274:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:275:5: F841 local variable 'workpath' is assigned to but never used
+./libs/lib_mainloop.py:276:12: E221 multiple spaces before operator
+./libs/lib_mainloop.py:277:15: E221 multiple spaces before operator
+./libs/lib_mainloop.py:287:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:294:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:299:1: W293 blank line contains whitespace
+./libs/lib_mainloop.py:300:22: W292 no newline at end of file
+./libs/lib_md.py:17:18: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:17:20: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:18:21: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:18:23: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:19:24: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:19:26: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:20:21: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:20:23: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:21:18: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:21:20: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:22:24: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:22:26: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:23:20: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:23:22: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:24:23: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:24:25: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:25:18: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:25:20: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:26:19: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:26:21: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:27:23: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:27:25: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:28:17: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:28:19: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:29:17: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:29:19: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:30:17: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:30:19: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_md.py:33:19: F541 f-string is missing placeholders
+./libs/lib_md.py:42:12: E221 multiple spaces before operator
+./libs/lib_md.py:43:5: F841 local variable 'workpath' is assigned to but never used
+./libs/lib_md.py:43:13: E221 multiple spaces before operator
+./libs/lib_md.py:44:1: W293 blank line contains whitespace
+./libs/lib_md.py:46:1: W293 blank line contains whitespace
+./libs/lib_md.py:50:38: E231 missing whitespace after ','
+./libs/lib_md.py:50:51: E702 multiple statements on one line (semicolon)
+./libs/lib_md.py:51:1: W293 blank line contains whitespace
+./libs/lib_md.py:53:23: F541 f-string is missing placeholders
+./libs/lib_md.py:57:17: F541 f-string is missing placeholders
+./libs/lib_md.py:61:76: E502 the backslash is redundant between brackets
+./libs/lib_md.py:62:78: E502 the backslash is redundant between brackets
+./libs/lib_md.py:66:17: F541 f-string is missing placeholders
+./libs/lib_md.py:71:13: F541 f-string is missing placeholders
+./libs/lib_md.py:75:72: E502 the backslash is redundant between brackets
+./libs/lib_md.py:76:74: E502 the backslash is redundant between brackets
+./libs/lib_md.py:80:13: F541 f-string is missing placeholders
+./libs/lib_md.py:83:1: W293 blank line contains whitespace
+./libs/lib_md.py:84:22: W292 no newline at end of file
+./libs/lib_npz.py:5:14: E272 multiple spaces before keyword
+./libs/lib_npz.py:6:1: F401 'ase.io.read as atoms_read' imported but unused
+./libs/lib_npz.py:6:12: E272 multiple spaces before keyword
+./libs/lib_npz.py:8:19: E272 multiple spaces before keyword
+./libs/lib_npz.py:16:12: E221 multiple spaces before operator
+./libs/lib_npz.py:16:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:17:12: E221 multiple spaces before operator
+./libs/lib_npz.py:17:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:18:12: E221 multiple spaces before operator
+./libs/lib_npz.py:18:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:19:12: E221 multiple spaces before operator
+./libs/lib_npz.py:19:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:20:15: E221 multiple spaces before operator
+./libs/lib_npz.py:20:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:21:14: E221 multiple spaces before operator
+./libs/lib_npz.py:21:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:22:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:23:1: W293 blank line contains whitespace
+./libs/lib_npz.py:25:76: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:26:50: E703 statement ends with a semicolon
+./libs/lib_npz.py:28:23: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./libs/lib_npz.py:31:49: E231 missing whitespace after ','
+./libs/lib_npz.py:31:60: E231 missing whitespace after ','
+./libs/lib_npz.py:31:75: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:37:80: E501 line too long (85 > 79 characters)
+./libs/lib_npz.py:37:85: E703 statement ends with a semicolon
+./libs/lib_npz.py:38:68: E703 statement ends with a semicolon
+./libs/lib_npz.py:39:71: E703 statement ends with a semicolon
+./libs/lib_npz.py:40:63: E703 statement ends with a semicolon
+./libs/lib_npz.py:41:69: E703 statement ends with a semicolon
+./libs/lib_npz.py:42:67: E703 statement ends with a semicolon
+./libs/lib_npz.py:44:1: W293 blank line contains whitespace
+./libs/lib_npz.py:48:1: W293 blank line contains whitespace
+./libs/lib_npz.py:50:27: E221 multiple spaces before operator
+./libs/lib_npz.py:51:30: E221 multiple spaces before operator
+./libs/lib_npz.py:51:50: E211 whitespace before '('
+./libs/lib_npz.py:52:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:53:30: E221 multiple spaces before operator
+./libs/lib_npz.py:53:50: E211 whitespace before '('
+./libs/lib_npz.py:54:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:55:30: E221 multiple spaces before operator
+./libs/lib_npz.py:55:50: E211 whitespace before '('
+./libs/lib_npz.py:56:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:57:30: E221 multiple spaces before operator
+./libs/lib_npz.py:57:50: E211 whitespace before '('
+./libs/lib_npz.py:58:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:59:50: E211 whitespace before '('
+./libs/lib_npz.py:60:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:61:32: E221 multiple spaces before operator
+./libs/lib_npz.py:61:50: E211 whitespace before '('
+./libs/lib_npz.py:62:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:63:52: E211 whitespace before '('
+./libs/lib_npz.py:64:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:66:30: E221 multiple spaces before operator
+./libs/lib_npz.py:67:30: E221 multiple spaces before operator
+./libs/lib_npz.py:68:30: E221 multiple spaces before operator
+./libs/lib_npz.py:69:30: E221 multiple spaces before operator
+./libs/lib_npz.py:71:32: E221 multiple spaces before operator
+./libs/lib_npz.py:73:1: W293 blank line contains whitespace
+./libs/lib_npz.py:76:31: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:77:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:78:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:79:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:80:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:81:49: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:82:47: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:83:52: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:89:1: W293 blank line contains whitespace
+./libs/lib_npz.py:94:12: E221 multiple spaces before operator
+./libs/lib_npz.py:94:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:95:12: E221 multiple spaces before operator
+./libs/lib_npz.py:95:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:96:12: E221 multiple spaces before operator
+./libs/lib_npz.py:96:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:97:12: E221 multiple spaces before operator
+./libs/lib_npz.py:97:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:98:15: E221 multiple spaces before operator
+./libs/lib_npz.py:98:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:99:14: E221 multiple spaces before operator
+./libs/lib_npz.py:99:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:100:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:101:1: W293 blank line contains whitespace
+./libs/lib_npz.py:103:76: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:104:50: E703 statement ends with a semicolon
+./libs/lib_npz.py:106:23: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./libs/lib_npz.py:109:49: E231 missing whitespace after ','
+./libs/lib_npz.py:109:60: E231 missing whitespace after ','
+./libs/lib_npz.py:109:75: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:115:80: E501 line too long (85 > 79 characters)
+./libs/lib_npz.py:115:85: E703 statement ends with a semicolon
+./libs/lib_npz.py:116:68: E703 statement ends with a semicolon
+./libs/lib_npz.py:117:71: E703 statement ends with a semicolon
+./libs/lib_npz.py:118:63: E703 statement ends with a semicolon
+./libs/lib_npz.py:119:69: E703 statement ends with a semicolon
+./libs/lib_npz.py:120:67: E703 statement ends with a semicolon
+./libs/lib_npz.py:122:1: W293 blank line contains whitespace
+./libs/lib_npz.py:126:1: W293 blank line contains whitespace
+./libs/lib_npz.py:128:27: E221 multiple spaces before operator
+./libs/lib_npz.py:129:30: E221 multiple spaces before operator
+./libs/lib_npz.py:129:50: E211 whitespace before '('
+./libs/lib_npz.py:130:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:131:30: E221 multiple spaces before operator
+./libs/lib_npz.py:131:50: E211 whitespace before '('
+./libs/lib_npz.py:132:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:133:30: E221 multiple spaces before operator
+./libs/lib_npz.py:133:50: E211 whitespace before '('
+./libs/lib_npz.py:134:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:135:30: E221 multiple spaces before operator
+./libs/lib_npz.py:135:50: E211 whitespace before '('
+./libs/lib_npz.py:136:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:137:50: E211 whitespace before '('
+./libs/lib_npz.py:138:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:139:32: E221 multiple spaces before operator
+./libs/lib_npz.py:139:50: E211 whitespace before '('
+./libs/lib_npz.py:140:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:141:52: E211 whitespace before '('
+./libs/lib_npz.py:142:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:144:30: E221 multiple spaces before operator
+./libs/lib_npz.py:145:30: E221 multiple spaces before operator
+./libs/lib_npz.py:146:30: E221 multiple spaces before operator
+./libs/lib_npz.py:147:30: E221 multiple spaces before operator
+./libs/lib_npz.py:149:32: E221 multiple spaces before operator
+./libs/lib_npz.py:151:1: W293 blank line contains whitespace
+./libs/lib_npz.py:154:31: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:155:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:156:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:157:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:158:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:159:49: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:160:47: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:161:52: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:167:1: W293 blank line contains whitespace
+./libs/lib_npz.py:172:12: E221 multiple spaces before operator
+./libs/lib_npz.py:172:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:173:12: E221 multiple spaces before operator
+./libs/lib_npz.py:173:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:174:12: E221 multiple spaces before operator
+./libs/lib_npz.py:174:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:175:12: E221 multiple spaces before operator
+./libs/lib_npz.py:175:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:176:15: E221 multiple spaces before operator
+./libs/lib_npz.py:176:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:177:14: E221 multiple spaces before operator
+./libs/lib_npz.py:177:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:178:1: W293 blank line contains whitespace
+./libs/lib_npz.py:182:45: E231 missing whitespace after ','
+./libs/lib_npz.py:182:56: E231 missing whitespace after ','
+./libs/lib_npz.py:182:71: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:186:80: E501 line too long (84 > 79 characters)
+./libs/lib_npz.py:186:84: E703 statement ends with a semicolon
+./libs/lib_npz.py:187:77: E703 statement ends with a semicolon
+./libs/lib_npz.py:188:75: E703 statement ends with a semicolon
+./libs/lib_npz.py:189:80: E501 line too long (139 > 79 characters)
+./libs/lib_npz.py:189:139: E703 statement ends with a semicolon
+./libs/lib_npz.py:190:73: E703 statement ends with a semicolon
+./libs/lib_npz.py:195:22: E221 multiple spaces before operator
+./libs/lib_npz.py:196:22: E221 multiple spaces before operator
+./libs/lib_npz.py:197:22: E221 multiple spaces before operator
+./libs/lib_npz.py:198:22: E221 multiple spaces before operator
+./libs/lib_npz.py:200:24: E221 multiple spaces before operator
+./libs/lib_npz.py:213:1: W293 blank line contains whitespace
+./libs/lib_npz.py:214:1: W293 blank line contains whitespace
+./libs/lib_npz.py:219:12: E221 multiple spaces before operator
+./libs/lib_npz.py:219:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:220:12: E221 multiple spaces before operator
+./libs/lib_npz.py:220:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:221:12: E221 multiple spaces before operator
+./libs/lib_npz.py:221:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:222:12: E221 multiple spaces before operator
+./libs/lib_npz.py:222:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:223:15: E221 multiple spaces before operator
+./libs/lib_npz.py:223:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:224:14: E221 multiple spaces before operator
+./libs/lib_npz.py:224:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:225:1: W293 blank line contains whitespace
+./libs/lib_npz.py:227:76: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:228:50: E703 statement ends with a semicolon
+./libs/lib_npz.py:230:23: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./libs/lib_npz.py:233:49: E231 missing whitespace after ','
+./libs/lib_npz.py:233:63: E231 missing whitespace after ','
+./libs/lib_npz.py:233:78: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:238:80: E501 line too long (146 > 79 characters)
+./libs/lib_npz.py:239:71: E703 statement ends with a semicolon
+./libs/lib_npz.py:240:66: E703 statement ends with a semicolon
+./libs/lib_npz.py:241:75: E703 statement ends with a semicolon
+./libs/lib_npz.py:242:67: E703 statement ends with a semicolon
+./libs/lib_npz.py:243:73: E703 statement ends with a semicolon
+./libs/lib_npz.py:244:71: E703 statement ends with a semicolon
+./libs/lib_npz.py:247:80: E501 line too long (121 > 79 characters)
+./libs/lib_npz.py:252:80: E501 line too long (92 > 79 characters)
+./libs/lib_npz.py:252:92: E703 statement ends with a semicolon
+./libs/lib_npz.py:253:80: E501 line too long (85 > 79 characters)
+./libs/lib_npz.py:253:85: E703 statement ends with a semicolon
+./libs/lib_npz.py:254:80: E501 line too long (83 > 79 characters)
+./libs/lib_npz.py:254:83: E703 statement ends with a semicolon
+./libs/lib_npz.py:255:76: E703 statement ends with a semicolon
+./libs/lib_npz.py:256:80: E501 line too long (81 > 79 characters)
+./libs/lib_npz.py:256:81: E703 statement ends with a semicolon
+./libs/lib_npz.py:257:79: E703 statement ends with a semicolon
+./libs/lib_npz.py:261:1: W293 blank line contains whitespace
+./libs/lib_npz.py:265:1: W293 blank line contains whitespace
+./libs/lib_npz.py:267:27: E221 multiple spaces before operator
+./libs/lib_npz.py:268:30: E221 multiple spaces before operator
+./libs/lib_npz.py:268:50: E211 whitespace before '('
+./libs/lib_npz.py:269:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:270:30: E221 multiple spaces before operator
+./libs/lib_npz.py:270:50: E211 whitespace before '('
+./libs/lib_npz.py:271:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:272:30: E221 multiple spaces before operator
+./libs/lib_npz.py:272:50: E211 whitespace before '('
+./libs/lib_npz.py:273:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:274:30: E221 multiple spaces before operator
+./libs/lib_npz.py:274:50: E211 whitespace before '('
+./libs/lib_npz.py:275:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:276:50: E211 whitespace before '('
+./libs/lib_npz.py:277:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:278:32: E221 multiple spaces before operator
+./libs/lib_npz.py:278:50: E211 whitespace before '('
+./libs/lib_npz.py:279:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:281:30: E221 multiple spaces before operator
+./libs/lib_npz.py:282:30: E221 multiple spaces before operator
+./libs/lib_npz.py:283:30: E221 multiple spaces before operator
+./libs/lib_npz.py:284:30: E221 multiple spaces before operator
+./libs/lib_npz.py:286:32: E221 multiple spaces before operator
+./libs/lib_npz.py:287:1: W293 blank line contains whitespace
+./libs/lib_npz.py:290:31: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:291:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:292:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:293:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:294:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:295:49: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:302:1: W293 blank line contains whitespace
+./libs/lib_npz.py:303:1: W293 blank line contains whitespace
+./libs/lib_npz.py:304:1: E303 too many blank lines (3)
+./libs/lib_npz.py:308:12: E221 multiple spaces before operator
+./libs/lib_npz.py:308:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:309:12: E221 multiple spaces before operator
+./libs/lib_npz.py:309:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:310:12: E221 multiple spaces before operator
+./libs/lib_npz.py:310:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:311:12: E221 multiple spaces before operator
+./libs/lib_npz.py:311:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:312:15: E221 multiple spaces before operator
+./libs/lib_npz.py:312:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:313:14: E221 multiple spaces before operator
+./libs/lib_npz.py:313:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:314:13: E221 multiple spaces before operator
+./libs/lib_npz.py:314:22: E703 statement ends with a semicolon
+./libs/lib_npz.py:315:1: W293 blank line contains whitespace
+./libs/lib_npz.py:319:45: E231 missing whitespace after ','
+./libs/lib_npz.py:319:56: E231 missing whitespace after ','
+./libs/lib_npz.py:319:71: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:323:80: E501 line too long (84 > 79 characters)
+./libs/lib_npz.py:323:84: E703 statement ends with a semicolon
+./libs/lib_npz.py:324:77: E703 statement ends with a semicolon
+./libs/lib_npz.py:325:75: E703 statement ends with a semicolon
+./libs/lib_npz.py:326:80: E501 line too long (139 > 79 characters)
+./libs/lib_npz.py:326:139: E703 statement ends with a semicolon
+./libs/lib_npz.py:327:73: E703 statement ends with a semicolon
+./libs/lib_npz.py:333:22: E221 multiple spaces before operator
+./libs/lib_npz.py:334:22: E221 multiple spaces before operator
+./libs/lib_npz.py:335:22: E221 multiple spaces before operator
+./libs/lib_npz.py:336:22: E221 multiple spaces before operator
+./libs/lib_npz.py:338:24: E221 multiple spaces before operator
+./libs/lib_npz.py:351:1: W293 blank line contains whitespace
+./libs/lib_npz.py:353:1: W293 blank line contains whitespace
+./libs/lib_npz.py:354:1: W293 blank line contains whitespace
+./libs/lib_npz.py:359:12: E221 multiple spaces before operator
+./libs/lib_npz.py:359:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:360:12: E221 multiple spaces before operator
+./libs/lib_npz.py:360:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:361:12: E221 multiple spaces before operator
+./libs/lib_npz.py:361:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:362:12: E221 multiple spaces before operator
+./libs/lib_npz.py:362:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:363:15: E221 multiple spaces before operator
+./libs/lib_npz.py:363:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:364:14: E221 multiple spaces before operator
+./libs/lib_npz.py:364:46: E703 statement ends with a semicolon
+./libs/lib_npz.py:365:1: W293 blank line contains whitespace
+./libs/lib_npz.py:367:76: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:368:50: E703 statement ends with a semicolon
+./libs/lib_npz.py:370:23: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./libs/lib_npz.py:373:58: E231 missing whitespace after ','
+./libs/lib_npz.py:373:80: E501 line too long (100 > 79 characters)
+./libs/lib_npz.py:373:85: E231 missing whitespace after ','
+./libs/lib_npz.py:373:100: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:377:80: E501 line too long (88 > 79 characters)
+./libs/lib_npz.py:377:88: E703 statement ends with a semicolon
+./libs/lib_npz.py:378:80: E501 line too long (81 > 79 characters)
+./libs/lib_npz.py:378:81: E703 statement ends with a semicolon
+./libs/lib_npz.py:379:79: E703 statement ends with a semicolon
+./libs/lib_npz.py:380:80: E501 line too long (143 > 79 characters)
+./libs/lib_npz.py:380:143: E703 statement ends with a semicolon
+./libs/lib_npz.py:381:77: E703 statement ends with a semicolon
+./libs/lib_npz.py:385:1: W293 blank line contains whitespace
+./libs/lib_npz.py:389:1: W293 blank line contains whitespace
+./libs/lib_npz.py:391:27: E221 multiple spaces before operator
+./libs/lib_npz.py:392:30: E221 multiple spaces before operator
+./libs/lib_npz.py:392:50: E211 whitespace before '('
+./libs/lib_npz.py:393:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:394:30: E221 multiple spaces before operator
+./libs/lib_npz.py:394:50: E211 whitespace before '('
+./libs/lib_npz.py:395:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:396:30: E221 multiple spaces before operator
+./libs/lib_npz.py:396:50: E211 whitespace before '('
+./libs/lib_npz.py:397:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:398:30: E221 multiple spaces before operator
+./libs/lib_npz.py:398:50: E211 whitespace before '('
+./libs/lib_npz.py:399:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:400:50: E211 whitespace before '('
+./libs/lib_npz.py:401:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:402:32: E221 multiple spaces before operator
+./libs/lib_npz.py:402:50: E211 whitespace before '('
+./libs/lib_npz.py:403:17: E122 continuation line missing indentation or outdented
+./libs/lib_npz.py:405:30: E221 multiple spaces before operator
+./libs/lib_npz.py:406:30: E221 multiple spaces before operator
+./libs/lib_npz.py:407:30: E221 multiple spaces before operator
+./libs/lib_npz.py:408:30: E221 multiple spaces before operator
+./libs/lib_npz.py:410:32: E221 multiple spaces before operator
+./libs/lib_npz.py:411:1: W293 blank line contains whitespace
+./libs/lib_npz.py:414:31: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:415:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:416:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:417:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:418:43: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:419:49: E502 the backslash is redundant between brackets
+./libs/lib_npz.py:426:1: W293 blank line contains whitespace
+./libs/lib_npz.py:427:5: E303 too many blank lines (2)
+./libs/lib_npz.py:427:20: W292 no newline at end of file
+./libs/lib_nvtlangevin.py:16:80: E501 line too long (83 > 79 characters)
+./libs/lib_nvtlangevin.py:20:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:22:5: E122 continuation line missing indentation or outdented
+./libs/lib_nvtlangevin.py:26:75: E502 the backslash is redundant between brackets
+./libs/lib_nvtlangevin.py:27:76: E502 the backslash is redundant between brackets
+./libs/lib_nvtlangevin.py:28:76: E502 the backslash is redundant between brackets
+./libs/lib_nvtlangevin.py:29:76: E502 the backslash is redundant between brackets
+./libs/lib_nvtlangevin.py:35:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:42:80: E501 line too long (85 > 79 characters)
+./libs/lib_nvtlangevin.py:43:80: E501 line too long (83 > 79 characters)
+./libs/lib_nvtlangevin.py:46:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:48:80: E501 line too long (83 > 79 characters)
+./libs/lib_nvtlangevin.py:50:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:58:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:61:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:65:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:68:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:71:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:78:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:84:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:87:13: E122 continuation line missing indentation or outdented
+./libs/lib_nvtlangevin.py:87:80: E501 line too long (81 > 79 characters)
+./libs/lib_nvtlangevin.py:92:76: E502 the backslash is redundant between brackets
+./libs/lib_nvtlangevin.py:93:73: E502 the backslash is redundant between brackets
+./libs/lib_nvtlangevin.py:94:73: E502 the backslash is redundant between brackets
+./libs/lib_nvtlangevin.py:95:73: E502 the backslash is redundant between brackets
+./libs/lib_nvtlangevin.py:96:58: E221 multiple spaces before operator
+./libs/lib_nvtlangevin.py:101:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:116:9: E122 continuation line missing indentation or outdented
+./libs/lib_nvtlangevin.py:116:80: E501 line too long (87 > 79 characters)
+./libs/lib_nvtlangevin.py:116:80: E231 missing whitespace after ','
+./libs/lib_nvtlangevin.py:130:33: W291 trailing whitespace
+./libs/lib_nvtlangevin.py:146:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:148:9: E122 continuation line missing indentation or outdented
+./libs/lib_nvtlangevin.py:150:9: E122 continuation line missing indentation or outdented
+./libs/lib_nvtlangevin.py:152:9: E122 continuation line missing indentation or outdented
+./libs/lib_nvtlangevin.py:154:9: E122 continuation line missing indentation or outdented
+./libs/lib_nvtlangevin.py:167:1: W293 blank line contains whitespace
+./libs/lib_nvtlangevin.py:175:28: W292 no newline at end of file
+./libs/lib_progress.py:1:1: F401 'ase.io.trajectory.Trajectory' imported but unused
+./libs/lib_progress.py:7:1: F401 'libs.lib_util.check_mkdir' imported but unused
+./libs/lib_progress.py:7:1: F401 'libs.lib_util.mpi_print' imported but unused
+./libs/lib_progress.py:7:19: E272 multiple spaces before keyword
+./libs/lib_progress.py:8:1: F401 'libs.lib_struc.check_struc' imported but unused
+./libs/lib_progress.py:8:20: E272 multiple spaces before keyword
+./libs/lib_progress.py:9:23: E272 multiple spaces before keyword
+./libs/lib_progress.py:10:1: F401 'libs.lib_train.get_train_job' imported but unused
+./libs/lib_progress.py:10:20: E272 multiple spaces before keyword
+./libs/lib_progress.py:11:1: F401 'libs.lib_npz.generate_npz_DFT' imported but unused
+./libs/lib_progress.py:11:18: E272 multiple spaces before keyword
+./libs/lib_progress.py:12:1: F401 'libs.lib_md.check_runMD' imported but unused
+./libs/lib_progress.py:12:17: E272 multiple spaces before keyword
+./libs/lib_progress.py:13:1: F401 'libs.lib_termination.termination' imported but unused
+./libs/lib_progress.py:26:1: W293 blank line contains whitespace
+./libs/lib_progress.py:29:80: E501 line too long (107 > 79 characters)
+./libs/lib_progress.py:30:80: E501 line too long (80 > 79 characters)
+./libs/lib_progress.py:33:1: W293 blank line contains whitespace
+./libs/lib_progress.py:38:51: E502 the backslash is redundant between brackets
+./libs/lib_progress.py:44:80: E501 line too long (88 > 79 characters)
+./libs/lib_progress.py:45:22: E225 missing whitespace around operator
+./libs/lib_progress.py:50:58: E231 missing whitespace after ','
+./libs/lib_progress.py:59:1: W293 blank line contains whitespace
+./libs/lib_progress.py:60:80: E501 line too long (151 > 79 characters)
+./libs/lib_progress.py:60:151: E502 the backslash is redundant between brackets
+./libs/lib_progress.py:61:36: E127 continuation line over-indented for visual indent
+./libs/lib_progress.py:61:80: E501 line too long (188 > 79 characters)
+./libs/lib_progress.py:61:188: E703 statement ends with a semicolon
+./libs/lib_progress.py:62:1: W293 blank line contains whitespace
+./libs/lib_progress.py:63:40: E712 comparison to True should be 'if cond is True:' or 'if cond:'
+./libs/lib_progress.py:66:80: E501 line too long (92 > 79 characters)
+./libs/lib_progress.py:70:80: E501 line too long (132 > 79 characters)
+./libs/lib_progress.py:79:80: E501 line too long (84 > 79 characters)
+./libs/lib_progress.py:80:18: E225 missing whitespace around operator
+./libs/lib_progress.py:84:1: W293 blank line contains whitespace
+./libs/lib_progress.py:87:1: W293 blank line contains whitespace
+./libs/lib_progress.py:91:9: E122 continuation line missing indentation or outdented
+./libs/lib_progress.py:92:41: E231 missing whitespace after ','
+./libs/lib_progress.py:92:54: E702 multiple statements on one line (semicolon)
+./libs/lib_progress.py:96:1: W293 blank line contains whitespace
+./libs/lib_progress.py:103:46: E231 missing whitespace after ','
+./libs/lib_progress.py:108:1: W293 blank line contains whitespace
+./libs/lib_progress.py:109:17: W292 no newline at end of file
+./libs/lib_struc.py:5:19: E272 multiple spaces before keyword
+./libs/lib_struc.py:11:18: F541 f-string is missing placeholders
+./libs/lib_struc.py:17:22: F541 f-string is missing placeholders
+./libs/lib_struc.py:21:22: F541 f-string is missing placeholders
+./libs/lib_struc.py:22:1: W293 blank line contains whitespace
+./libs/lib_struc.py:23:13: E221 multiple spaces before operator
+./libs/lib_struc.py:25:1: W293 blank line contains whitespace
+./libs/lib_struc.py:27:1: W293 blank line contains whitespace
+./libs/lib_struc.py:28:1: W293 blank line contains whitespace
+./libs/lib_struc.py:30:61: E261 at least two spaces before inline comment
+./libs/lib_struc.py:30:80: E501 line too long (103 > 79 characters)
+./libs/lib_struc.py:34:1: W293 blank line contains whitespace
+./libs/lib_struc.py:35:23: W292 no newline at end of file
+./libs/lib_termination.py:4:19: E272 multiple spaces before keyword
+./libs/lib_termination.py:10:65: E502 the backslash is redundant between brackets
+./libs/lib_termination.py:12:42: E231 missing whitespace after ','
+./libs/lib_termination.py:19:13: E122 continuation line missing indentation or outdented
+./libs/lib_termination.py:19:26: E225 missing whitespace around operator
+./libs/lib_termination.py:22:22: E225 missing whitespace around operator
+./libs/lib_termination.py:27:1: W293 blank line contains whitespace
+./libs/lib_train.py:5:1: F401 'copy' imported but unused
+./libs/lib_train.py:9:19: E272 multiple spaces before keyword
+./libs/lib_train.py:16:11: E221 multiple spaces before operator
+./libs/lib_train.py:17:16: E221 multiple spaces before operator
+./libs/lib_train.py:18:1: W293 blank line contains whitespace
+./libs/lib_train.py:29:60: E502 the backslash is redundant between brackets
+./libs/lib_train.py:51:27: E221 multiple spaces before operator
+./libs/lib_train.py:60:1: W293 blank line contains whitespace
+./libs/lib_train.py:64:12: E221 multiple spaces before operator
+./libs/lib_train.py:64:19: E261 at least two spaces before inline comment
+./libs/lib_train.py:73:1: W293 blank line contains whitespace
+./libs/lib_train.py:74:80: E501 line too long (82 > 79 characters)
+./libs/lib_train.py:74:82: E703 statement ends with a semicolon
+./libs/lib_train.py:75:16: E703 statement ends with a semicolon
+./libs/lib_train.py:76:1: W293 blank line contains whitespace
+./libs/lib_train.py:85:1: W293 blank line contains whitespace
+./libs/lib_train.py:87:16: E221 multiple spaces before operator
+./libs/lib_train.py:94:5: E122 continuation line missing indentation or outdented
+./libs/lib_train.py:95:5: E122 continuation line missing indentation or outdented
+./libs/lib_train.py:95:6: F541 f-string is missing placeholders
+./libs/lib_train.py:95:6: E225 missing whitespace around operator
+./libs/lib_train.py:95:29: F541 f-string is missing placeholders
+./libs/lib_train.py:96:5: E122 continuation line missing indentation or outdented
+./libs/lib_train.py:96:6: E225 missing whitespace around operator
+./libs/lib_train.py:97:5: E122 continuation line missing indentation or outdented
+./libs/lib_train.py:97:6: E225 missing whitespace around operator
+./libs/lib_train.py:98:5: E122 continuation line missing indentation or outdented
+./libs/lib_train.py:98:6: E225 missing whitespace around operator
+./libs/lib_train.py:99:5: E122 continuation line missing indentation or outdented
+./libs/lib_train.py:99:6: E225 missing whitespace around operator
+./libs/lib_train.py:100:5: E122 continuation line missing indentation or outdented
+./libs/lib_train.py:100:6: E225 missing whitespace around operator
+./libs/lib_train.py:101:1: W293 blank line contains whitespace
+./libs/lib_train.py:104:1: W293 blank line contains whitespace
+./libs/lib_train.py:109:14: E221 multiple spaces before operator
+./libs/lib_train.py:118:1: W293 blank line contains whitespace
+./libs/lib_train.py:119:80: E501 line too long (97 > 79 characters)
+./libs/lib_train.py:120:1: W293 blank line contains whitespace
+./libs/lib_train.py:121:1: W293 blank line contains whitespace
+./libs/lib_train.py:127:5: F841 local variable 'E_inter' is assigned to but never used
+./libs/lib_train.py:127:12: E221 multiple spaces before operator
+./libs/lib_train.py:127:19: E261 at least two spaces before inline comment
+./libs/lib_train.py:128:5: F841 local variable 'job_dependency' is assigned to but never used
+./libs/lib_train.py:129:16: E221 multiple spaces before operator
+./libs/lib_train.py:130:1: W293 blank line contains whitespace
+./libs/lib_train.py:156:27: E221 multiple spaces before operator
+./libs/lib_train.py:163:55: E703 statement ends with a semicolon
+./libs/lib_train.py:164:38: W292 no newline at end of file
+./libs/lib_util.py:7:9: E272 multiple spaces before keyword
+./libs/lib_util.py:8:14: E272 multiple spaces before keyword
+./libs/lib_util.py:21:1: W293 blank line contains whitespace
+./libs/lib_util.py:23:38: E712 comparison to False should be 'if cond is False:' or 'if not cond:'
+./libs/lib_util.py:25:1: W293 blank line contains whitespace
+./libs/lib_util.py:26:1: W293 blank line contains whitespace
+./libs/lib_util.py:30:1: W293 blank line contains whitespace
+./libs/lib_util.py:31:1: W293 blank line contains whitespace
+./libs/lib_util.py:34:1: W293 blank line contains whitespace
+./libs/lib_util.py:40:1: W293 blank line contains whitespace
+./libs/lib_util.py:44:1: W293 blank line contains whitespace
+./libs/lib_util.py:45:29: W605 invalid escape sequence '\d'
+./libs/lib_util.py:49:1: W293 blank line contains whitespace
+./libs/lib_util.py:51:80: E501 line too long (102 > 79 characters)
+./libs/lib_util.py:53:80: E501 line too long (101 > 79 characters)
+./libs/lib_util.py:55:80: E501 line too long (87 > 79 characters)
+./libs/lib_util.py:56:1: W293 blank line contains whitespace
+./libs/lib_util.py:57:1: W293 blank line contains whitespace
+./libs/lib_util.py:69:24: E231 missing whitespace after ','
+./libs/lib_util.py:75:80: E501 line too long (104 > 79 characters)
+./libs/lib_util.py:77:80: E501 line too long (107 > 79 characters)
+./libs/lib_util.py:81:80: E501 line too long (92 > 79 characters)
+./libs/lib_util.py:84:80: E501 line too long (97 > 79 characters)
+./libs/lib_util.py:85:80: E501 line too long (97 > 79 characters)
+./libs/lib_util.py:85:92: E231 missing whitespace after ','
+./libs/lib_util.py:96:80: E501 line too long (123 > 79 characters)
+./libs/lib_util.py:102:1: W293 blank line contains whitespace
+./libs/lib_util.py:105:18: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_util.py:105:20: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_util.py:106:13: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_util.py:106:15: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_util.py:107:12: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_util.py:107:14: E251 unexpected spaces around keyword / parameter equals
+./libs/lib_util.py:109:1: W293 blank line contains whitespace
+./libs/lib_util.py:132:80: E501 line too long (90 > 79 characters)
+./libs/lib_util.py:134:80: E501 line too long (218 > 79 characters)
+./scripts/almd.py:14:80: E501 line too long (81 > 79 characters)
+./scripts/almd.py:15:80: E501 line too long (115 > 79 characters)
+./scripts/almd.py:18:23: E272 multiple spaces before keyword
+./scripts/almd.py:19:23: E272 multiple spaces before keyword
+./scripts/almd.py:20:1: F401 'libs.lib_criteria.get_criteria' imported but unused
+./scripts/almd.py:20:1: F401 'libs.lib_criteria.get_average' imported but unused
+./scripts/almd.py:20:23: E272 multiple spaces before keyword
+./scripts/almd.py:21:1: F401 'libs.lib_termination.termination' imported but unused
+./scripts/almd.py:25:1: F401 'matplotlib.ticker as tck' imported but unused
+./scripts/almd.py:26:1: F401 'matplotlib.ticker.MultipleLocator' imported but unused
+./scripts/almd.py:40:80: E501 line too long (83 > 79 characters)
+./scripts/almd.py:42:80: E501 line too long (85 > 79 characters)
+./scripts/almd.py:53:55: W291 trailing whitespace
+./scripts/almd.py:58:9: F841 local variable 'rank' is assigned to but never used
+./scripts/almd.py:61:9: E303 too many blank lines (2)
+./scripts/almd.py:61:9: E266 too many leading '#' for block comment
+./scripts/almd.py:62:9: E265 block comment should start with '# '
+./scripts/almd.py:64:80: E501 line too long (80 > 79 characters)
+./scripts/almd.py:76:9: E265 block comment should start with '# '
+./scripts/almd.py:96:9: E265 block comment should start with '# '
+./scripts/almd.py:101:80: E501 line too long (87 > 79 characters)
+./scripts/almd.py:116:9: E265 block comment should start with '# '
+./scripts/almd.py:121:9: E265 block comment should start with '# '
+./scripts/almd.py:123:80: E501 line too long (96 > 79 characters)
+./scripts/almd.py:132:80: E501 line too long (86 > 79 characters)
+./scripts/almd.py:135:9: E265 block comment should start with '# '
+./scripts/almd.py:153:9: E265 block comment should start with '# '
+./scripts/almd.py:155:50: W291 trailing whitespace
+./scripts/almd.py:159:9: E303 too many blank lines (2)
+./scripts/almd.py:159:9: E266 too many leading '#' for block comment
+./scripts/almd.py:162:1: W293 blank line contains whitespace
+./scripts/almd.py:165:1: W293 blank line contains whitespace
+./scripts/almd.py:167:9: E303 too many blank lines (2)
+./scripts/almd.py:167:9: E266 too many leading '#' for block comment
+./scripts/almd.py:173:80: E501 line too long (114 > 79 characters)
+./scripts/almd.py:175:80: E501 line too long (114 > 79 characters)
+./scripts/almd.py:178:9: E266 too many leading '#' for block comment
+./scripts/almd.py:182:1: W293 blank line contains whitespace
+./scripts/almd.py:185:5: E303 too many blank lines (3)
+./scripts/almd.py:198:80: E501 line too long (80 > 79 characters)
+./scripts/almd.py:205:80: E501 line too long (87 > 79 characters)
+./scripts/almd.py:212:80: E501 line too long (90 > 79 characters)
+./scripts/almd.py:223:80: E501 line too long (83 > 79 characters)
+./scripts/almd.py:228:1: W293 blank line contains whitespace
+./scripts/almd.py:231:5: E303 too many blank lines (3)
+./scripts/almd.py:240:9: E266 too many leading '#' for block comment
+./scripts/almd.py:248:9: E266 too many leading '#' for block comment
+./scripts/almd.py:249:9: E266 too many leading '#' for block comment
+./scripts/almd.py:251:80: E501 line too long (108 > 79 characters)
+./scripts/almd.py:257:80: E501 line too long (82 > 79 characters)
+./scripts/almd.py:258:80: E501 line too long (89 > 79 characters)
+./scripts/almd.py:260:80: E501 line too long (101 > 79 characters)
+./scripts/almd.py:261:80: E501 line too long (100 > 79 characters)
+./scripts/almd.py:269:9: E266 too many leading '#' for block comment
+./scripts/almd.py:271:80: E501 line too long (86 > 79 characters)
+./scripts/almd.py:274:26: E262 inline comment should start with '# '
+./scripts/almd.py:280:80: E501 line too long (82 > 79 characters)
+./scripts/almd.py:284:9: E265 block comment should start with '# '
+./scripts/almd.py:297:9: E303 too many blank lines (2)
+./scripts/almd.py:297:9: E266 too many leading '#' for block comment
+./scripts/almd.py:299:80: E501 line too long (80 > 79 characters)
+./scripts/almd.py:305:80: E501 line too long (101 > 79 characters)
+./scripts/almd.py:307:80: E501 line too long (84 > 79 characters)
+./scripts/almd.py:312:9: E303 too many blank lines (2)
+./scripts/almd.py:312:9: E266 too many leading '#' for block comment
+./scripts/almd.py:315:80: E501 line too long (87 > 79 characters)
+./scripts/almd.py:316:13: E265 block comment should start with '# '
+./scripts/almd.py:318:80: E501 line too long (112 > 79 characters)
+./scripts/almd.py:319:80: E501 line too long (117 > 79 characters)
+./scripts/almd.py:324:80: E501 line too long (115 > 79 characters)
+./scripts/almd.py:325:80: E501 line too long (113 > 79 characters)
+./scripts/almd.py:326:80: E501 line too long (99 > 79 characters)
+./scripts/almd.py:333:80: E501 line too long (112 > 79 characters)
+./scripts/almd.py:334:80: E501 line too long (124 > 79 characters)
+./scripts/almd.py:338:80: E501 line too long (94 > 79 characters)
+./scripts/almd.py:340:80: E501 line too long (112 > 79 characters)
+./scripts/almd.py:342:80: E501 line too long (104 > 79 characters)
+./scripts/almd.py:346:5: E303 too many blank lines (3)
+./scripts/almd.py:355:9: E266 too many leading '#' for block comment
+./scripts/almd.py:363:9: E266 too many leading '#' for block comment
+./scripts/almd.py:364:9: E266 too many leading '#' for block comment
+./scripts/almd.py:366:80: E501 line too long (108 > 79 characters)
+./scripts/almd.py:372:80: E501 line too long (82 > 79 characters)
+./scripts/almd.py:373:80: E501 line too long (89 > 79 characters)
+./scripts/almd.py:375:80: E501 line too long (101 > 79 characters)
+./scripts/almd.py:376:80: E501 line too long (100 > 79 characters)
+./scripts/almd.py:384:9: E266 too many leading '#' for block comment
+./scripts/almd.py:386:80: E501 line too long (86 > 79 characters)
+./scripts/almd.py:395:13: F821 undefined name 'single_print'
+./scripts/almd.py:397:80: E501 line too long (82 > 79 characters)
+./scripts/almd.py:401:9: E265 block comment should start with '# '
+./scripts/almd.py:413:9: E303 too many blank lines (2)
+./scripts/almd.py:413:9: E266 too many leading '#' for block comment
+./scripts/almd.py:415:80: E501 line too long (80 > 79 characters)
+./scripts/almd.py:423:80: E501 line too long (92 > 79 characters)
+./scripts/almd.py:429:80: E501 line too long (85 > 79 characters)
+./scripts/almd.py:438:80: E501 line too long (83 > 79 characters)
+./scripts/almd.py:444:5: E303 too many blank lines (3)
+./scripts/almd.py:457:80: E501 line too long (87 > 79 characters)
+./scripts/almd.py:471:80: E501 line too long (83 > 79 characters)
+./scripts/almd.py:473:80: E501 line too long (103 > 79 characters)
+./scripts/almd.py:492:80: E501 line too long (94 > 79 characters)
+./scripts/almd.py:499:80: E501 line too long (87 > 79 characters)
+./scripts/almd.py:501:80: E501 line too long (97 > 79 characters)
+./scripts/almd.py:512:5: E303 too many blank lines (2)
+./scripts/almd.py:523:20: F541 f-string is missing placeholders
+./scripts/almd.py:523:46: E261 at least two spaces before inline comment
+./scripts/almd.py:525:9: F841 local variable 'NumAtom' is assigned to but never used
+./scripts/almd.py:525:80: E501 line too long (94 > 79 characters)
+./scripts/almd.py:528:80: E501 line too long (83 > 79 characters)
+./scripts/almd.py:537:80: E501 line too long (83 > 79 characters)
+./scripts/almd.py:539:80: E501 line too long (82 > 79 characters)
+./scripts/almd.py:541:80: E501 line too long (110 > 79 characters)
+./scripts/almd.py:557:80: E501 line too long (84 > 79 characters)
+./scripts/almd.py:565:13: E125 continuation line with same indent as next logical line
+./scripts/almd.py:576:80: E501 line too long (80 > 79 characters)
+./scripts/almd.py:578:80: E501 line too long (93 > 79 characters)
+./scripts/almd.py:583:80: E501 line too long (104 > 79 characters)
+./scripts/almd.py:585:80: E501 line too long (103 > 79 characters)
+./scripts/almd.py:586:80: E501 line too long (99 > 79 characters)
+./scripts/almd.py:593:80: E501 line too long (103 > 79 characters)
+./scripts/almd.py:600:80: E501 line too long (110 > 79 characters)
+./scripts/almd.py:601:80: E501 line too long (88 > 79 characters)
+./scripts/almd.py:602:80: E501 line too long (89 > 79 characters)
+./scripts/almd.py:603:80: E501 line too long (94 > 79 characters)
+./scripts/almd.py:613:80: E501 line too long (104 > 79 characters)
+./scripts/almd.py:614:80: E501 line too long (109 > 79 characters)
+./scripts/almd.py:621:9: E303 too many blank lines (2)
+./scripts/almd.py:621:9: E266 too many leading '#' for block comment
+./scripts/almd.py:633:80: E501 line too long (95 > 79 characters)
+./scripts/almd.py:642:41: E261 at least two spaces before inline comment
+./scripts/almd.py:649:80: E501 line too long (88 > 79 characters)
+./scripts/almd.py:655:80: E501 line too long (80 > 79 characters)
+./scripts/almd.py:664:40: E261 at least two spaces before inline comment
+./scripts/utils.py:3:1: F401 'sys' imported but unused
+./scripts/utils.py:6:1: F401 'argparse' imported but unused
+./scripts/utils.py:9:1: F401 'ase.units' imported but unused
+./scripts/utils.py:15:1: E302 expected 2 blank lines, found 1
+./scripts/utils.py:17:76: W291 trailing whitespace
+./scripts/utils.py:19:1: W293 blank line contains whitespace
+./scripts/utils.py:32:32: E261 at least two spaces before inline comment
+./scripts/utils.py:44:61: W291 trailing whitespace
+./scripts/utils.py:47:44: E261 at least two spaces before inline comment
+./scripts/utils.py:48:30: E261 at least two spaces before inline comment
+./scripts/utils.py:57:80: E501 line too long (85 > 79 characters)
+./scripts/utils.py:61:80: E501 line too long (104 > 79 characters)
+./scripts/utils.py:64:80: E501 line too long (107 > 79 characters)
+./scripts/utils.py:70:80: E501 line too long (92 > 79 characters)
+./scripts/utils.py:72:80: E501 line too long (80 > 79 characters)
+./scripts/utils.py:74:80: E501 line too long (97 > 79 characters)
+./scripts/utils.py:75:80: E501 line too long (97 > 79 characters)
+./scripts/utils.py:75:92: E231 missing whitespace after ','
+./scripts/utils.py:76:80: E501 line too long (88 > 79 characters)
+./scripts/utils.py:76:84: E231 missing whitespace after ','
+./scripts/utils.py:78:51: W291 trailing whitespace
+./scripts/utils.py:83:37: E261 at least two spaces before inline comment
+./scripts/utils.py:92:80: E501 line too long (123 > 79 characters)
+./scripts/utils.py:98:37: E261 at least two spaces before inline comment
+./scripts/utils.py:100:80: E501 line too long (100 > 79 characters)
+./scripts/utils.py:102:39: E261 at least two spaces before inline comment
+./scripts/utils.py:107:80: E501 line too long (100 > 79 characters)
+./scripts/utils.py:113:44: E261 at least two spaces before inline comment
+./scripts/utils.py:115:80: E501 line too long (101 > 79 characters)
+./scripts/utils.py:117:44: E261 at least two spaces before inline comment
+./scripts/utils.py:120:80: E501 line too long (89 > 79 characters)
+./scripts/utils.py:121:80: E501 line too long (90 > 79 characters)
+./scripts/utils.py:122:80: E501 line too long (122 > 79 characters)
+./scripts/utils.py:123:62: E231 missing whitespace after ','
+./scripts/utils.py:123:77: E231 missing whitespace after ','
+./scripts/utils.py:123:80: E501 line too long (188 > 79 characters)
+./scripts/utils.py:123:93: E231 missing whitespace after ','
+./scripts/utils.py:123:109: E231 missing whitespace after ','
+./scripts/utils.py:123:124: E231 missing whitespace after ','
+./scripts/utils.py:123:140: E231 missing whitespace after ','
+./scripts/utils.py:123:156: E231 missing whitespace after ','
+./scripts/utils.py:123:171: E231 missing whitespace after ','
+./scripts/utils.py:127:80: E501 line too long (84 > 79 characters)
+./scripts/utils.py:129:49: E261 at least two spaces before inline comment
+./scripts/utils.py:140:80: E501 line too long (105 > 79 characters)
+./scripts/utils.py:141:80: E501 line too long (94 > 79 characters)
+./scripts/utils.py:147:80: E501 line too long (85 > 79 characters)
+./scripts/utils.py:193:80: E501 line too long (89 > 79 characters)
+./scripts/utils.py:216:5: E303 too many blank lines (2)
+./scripts/utils.py:223:1: W293 blank line contains whitespace
+./scripts/utils.py:224:80: E501 line too long (80 > 79 characters)
+./scripts/utils.py:226:80: E501 line too long (87 > 79 characters)
+./scripts/utils.py:227:80: E501 line too long (85 > 79 characters)
+./scripts/utils.py:230:80: E501 line too long (106 > 79 characters)
+./scripts/utils.py:232:57: E261 at least two spaces before inline comment
+./scripts/utils.py:232:80: E501 line too long (108 > 79 characters)
+./scripts/utils.py:234:5: E266 too many leading '#' for block comment
+./scripts/utils.py:243:15: E221 multiple spaces before operator
+./scripts/utils.py:243:25: E261 at least two spaces before inline comment
+./scripts/utils.py:244:15: E221 multiple spaces before operator
+./scripts/utils.py:244:25: E261 at least two spaces before inline comment
+./scripts/utils.py:245:15: E221 multiple spaces before operator
+./scripts/utils.py:245:25: E261 at least two spaces before inline comment
+./scripts/utils.py:246:15: E221 multiple spaces before operator
+./scripts/utils.py:246:25: E261 at least two spaces before inline comment
+./scripts/utils.py:247:18: E221 multiple spaces before operator
+./scripts/utils.py:247:25: E261 at least two spaces before inline comment
+./scripts/utils.py:248:17: E221 multiple spaces before operator
+./scripts/utils.py:248:25: E261 at least two spaces before inline comment
+./scripts/utils.py:252:68: E703 statement ends with a semicolon
+./scripts/utils.py:252:69: E261 at least two spaces before inline comment
+./scripts/utils.py:252:80: E501 line too long (117 > 79 characters)
+./scripts/utils.py:253:61: E703 statement ends with a semicolon
+./scripts/utils.py:254:59: E703 statement ends with a semicolon
+./scripts/utils.py:255:80: E501 line too long (140 > 79 characters)
+./scripts/utils.py:255:123: E703 statement ends with a semicolon
+./scripts/utils.py:255:124: E261 at least two spaces before inline comment
+./scripts/utils.py:256:57: E703 statement ends with a semicolon
+./scripts/utils.py:258:1: W293 blank line contains whitespace
+./scripts/utils.py:270:1: W293 blank line contains whitespace
+./scripts/utils.py:273:1: W391 blank line at end of file
+./setup.py:20:1: W391 blank line at end of file

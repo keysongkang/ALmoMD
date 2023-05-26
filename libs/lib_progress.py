@@ -12,10 +12,8 @@ from libs.lib_termination import termination
 
 
 def check_progress(
-    temperature, pressure, ensemble, timestep, friction,
-    compressibility, taut, taup, mask, loginterval, name,
-    supercell, ntotal, ntrain, ntrain_init, nval, nval_init, rmax, lmax,
-    nfeatures, nstep, nmodel, steps_init, index, crtria, crtria_cnvg, NumAtoms
+    temperature, pressure, ntotal, ntrain, nval,
+    nstep, steps_init, index, crtria, NumAtoms
 ):
     """Function [check_progress]
     Check the progress of previous calculations.
@@ -27,61 +25,23 @@ def check_progress(
         The desired temperature in units of Kelvin (K)
     pressure: float
         The desired pressure in units of eV/Angstrom**3
-    ensemble: str
-        Type of MD ensembles; 'NVTLangevin'  ##!! We don't need it anymore
-    timestep: float
-        The step interval for printing MD steps  ##!! We don't need it anymore
-    friction: float
-        Strength of the friction parameter in NVTLangevin ensemble  ##!! We don't need it anymore
-    compressibility: float
-        compressibility in units of eV/Angstrom**3 in NPTBerendsen  ##!! We don't need it anymore
-    taut: float
-        Time constant for Berendsen temperature coupling ##!! We don't need it anymore
-        in NVTBerendsen and NPT Berendsen
-    taup: float
-        Time constant for Berendsen pressure coupling in NPTBerendsen ##!! We don't need it anymore
-    mask: Three-element tuple
-        Dynamic elements of the computational box (x,y,z); ##!! We don't need it anymore
-        0 is false, 1 is true
-    loginterval: int
-        The step interval for printing MD steps ##!! We don't need it anymore
-    name: str
-        name of file ##!! We don't need it anymore
-    supercell: list
-        supersuper ##!! We don't need it anymore
 
     ntotal: int
         Total number of added training and valdiation data for all subsamplings for each iteractive step
     ntrain: int
         The number of added training data for each iterative step
-    ntrain_init: int
-        The number of training dat for initial step ##!! We don't need it anymore
     nval: int
         The number of added validating data for each iterative step
-    nval_init:int
-        The number of validating data for initial step ##!! We don't need it anymore
-
-    rmax: float
-        rmaxrmax ##!! We don't need it anymore
-    lmax: int
-        lmaxlmax ##!! We don't need it anymore
-    nfeatures: int
-        nfeatures ##!! We don't need it anymore
 
     nstep: int
         The number of subsampling sets
-    nmodel: int
-        The number of ensemble model sets with different initialization ##!! We don't need it anymore
-    steps_init:int
+    steps_init: int
         Initialize MD steps to get averaged uncertainties and energies
     index: int
         The index of AL interactive step
 
     crtria: float
         Convergence criteria
-    crtria_cnvg: float
-        Convergence criteria ##!! We don't need it anymore
-
     NumAtoms: int
         The number of atoms in the simulation cell
 

@@ -259,12 +259,10 @@ class almd:
             if rank == 0:
                 # Open the uncertainty output file
                 kndex, MD_index, self.index, signal = check_progress(
-                    self.temperature, self.pressure, self.ensemble, self.timestep,
-                    self.friction, self.compressibility, self.taut, self.taup, self.mask,
-                    self.loginterval, self.name, self.supercell,
-                    self.ntotal, self.ntrain, self.ntrain_init, self.nval, self.nval_init, self.rmax,
-                    self.lmax, self.nfeatures, self.nstep, self.nmodel, self.steps_init, self.index,
-                    self.crtria, self.crtria_cnvg, self.NumAtoms
+                    self.temperature, self.pressure,
+                    self.ntotal, self.ntrain, self.nval,
+                    self.nstep, self.steps_init,
+                    self.index, self.crtria, self.NumAtoms
                 )
             kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)
@@ -375,12 +373,10 @@ class almd:
             if rank == 0:
                 # Open the uncertainty output file
                 kndex, MD_index, self.index, signal = check_progress(
-                    self.temperature, self.pressure, self.ensemble, self.timestep,
-                    self.friction, self.compressibility, self.taut, self.taup, self.mask,
-                    self.loginterval, self.name, self.supercell,
-                    self.ntotal, self.ntrain, self.ntrain_init, self.nval, self.nval_init, self.rmax,
-                    self.lmax, self.nfeatures, self.nstep, self.nmodel, self.steps_init, self.index,
-                    self.crtria, self.crtria_cnvg, self.NumAtoms
+                    self.temperature, self.pressure,
+                    self.ntotal, self.ntrain, self.nval,
+                    self.nstep, self.steps_init,
+                    self.index, self.crtria, self.NumAtoms
                 )
             kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)

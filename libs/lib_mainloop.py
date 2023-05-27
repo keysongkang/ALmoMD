@@ -139,9 +139,7 @@ def MLMD_initial(
     
     # Initiate the MD run starting from kndex until reaching steps_init
     for jndex in range(kndex, steps_init):
-        ##!! It would be better not to print logfile for temporary file.
         # MD information for temporary steps
-        logfile      = f'temp-{temperature}K-{pressure}bar_{index}.log'
         trajectory   = f'temp-{temperature}K-{pressure}bar_{index}.traj'
 
         # Implement MD calculation for only one loginterval step
@@ -150,13 +148,14 @@ def MLMD_initial(
             pressure=pressure, timestep=timestep, friction=friction,
             compressibility=compressibility, taut=taut, taup=taup,
             mask=mask, loginterval=loginterval, steps=loginterval,
-            nstep=nstep, nmodel=nmodel, logfile=logfile,
+            nstep=nstep, nmodel=nmodel, logfile=None,
             trajectory=trajectory, calculator=calculator, signal_append=False
         )
 
         # Get new configuration and velocities for next step
-        traj_current = Trajectory(trajectory, properties=\
-                                  ['forces', 'velocities', 'temperature'])
+        traj_current = Trajectory(
+            trajectory, properties=['forces', 'velocities', 'temperature']
+            )
         struc_step   = traj_current[-1]
         del traj_current # Remove it to reduce the memory usage
 
@@ -292,9 +291,7 @@ def MLMD_main(
     while MD_index < ntotal:
         accept = '--         '
 
-        ##!! It would be better not to print logfile for temporary file.
         # MD information for temporary steps
-        logfile      = f'temp-{temperature}K-{pressure}bar_{index}.log'
         trajectory   = f'temp-{temperature}K-{pressure}bar_{index}.traj'
         
         # Implement the MD calculation for only one loginterval step
@@ -303,7 +300,7 @@ def MLMD_main(
             pressure=pressure, timestep=timestep, friction=friction,
             compressibility=compressibility, taut=taut, taup=taup,
             mask=mask, loginterval=loginterval, steps=loginterval,
-            nstep=nstep, nmodel=nmodel, logfile=logfile,
+            nstep=nstep, nmodel=nmodel, logfile=None,
             trajectory=trajectory, calculator=calc_MLIP, signal_append=False
         )
         

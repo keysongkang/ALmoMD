@@ -7,8 +7,9 @@ from decimal import Decimal
 
 
 def NVTLangevin(
-    struc, timestep, temperature, friction, steps, loginterval, logfile,
-    trajectory, nstep, nmodel, calculator, signal_append=True, fix_com=True,
+    struc, timestep, temperature, friction, steps, loginterval,
+    nstep, nmodel, calculator, trajectory, logfile=None,
+    signal_append=True, fix_com=True,
 ):
     """Function [NVTLangevin]
     Evalulate the absolute and relative uncertainties of
@@ -62,29 +63,31 @@ def NVTLangevin(
         # Get the last structure
         struc = traj_old[-1]
     else: # New start
-        # Prepare a log file ##!! Need to be optional
-        if rank == 0:
-            file_log = open(logfile, 'w')
-            file_log.write(
-                'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \tTemperature[K]\n'
-            )
-            file_log.close()
-            file_traj = TrajectoryWriter(filename=trajectory, mode='w')
+        if isinstance(logfile, str):
+            if rank == 0:
+                file_log = open(logfile, 'w')
+                file_log.write(
+                    'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \tTemperature[K]\n'
+                )
+                file_log.close()
+                file_traj = TrajectoryWriter(filename=trajectory, mode='w')
         
-        # Get MD information at the current step
-        info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-            struc, nstep, nmodel, calculator
-            )
+            # Get MD information at the current step
+            info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
+                struc, nstep, nmodel, calculator
+                )
 
-        # Log MD information at the current step in the log file
+            # Log MD information at the current step in the log file
+            if rank == 0:
+                file_log = open(logfile, 'a')
+                file_log.write('{:.5f}'.format(Decimal(str(0.0))) + str('   \t') +\
+                               '{:.5e}'.format(Decimal(str(info_TE))) + str('\t') +\
+                               '{:.5e}'.format(Decimal(str(info_PE))) + str('\t') +\
+                               '{:.5e}'.format(Decimal(str(info_KE))) + str('\t') +\
+                               '{:.2f}'.format(Decimal(str(info_T))) + str('\n'))
+                file_log.close()
+        # Add new configuration to the trajectory file
         if rank == 0:
-            file_log = open(logfile, 'a')
-            file_log.write('{:.5f}'.format(Decimal(str(0.0))) + str('   \t') +\
-                           '{:.5e}'.format(Decimal(str(info_TE))) + str('\t') +\
-                           '{:.5e}'.format(Decimal(str(info_PE))) + str('\t') +\
-                           '{:.5e}'.format(Decimal(str(info_KE))) + str('\t') +\
-                           '{:.2f}'.format(Decimal(str(info_T))) + str('\n'))
-            file_log.close()
             file_traj.write(atoms=struc)
 
     # Get averaged force from trained models
@@ -151,20 +154,22 @@ def NVTLangevin(
         
         # Log MD information at regular intervals
         if idx % loginterval == 0:
-            info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-                struc, nstep, nmodel, calculator
-                )
+            if isinstance(logfile, str):
+                info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
+                    struc, nstep, nmodel, calculator
+                    )
+                if rank == 0:
+                    file_log = open(logfile, 'a')
+                    simtime = timestep*(idx+loginterval)/units.fs/1000
+                    file_log.write(
+                        '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
+                        '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
+                        '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
+                        '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
+                        '{:.2f}'.format(Decimal(str(info_T)))  + '\n'
+                    )
+                    file_log.close()
             if rank == 0:
-                file_log = open(logfile, 'a')
-                simtime = timestep*(idx+loginterval)/units.fs/1000
-                file_log.write(
-                    '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
-                    '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                    '{:.2f}'.format(Decimal(str(info_T)))  + '\n'
-                )
-                file_log.close()
                 file_traj.write(atoms=struc)
 
                 

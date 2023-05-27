@@ -677,7 +677,7 @@ class almd:
         mpi_print(f'Energy: {R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}')
 
 
-    def run_dft_runmd(self):
+    def run_dft_runmd(self, dply_model, logfile, trajectory):
         """Function [run_dft_runmd]
         Initiate MD calculation using trained models.
         """
@@ -708,3 +708,8 @@ class almd:
                         mpi_print(f'Cannot find the model: {dply_model}', rank)
                         signal = 1
                         signal = comm.bcast(signal, root=rank)
+
+
+
+
+        runMD()

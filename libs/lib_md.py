@@ -67,11 +67,11 @@ def runMD(
             friction = friction,
             steps = steps,
             loginterval = loginterval,
-            logfile = logfile,
-            trajectory = trajectory,
             nstep = nstep,
             nmodel = nmodel,
             calculator = calculator,
+            trajectory = trajectory,
+            logfile = logfile,
             signal_append = signal_append
         )
     else:

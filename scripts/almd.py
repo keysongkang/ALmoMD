@@ -699,7 +699,6 @@ class almd:
         """Function [run_dft_runmd]
         Initiate MD calculation using trained models.
         """
-        import os
         from libs.lib_md import runMD
         from ase.data   import atomic_numbers
 

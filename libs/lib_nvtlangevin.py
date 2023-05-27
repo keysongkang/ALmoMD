@@ -1,9 +1,13 @@
+from ase.io.trajectory import Trajectory
 from ase.io.trajectory import TrajectoryWriter
 import ase.units as units
 
+import os
 import numpy as np
 from mpi4py import MPI
 from decimal import Decimal
+
+from libs.lib_util    import single_print
 
 
 def NVTLangevin(
@@ -55,13 +59,17 @@ def NVTLangevin(
     # Initialization of index
     Langevin_idx = 0
 
-    if signal_append and os.path.exist(trajectory): # If appending and the file exists,
+    if signal_append and os.path.exists(trajectory) and os.path.getsize(trajectory) != 0: # If appending and the file exists,
         # Read the previous trajectory
-        traj_old = np.load(trajectory)
+        traj_old = Trajectory(
+            trajectory,
+            properties=['forces', 'velocities', 'temperature']
+            )
         # Get the index
         Langevin_idx = len(traj_old) * loginterval
         # Get the last structure
         struc = traj_old[-1]
+        file_traj = TrajectoryWriter(filename=trajectory, mode='a')
     else: # New start
         if isinstance(logfile, str):
             if rank == 0:

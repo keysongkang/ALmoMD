@@ -240,8 +240,10 @@ def read_input_file(file_path):
                     value = eval(value)
                 elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs']:
                     value = float(value)
-                elif name in ['ntrain_init', 'ntrain', 'nstep', 'nmodel', 'temperature', 'taut', 'pressure', 'taup', 'steps_ther', 'steps_init', 'timestep', 'cutoff_ther', 'lmax', 'nfeatures', 'random_index', 'wndex']:
+                elif name in ['ntrain_init', 'ntrain', 'nstep', 'nmodel', 'temperature', 'taut', 'pressure', 'taup', 'steps_ther', 'steps_init', 'timestep', 'cutoff_ther', 'lmax', 'nfeatures', 'random_index', 'wndex', 'steps', 'loginterval']:
                     value = int(value)
+                else:
+                    value = str(value)
 
                 variables[name] = value
 

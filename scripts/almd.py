@@ -115,6 +115,24 @@ class almd:
         #     The desired pressure in units of eV/Angstrom**3
         self.pressure = 0
 
+        ##[runMD default inputs]
+        # workpath: str
+        #     A path to the directory containing trained models
+        self.workpath = './model/'
+        # logfile: str
+        #     A file name for MD logging
+        self.logfile = 'md.log'
+        # trajectory: str
+        #     A file name for MD trajectory
+        self.trajectory = 'md.traj'
+        # steps: int
+        #     A target simulation timesteps
+        self.steps = 500
+        # MD_input: str
+        #     A file name of the input file for initial structure
+        #     'geometry.in', 'geometry.in.next_step', 'trajectory.son' work
+        self.MD_input = 'trajectory.son'
+
         ##[NVTLangevin setting]
         # friction: float
         #     Strength of the friction parameter in NVTLangevin ensemble
@@ -677,20 +695,42 @@ class almd:
         mpi_print(f'Energy: {R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}')
 
 
-    def run_dft_runmd(self, dply_model, logfile, trajectory):
+    def run_dft_runmd(self):
         """Function [run_dft_runmd]
         Initiate MD calculation using trained models.
         """
+        from libs.lib_md import runMD
 
         # Extract MPI infos
         comm = MPI.COMM_WORLD
         size = comm.Get_size()
         rank = comm.Get_rank()
 
-        # Set the path to folders storing the deployed trained models for NequIP
-        workpath = f'./data/{self.temperature}K-{self.pressure}bar_{self.wndex}'
         # Initialization of a termination signal
         signal = 0
+
+        if self.MD_input == 'geometry.in' or self.MD_input == 'geometry.in.next_step':
+            # Read the ground state structure with the primitive cell
+            struc_init = atoms_read(self.MD_input, format='aims')
+            # Make it supercell
+            struc = make_supercell(struc_init, self.supercell)
+        elif self.MD_input == 'trajectory.son':
+            # Read all structural configurations in SON file
+            metadata, data = son.load(MD_input)
+            atom_numbers = [
+            atomic_numbers[items[1]]
+            for items in data[-1]['atoms']['symbols']
+            for jndex in range(items[0])
+            ]
+            struc = Atoms(
+                atom_numbers,
+                positions=data[-1]['atoms']['positions'],
+                cell=data[-1]['atoms']['cell'],
+                pbc=data[-1]['atoms']['pbc']
+                )
+        else:
+            mpi_print(f'You need to assign MD_input appropriately.')
+            signal = 1
 
         # Load the trained models as calculators
         calc_MLIP = []
@@ -698,10 +738,10 @@ class almd:
             for index_nstep in range(self.nstep):
                 if (index_nmodel * self.nstep + index_nstep) % size == rank:
                     dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-                    if os.path.exists(f'{workpath}/{dply_model}'):
+                    if os.path.exists(f'{self.workpath}/{dply_model}'):
                         mpi_print(f'Found the deployed model: {dply_model}', rank)
                         calc_MLIP.append(
-                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
+                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{self.workpath}/{dply_model}')
                         )
                     else:
                         # If there is no model, turn on the termination signal
@@ -709,7 +749,15 @@ class almd:
                         signal = 1
                         signal = comm.bcast(signal, root=rank)
 
+        # Check the termination signal
+        if signal == 1:
+            mpi_print('Some trained models are not finished.', rank)
+            sys.exit()
 
-
-
-        runMD()
+        runMD(
+            self.struc, self.ensemble, self.temperature, self.pressure,
+            self.timestep, self.friction, self.compressibility,
+            self.taut, self.taup, self.mask, self.loginterval,
+            self.steps, self.nstep, self.nmodel, self.logfile,
+            self.trajectory, calc_MLIP, signal_append=True
+            )

@@ -11,7 +11,7 @@ from libs.lib_nvtlangevin import NVTLangevin
 def runMD(
     struc, ensemble, temperature, pressure, timestep, friction,
     compressibility, taut, taup, mask, loginterval, steps,
-    nstep, nmodel, logfile, trajectory, calculator
+    nstep, nmodel, logfile, trajectory, calculator, signal_append
 ):
     """Function [runMD]
     Initiate the Molecular Dynamics simulation using various ensembles
@@ -72,8 +72,7 @@ def runMD(
             nstep = nstep,
             nmodel = nmodel,
             calculator = calculator,
-            signal_append = False
+            signal_append = signal_append
         )
     else:
         mpi_print(f'The ensemble model is not determined.', rank)
-        

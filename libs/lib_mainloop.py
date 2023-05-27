@@ -151,7 +151,7 @@ def MLMD_initial(
             compressibility=compressibility, taut=taut, taup=taup,
             mask=mask, loginterval=loginterval, steps=loginterval,
             nstep=nstep, nmodel=nmodel, logfile=logfile,
-            trajectory=trajectory, calculator=calculator
+            trajectory=trajectory, calculator=calculator, signal_append=False
         )
 
         # Get new configuration and velocities for next step
@@ -304,7 +304,7 @@ def MLMD_main(
             compressibility=compressibility, taut=taut, taup=taup,
             mask=mask, loginterval=loginterval, steps=loginterval,
             nstep=nstep, nmodel=nmodel, logfile=logfile,
-            trajectory=trajectory, calculator=calc_MLIP
+            trajectory=trajectory, calculator=calc_MLIP, signal_append=False
         )
         
         # Get new configuration and velocities for next step
@@ -529,7 +529,7 @@ def MLMD_random(
         compressibility=compressibility, taut=taut, taup=taup,
         mask=mask, loginterval=loginterval, steps=steps_init,
         nstep=nstep, nmodel=nmodel, logfile=logfile,
-        trajectory=trajectory, calculator=calculator
+        trajectory=trajectory, calculator=calculator, signal_append=False
     )
     
     # Recond the index of the iterative steps

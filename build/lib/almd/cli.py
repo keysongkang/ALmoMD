@@ -48,6 +48,15 @@ def test_command(args):
     run_almd.run_dft_test()
 
 
+def runmd_command(args):
+    """
+    Implement the logic for "almomd runMD" command
+    """
+    from scripts.almd import almd
+    run_almd = almd()
+    run_almd.run_dft_runmd()
+
+
 def aims2son_command(args):
     """
     Implement the logic for "almomd utils aims2son" command
@@ -131,6 +140,13 @@ def main():
         help='Check the validation error'
         )
     test_parser.set_defaults(func=test_command)
+
+    # Subparser for "runMD" command
+    runmd_parser = subparsers.add_parser(
+        'runMD',
+        help='Initiate MD calculation using trained models'
+        )
+    runmd_parser.set_defaults(func=runmd_command)
 
     # Subparser for "utils" command
     utils_parser = subparsers.add_parser(

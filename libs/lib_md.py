@@ -3,7 +3,6 @@ import ase.units as units
 import os
 import pandas as pd
 
-from mpi4py import MPI
 from libs.lib_util import mpi_print
 from libs.lib_nvtlangevin import NVTLangevin
 
@@ -75,4 +74,9 @@ def runMD(
             signal_append = signal_append
         )
     else:
+        from mpi4py import MPI
+        # Extract MPI infos
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        
         mpi_print(f'The ensemble model is not determined.', rank)

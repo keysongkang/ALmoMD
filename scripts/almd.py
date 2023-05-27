@@ -699,7 +699,9 @@ class almd:
         """Function [run_dft_runmd]
         Initiate MD calculation using trained models.
         """
+        import os
         from libs.lib_md import runMD
+        from ase.data   import atomic_numbers
 
         # Extract MPI infos
         comm = MPI.COMM_WORLD
@@ -716,7 +718,7 @@ class almd:
             struc = make_supercell(struc_init, self.supercell)
         elif self.MD_input == 'trajectory.son':
             # Read all structural configurations in SON file
-            metadata, data = son.load(MD_input)
+            metadata, data = son.load(self.MD_input)
             atom_numbers = [
             atomic_numbers[items[1]]
             for items in data[-1]['atoms']['symbols']
@@ -755,7 +757,7 @@ class almd:
             sys.exit()
 
         runMD(
-            self.struc, self.ensemble, self.temperature, self.pressure,
+            struc, self.ensemble, self.temperature, self.pressure,
             self.timestep, self.friction, self.compressibility,
             self.taut, self.taup, self.mask, self.loginterval,
             self.steps, self.nstep, self.nmodel, self.logfile,

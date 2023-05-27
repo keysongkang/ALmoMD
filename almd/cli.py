@@ -143,7 +143,7 @@ def main():
 
     # Subparser for "runMD" command
     runmd_parser = subparsers.add_parser(
-        'test',
+        'runMD',
         help='Initiate MD calculation using trained models'
         )
     runmd_parser.set_defaults(func=runmd_command)

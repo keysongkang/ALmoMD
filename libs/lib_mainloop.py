@@ -13,7 +13,7 @@ from decimal import Decimal
 from ase.data   import atomic_numbers
 
 from libs.lib_util    import mpi_print, single_print, read_aims
-from libs.lib_md       import runMD, check_runMD
+from libs.lib_md       import runMD
 from libs.lib_criteria import eval_uncert, uncert_strconvter, get_criteria, get_criteria_prob
 
 

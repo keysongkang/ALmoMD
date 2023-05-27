@@ -675,3 +675,36 @@ class almd:
 
         # Print out the statistic results
         mpi_print(f'Energy: {R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}')
+
+
+    def run_dft_runmd(self):
+        """Function [run_dft_runmd]
+        Initiate MD calculation using trained models.
+        """
+
+        # Extract MPI infos
+        comm = MPI.COMM_WORLD
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+
+        # Set the path to folders storing the deployed trained models for NequIP
+        workpath = f'./data/{self.temperature}K-{self.pressure}bar_{self.wndex}'
+        # Initialization of a termination signal
+        signal = 0
+
+        # Load the trained models as calculators
+        calc_MLIP = []
+        for index_nmodel in range(self.nmodel):
+            for index_nstep in range(self.nstep):
+                if (index_nmodel * self.nstep + index_nstep) % size == rank:
+                    dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
+                    if os.path.exists(f'{workpath}/{dply_model}'):
+                        mpi_print(f'Found the deployed model: {dply_model}', rank)
+                        calc_MLIP.append(
+                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
+                        )
+                    else:
+                        # If there is no model, turn on the termination signal
+                        mpi_print(f'Cannot find the model: {dply_model}', rank)
+                        signal = 1
+                        signal = comm.bcast(signal, root=rank)

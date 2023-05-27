@@ -729,6 +729,7 @@ class almd:
                 cell=data[-1]['atoms']['cell'],
                 pbc=data[-1]['atoms']['pbc']
                 )
+            struc.set_velocities(data[-1]['atoms']['velocities'])
         else:
             mpi_print(f'You need to assign MD_input appropriately.')
             signal = 1

@@ -212,7 +212,7 @@ def NVTLangevin(
                         )
                     if signal_uncert:
                         file_log.write(
-                            '\t' +
+                            '      \t' +
                             uncert_strconvter(UncertRel_E) + '\t' +
                             uncert_strconvter(UncertAbs_E) + '\t' +
                             uncert_strconvter(UncertRel_F) + '\t' +

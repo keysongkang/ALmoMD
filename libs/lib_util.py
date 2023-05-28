@@ -236,7 +236,7 @@ def read_input_file(file_path):
                 value = value.strip()
 
                 # Perform type conversions for specific variables
-                if name in ['supercell', 'mask']:
+                if name in ['supercell', 'supercell_init', 'mask']:
                     value = eval(value)
                 elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs']:
                     value = float(value)

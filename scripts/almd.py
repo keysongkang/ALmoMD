@@ -102,7 +102,7 @@ class almd:
         # supercell: 2D array of floats
         #     Tensor shape of supercell for MD calculations
         #     compared to primitive cell.
-        self.supercell = [[2, 0, 0], [0, 2, 0], [0, 0, 2]]
+        self.supercell = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
         # timestep: float
         #     MD timestep in units of femto-second (fs)
         self.timestep = 1
@@ -133,6 +133,10 @@ class almd:
         #     A file name of the input file for initial structure
         #     'geometry.in', 'geometry.in.next_step', 'trajectory.son' work
         self.MD_input = 'trajectory.son'
+        # supercell_init: 2D array of floats
+        #     Tensor shape of supercell for runMD calculations
+        #     compared to primitive cell.
+        self.supercell_init = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
         ##[NVTLangevin setting]
         # friction: float
@@ -713,11 +717,11 @@ class almd:
         # Initialization of a termination signal
         signal = 0
 
-        if self.MD_input == 'geometry.in' or self.MD_input == 'geometry.in.next_step':
+        if self.MD_input == 'start.in':
             # Read the ground state structure with the primitive cell
             struc_init = atoms_read(self.MD_input, format='aims')
             # Make it supercell
-            struc = make_supercell(struc_init, self.supercell)
+            struc = make_supercell(struc_init, self.supercell_init)
             MaxwellBoltzmannDistribution(struc, temperature_K=self.temperature, force_temp=True)
         elif self.MD_input == 'trajectory.son':
             # Read all structural configurations in SON file
@@ -727,13 +731,14 @@ class almd:
             for items in data[-1]['atoms']['symbols']
             for jndex in range(items[0])
             ]
-            struc = Atoms(
+            struc_son = Atoms(
                 atom_numbers,
                 positions=data[-1]['atoms']['positions'],
                 cell=data[-1]['atoms']['cell'],
                 pbc=data[-1]['atoms']['pbc']
                 )
-            struc.set_velocities(data[-1]['atoms']['velocities'])
+            struc_son.set_velocities(data[-1]['atoms']['velocities'])
+            struc = make_supercell(struc_son, self.supercell_init)
         else:
             mpi_print(f'You need to assign MD_input appropriately.')
             signal = 1

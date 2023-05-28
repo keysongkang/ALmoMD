@@ -8,12 +8,13 @@ from mpi4py import MPI
 from decimal import Decimal
 
 from libs.lib_util    import single_print
+from libs.lib_criteria import eval_uncert, uncert_strconvter
 
 
 def NVTLangevin(
     struc, timestep, temperature, friction, steps, loginterval,
-    nstep, nmodel, calculator, trajectory, logfile=None,
-    signal_append=True, fix_com=True,
+    nstep, nmodel, calculator, E_ref, al_type, trajectory, logfile=None,
+    signal_uncert=False, signal_append=True, fix_com=True,
 ):
     """Function [NVTLangevin]
     Evalulate the absolute and relative uncertainties of
@@ -37,16 +38,24 @@ def NVTLangevin(
     loginterval: int
         The step interval for printing MD steps
 
-    logfile: str
-        A name of MD logfile
-    trajectory: str
-        A name of MD trajectory file
     nstep: int
         The number of subsampling sets
     nmodel: int
         The number of ensemble model sets with different initialization
     calculator: ASE calculator
         Any calculator
+    E_ref: flaot
+        The energy of reference state (Here, ground state)
+    al_type: str
+        Type of active learning: 'energy', 'force', 'force_max'
+    trajectory: str
+        A name of MD trajectory file
+
+    logfile: str (optional)
+        A name of MD logfile. With None, it will not print a log file.
+    signal_uncert: bool (optional)
+
+
     fixcm: bool (optional)
         If True, the position and momentum of the center of mass is
         kept unperturbed.  Default: True.
@@ -75,7 +84,9 @@ def NVTLangevin(
             if rank == 0:
                 file_log = open(logfile, 'w')
                 file_log.write(
-                    'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \tTemperature[K]\n'
+                    'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
+                    + 'Temperature[K]\tUncertRel_E\tUncertAbs_E\t'
+                    + 'UncertRel_F\tUncertAbs_F\n'
                 )
                 file_log.close()
                 file_traj = TrajectoryWriter(filename=trajectory, mode='w')
@@ -85,14 +96,31 @@ def NVTLangevin(
                 struc, nstep, nmodel, calculator
                 )
 
+            # Get absolute and relative uncertainties of energy and force
+            # and also total energy
+            UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, Etot_step =\
+            eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type)
+
             # Log MD information at the current step in the log file
             if rank == 0:
                 file_log = open(logfile, 'a')
-                file_log.write('{:.5f}'.format(Decimal(str(0.0))) + str('   \t') +\
-                               '{:.5e}'.format(Decimal(str(info_TE))) + str('\t') +\
-                               '{:.5e}'.format(Decimal(str(info_PE))) + str('\t') +\
-                               '{:.5e}'.format(Decimal(str(info_KE))) + str('\t') +\
-                               '{:.2f}'.format(Decimal(str(info_T))) + str('\n'))
+                file_log.write(
+                    '{:.5f}'.format(Decimal(str(0.0))) + '   \t' +
+                    '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
+                    '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
+                    '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
+                    '{:.2f}'.format(Decimal(str(info_T)))
+                    )
+                if signal_uncert:
+                    file_log.write(
+                        '      \t' +
+                        uncert_strconvter(UncertRel_E) + '\t' +
+                        uncert_strconvter(UncertAbs_E) + '\t' +
+                        uncert_strconvter(UncertRel_F) + '\t' +
+                        uncert_strconvter(UncertAbs_F) + '\n'
+                        )
+                else:
+                    file_log.write('\n')
                 file_log.close()
         # Add new configuration to the trajectory file
         if rank == 0:
@@ -166,6 +194,12 @@ def NVTLangevin(
                 info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
                     struc, nstep, nmodel, calculator
                     )
+
+                # Get absolute and relative uncertainties of energy and force
+                # and also total energy
+                UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, Etot_step =\
+                eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type)
+
                 if rank == 0:
                     file_log = open(logfile, 'a')
                     simtime = timestep*(idx+loginterval)/units.fs/1000
@@ -174,8 +208,18 @@ def NVTLangevin(
                         '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
                         '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
                         '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                        '{:.2f}'.format(Decimal(str(info_T)))  + '\n'
-                    )
+                        '{:.2f}'.format(Decimal(str(info_T)))
+                        )
+                    if signal_uncert:
+                        file_log.write(
+                            '\t' +
+                            uncert_strconvter(UncertRel_E) + '\t' +
+                            uncert_strconvter(UncertAbs_E) + '\t' +
+                            uncert_strconvter(UncertRel_F) + '\t' +
+                            uncert_strconvter(UncertAbs_F) + '\n'
+                            )
+                    else:
+                        file_log.write('\n')
                     file_log.close()
             if rank == 0:
                 file_traj.write(atoms=struc)

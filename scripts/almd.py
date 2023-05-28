@@ -10,8 +10,9 @@ from nequip.ase import nequip_calculator
 from ase import Atoms
 from ase.build import make_supercell
 from ase.io import read as atoms_read
+from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
-from libs.lib_util import check_mkdir, job_dependency, read_input_file, mpi_print
+from libs.lib_util import check_mkdir, job_dependency, read_input_file, mpi_print, single_print
 from libs.lib_npz import generate_npz_DFT_init, generate_npz_DFT, generate_npz_DFT_rand_init, generate_npz_DFT_rand
 from libs.lib_train import get_train_job, execute_train_job
 from libs.lib_dft import run_DFT
@@ -118,7 +119,7 @@ class almd:
         ##[runMD default inputs]
         # workpath: str
         #     A path to the directory containing trained models
-        self.workpath = './model/'
+        self.workpath = './model'
         # logfile: str
         #     A file name for MD logging
         self.logfile = 'md.log'
@@ -702,6 +703,8 @@ class almd:
         from libs.lib_md import runMD
         from ase.data   import atomic_numbers
 
+        ##!! Need to add uncertainty output
+
         # Extract MPI infos
         comm = MPI.COMM_WORLD
         size = comm.Get_size()
@@ -715,6 +718,7 @@ class almd:
             struc_init = atoms_read(self.MD_input, format='aims')
             # Make it supercell
             struc = make_supercell(struc_init, self.supercell)
+            MaxwellBoltzmannDistribution(struc, temperature_K=self.temperature, force_temp=True)
         elif self.MD_input == 'trajectory.son':
             # Read all structural configurations in SON file
             metadata, data = son.load(self.MD_input)
@@ -734,32 +738,50 @@ class almd:
             mpi_print(f'You need to assign MD_input appropriately.')
             signal = 1
 
-        # Load the trained models as calculators
+        ## Prepare the ground state structure
+        # Read the ground state structure with the primitive cell
+        struc_init = atoms_read('geometry.in.next_step', format='aims')
+        # Make it supercell
+        struc_super = make_supercell(struc_init, self.supercell)
+        # Get the number of atoms in the simulation cell
+        self.NumAtoms = len(struc_super)
+
+
+        # Prepare empty lists for potential and total energies
+        Etot_step = []
         calc_MLIP = []
         for index_nmodel in range(self.nmodel):
             for index_nstep in range(self.nstep):
                 if (index_nmodel * self.nstep + index_nstep) % size == rank:
                     dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
                     if os.path.exists(f'{self.workpath}/{dply_model}'):
-                        mpi_print(f'Found the deployed model: {dply_model}', rank)
+                        single_print(f'Found the deployed model: {dply_model}')
                         calc_MLIP.append(
                             nequip_calculator.NequIPCalculator.from_deployed_model(f'{self.workpath}/{dply_model}')
                         )
+                        struc_super.calc = calc_MLIP[-1]
+                        Etot_step.append(struc_super.get_total_energy() - self.E_gs)
                     else:
                         # If there is no model, turn on the termination signal
-                        mpi_print(f'Cannot find the model: {dply_model}', rank)
+                        single_print(f'Cannot find the model: {dply_model}')
                         signal = 1
                         signal = comm.bcast(signal, root=rank)
+        Etot_step = comm.allgather(Etot_step)
 
-        # Check the termination signal
+        # Get averaged energy from trained models
+        Etot_step_avg =\
+        np.average(np.array([i for items in Etot_step for i in items]), axis=0)
+
+        # if the number of trained model is not enough, terminate it
         if signal == 1:
-            mpi_print('Some trained models are not finished.', rank)
             sys.exit()
 
         runMD(
-            struc, self.ensemble, self.temperature, self.pressure,
-            self.timestep, self.friction, self.compressibility,
-            self.taut, self.taup, self.mask, self.loginterval,
-            self.steps, self.nstep, self.nmodel, self.logfile,
-            self.trajectory, calc_MLIP, signal_append=True
+            struc, self.ensemble, self.temperature,
+            self.pressure, self.timestep, self.friction,
+            self.compressibility, self.taut, self.taup,
+            self.mask, self.loginterval, self.steps,
+            self.nstep, self.nmodel, Etot_step_avg, self.al_type,
+            self.logfile, self.trajectory, calc_MLIP,
+            signal_uncert=True, signal_append=True
             )

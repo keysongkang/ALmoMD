@@ -148,8 +148,9 @@ def MLMD_initial(
             pressure=pressure, timestep=timestep, friction=friction,
             compressibility=compressibility, taut=taut, taup=taup,
             mask=mask, loginterval=loginterval, steps=loginterval,
-            nstep=nstep, nmodel=nmodel, logfile=None,
-            trajectory=trajectory, calculator=calculator, signal_append=False
+            nstep=nstep, nmodel=nmodel, E_ref=E_ref, al_type=al_type,
+            logfile=None, trajectory=trajectory, calculator=calculator,
+            signal_uncert=False, signal_append=False
         )
 
         # Get new configuration and velocities for next step
@@ -300,8 +301,9 @@ def MLMD_main(
             pressure=pressure, timestep=timestep, friction=friction,
             compressibility=compressibility, taut=taut, taup=taup,
             mask=mask, loginterval=loginterval, steps=loginterval,
-            nstep=nstep, nmodel=nmodel, logfile=None,
-            trajectory=trajectory, calculator=calc_MLIP, signal_append=False
+            nstep=nstep, nmodel=nmodel, E_ref=E_ref, al_type=al_type,
+            logfile=None, trajectory=trajectory, calculator=calc_MLIP,
+            signal_uncert=False, signal_append=False
         )
         
         # Get new configuration and velocities for next step
@@ -525,8 +527,9 @@ def MLMD_random(
         pressure=pressure, timestep=timestep, friction=friction,
         compressibility=compressibility, taut=taut, taup=taup,
         mask=mask, loginterval=loginterval, steps=steps_init,
-        nstep=nstep, nmodel=nmodel, logfile=logfile,
-        trajectory=trajectory, calculator=calculator, signal_append=False
+        nstep=nstep, nmodel=nmodel, E_ref=E_ref, al_type=al_type,
+        logfile=logfile, trajectory=trajectory, calculator=calculator,
+        signal_uncert=False, signal_append=False
     )
     
     # Recond the index of the iterative steps

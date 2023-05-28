@@ -10,7 +10,8 @@ from libs.lib_nvtlangevin import NVTLangevin
 def runMD(
     struc, ensemble, temperature, pressure, timestep, friction,
     compressibility, taut, taup, mask, loginterval, steps,
-    nstep, nmodel, logfile, trajectory, calculator, signal_append
+    nstep, nmodel, E_ref, al_type, logfile, trajectory,
+    calculator, signal_uncert, signal_append
 ):
     """Function [runMD]
     Initiate the Molecular Dynamics simulation using various ensembles
@@ -69,8 +70,11 @@ def runMD(
             nstep = nstep,
             nmodel = nmodel,
             calculator = calculator,
+            E_ref = E_ref,
+            al_type = al_type,
             trajectory = trajectory,
             logfile = logfile,
+            signal_uncert = signal_uncert,
             signal_append = signal_append
         )
     else:

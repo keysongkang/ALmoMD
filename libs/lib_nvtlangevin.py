@@ -80,6 +80,11 @@ def NVTLangevin(
         struc = traj_old[-1]
         file_traj = TrajectoryWriter(filename=trajectory, mode='a')
     else: # New start
+        file_traj = TrajectoryWriter(filename=trajectory, mode='w')
+        # Add new configuration to the trajectory file
+        if rank == 0:
+            file_traj.write(atoms=struc)
+            
         if isinstance(logfile, str):
             if rank == 0:
                 file_log = open(logfile, 'w')
@@ -89,7 +94,6 @@ def NVTLangevin(
                     + 'UncertRel_F\tUncertAbs_F\n'
                 )
                 file_log.close()
-                file_traj = TrajectoryWriter(filename=trajectory, mode='w')
         
             # Get MD information at the current step
             info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
@@ -122,9 +126,6 @@ def NVTLangevin(
                 else:
                     file_log.write('\n')
                 file_log.close()
-        # Add new configuration to the trajectory file
-        if rank == 0:
-            file_traj.write(atoms=struc)
 
     # Get averaged force from trained models
     forces = get_forces(struc, nstep, nmodel, calculator)

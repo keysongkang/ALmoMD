@@ -277,3 +277,84 @@ def split_son(num_split, E_gs):
         print('Finish the sampling testing data: data-train.npz')
 
 
+def harmonic_run(temperature, num_sample, num_calc):
+    """Frunction [harmonic_run]
+    Initiate the FHI-vibes with structral configurations
+    from a harmonic sampling
+
+    Parameters:
+
+    temperature: float
+        Temperature (K)
+    num_sample: int
+        The number of harmonic samples
+    num_calc: int
+        The number of job scripts to be submitted
+    """
+    import subprocess
+
+    # Prepare the index inputs
+    index_temp = '{:0>4.0f}'.format(temperature)
+    index_calc_list = [f'{i:03d}' for i in range(num_sample)]
+
+    # Create the calculation directory
+    check_mkdir(f'calc')
+
+    # Get the current path
+    mainpath_cwd = os.getcwd()
+
+    # Move to the calculation directory
+    os.chdir(f'calc')
+
+    # Get the full path to the calculation directotry
+    calcpath_cwd = os.getcwd()
+
+    # Get the template of the job script
+    with open('../template/job-vibes.slurm', 'r') as job_script_DFT_initial:
+        job_script_DFT_default = job_script_DFT_initial.read()
+    # Prepare the command line for FHI-vibes
+    vibes_command = 'vibes run singlepoint aims.in &> log.aims'
+    # Prepare an empty list for the calculation paths
+    execute_cwd = []
+
+
+    for index_calc_each in index_calc_list:
+        # Create a folder for each structral configuration
+        check_mkdir(f'{index_calc_each}')
+        # Move to that folder
+        os.chdir(f'{index_calc_each}')
+
+        if os.path.exists(f'aims/calculations/aims.out'):
+            # Check whether calculation is finished
+            if 'Have a nice day.' in open('aims/calculations/aims.out').read():
+                os.chdir(calcpath_cwd)
+            else:
+                # Collect the current calculation path
+                execute_cwd.append(os.getcwd())
+                # Move back to 'calc' folder
+                os.chdir(calcpath_cwd)
+        else:
+            # Copy a configuration from the harmonic sampling
+            harmonic_file = f'geometry.in.supercell.{index_temp}K.{index_calc_each}'
+            subprocess.run(['cp', f'./../../{harmonic_file}', 'geometry.in'])
+            # Get FHI-aims inputs from the template folder
+            subprocess.run(['cp', './../../template/aims.in', '.'])
+            # Collect the current calculation path
+            execute_cwd.append(os.getcwd())
+            # Move back to 'calc' folder
+            os.chdir(calcpath_cwd)
+
+    # Create job scripts and submit them
+    for index_calc in range(num_calc):
+        job_script = f'job-vibes_{index_calc}.slurm'
+        with open(job_script, 'w') as writing_input:
+            writing_input.write(job_script_DFT_default)
+            for index_execute_cwd, value_execute_cwd in enumerate(execute_cwd):
+                if index_execute_cwd % num_calc == index_calc:
+                    writing_input.write('cd '+value_execute_cwd+'\n')
+                    writing_input.write(vibes_command+'\n')
+        # If the previous calculation is not finished, rerun it
+        subprocess.run(['sbatch', job_script])
+
+    # Move back to the original position
+    os.chdir(mainpath_cwd)

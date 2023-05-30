@@ -1,6 +1,6 @@
 import argparse
 import argcomplete
-from scripts.utils import aims2son, split_son
+from scripts.utils import aims2son, split_son, harmonic_run
 
 
 def init_command(args):
@@ -67,7 +67,7 @@ def aims2son_command(args):
     args: class
         Contains inputs from the command line
     args.temperature: float
-        temperature (K)
+        Temperature (K)
     """
     if not hasattr(args, 'temperature') or args.temperature is None:
         print('Please provide the simulated temperature.')
@@ -94,6 +94,33 @@ def split_son_command(args):
               '(e.g. almomd utils split 600 -120.30)')
     else:
         split_son(args.num_split, args.E_gs)
+
+
+def harmonic_run_command(args):
+    """
+    Implement the logic for "almomd utils harmonic_run" command
+
+    Parameters:
+
+    args: class
+        Contains inputs from the command line
+    args.temperature: float
+        Temperature (K)
+    args.num_sample: int
+        The number of harmonic samples
+    args.num_calc: int
+        The number of job scripts to be submitted
+    """
+    if not hasattr(args, 'temperature') or args.temperature is None or \
+            not hasattr(args, 'num_sample') or args.num_sample is None or \
+            not hasattr(args, 'num_calc') or args.num_calc is None:
+        print(
+            'Please provide the temperature, the number of harmoic samples'
+            ', and the number of job scripts to be submitted.'
+            '(e.g. almomd utils harmonic_run 300 10 3)'
+            )
+    else:
+        harmonic_run(args.temperature, args.num_sample, args.num_calc)
 
 
 def main():
@@ -163,7 +190,7 @@ def main():
              "utilizing the Maxwell-Boltzmann distribution)"
         )
     aims2son_parser.add_argument(
-        'temperature', nargs='?', type=int,
+        'temperature', nargs='?', type=float,
         help='Temperature (K)'
         )
     aims2son_parser.set_defaults(func=aims2son_command)
@@ -183,6 +210,26 @@ def main():
         help='Reference total energy in units of eV/Unitcell'
         )
     split_parser.set_defaults(func=split_son_command)
+
+    # Subparser for "utils harmonic_run" subcommand
+    harmonic_run_parser = utils_subparsers.add_parser(
+        'harmonic_run',
+        help='Initiate the FHI-vibes with structural configurations '
+             'from a harmonic sampling'
+        )
+    harmonic_run_parser.add_argument(
+        'temperature', nargs='?', type=float,
+        help='Temperature (K)'
+        )
+    harmonic_run_parser.add_argument(
+        'num_sample', nargs='?', type=int,
+        help='The number of harmonic samples'
+        )
+    harmonic_run_parser.add_argument(
+        'num_calc', nargs='?', type=int,
+        help='The number of job scripts to be submitted'
+        )
+    harmonic_run_parser.set_defaults(func=harmonic_run_command)
 
     args = parser.parse_args()
 

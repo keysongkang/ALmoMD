@@ -8,7 +8,7 @@ from decimal import Decimal
 from libs.lib_util   import check_mkdir
 
 
-def run_DFT(temperature, pressure, index, numstep):
+def run_DFT(temperature, pressure, index, numstep, num_calc):
     """Function [get_criteria_uncert]
     Create a folder and run DFT calculations
     for sampled structral configurations
@@ -44,8 +44,17 @@ def run_DFT(temperature, pressure, index, numstep):
     os.chdir(calcpath)
     # Get the new path
     calcpath_cwd = os.getcwd()
-    
+
+    # Get the template of the job script
+    with open('../../template/job-vibes.slurm', 'r') as job_script_DFT_initial:
+        job_script_DFT_default = job_script_DFT_initial.read()
+    # Prepare the command line for FHI-vibes
+    vibes_command = 'vibes run singlepoint aims.in &> log.aims'
+    # Prepare an empty list for the calculation paths
+    execute_cwd = []
+
     # Go through all sampled structral configurations
+    # Collect the calculations and deploy all inputs for FHI-vibes
     for jndex, jtem in enumerate(traj_DFT):
         # Get configurations until the number of target subsampling data
         if jndex < numstep:
@@ -60,21 +69,34 @@ def run_DFT(temperature, pressure, index, numstep):
                 if 'Have a nice day.' in open('aims/calculations/aims.out').read():
                     os.chdir(calcpath_cwd)
                 else:
-                    # If the previous calculation is not finished, rerun it
-                    subprocess.run(['sbatch', 'job-vibes.slurm'])
+                    # Collect the current calculation path
+                    execute_cwd.append(os.getcwd())
                     # Move back to 'calc' folder
                     os.chdir(calcpath_cwd)
             else:
-                # Get FHI-aims inputs from the template folder and run DFT
+                # Get FHI-aims inputs from the template folder
                 aims_write('geometry.in', jtem)
                 subprocess.run(['cp', '../../../template/aims.in', '.'])
-                subprocess.run(['cp', '../../../template/job-vibes.slurm', '.'])
-                subprocess.run(['sbatch', 'job-vibes.slurm'])
+                # Collect the current calculation path
+                execute_cwd.append(os.getcwd())
                 # Move back to 'calc' folder
                 os.chdir(calcpath_cwd)
     
+    # Create job scripts and submit them
+    for index_calc in range(num_calc):
+        job_script = f'job-vibes_{index_calc}.slurm'
+        with open(job_script, 'w') as writing_input:
+            writing_input.write(job_script_DFT_default)
+            for index_execute_cwd, value_execute_cwd in enumerate(execute_cwd):
+                if index_execute_cwd % num_calc == index_calc:
+                    writing_input.write('cd '+value_execute_cwd+'\n')
+                    writing_input.write(vibes_command+'\n')
+        # If the previous calculation is not finished, rerun it
+        subprocess.run(['sbatch', job_script])
+
     # Move back to the original position
     os.chdir(mainpath_cwd)
+    
     
     
 def aims_write(filename, atoms):

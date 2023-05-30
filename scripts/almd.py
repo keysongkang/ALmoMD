@@ -94,6 +94,9 @@ class almd:
         #     Convergence criteria
         self.crtria = 0.0000001
         self.crtria_cnvg = 0.0000001 ##!! This is needed to be removed.
+        # num_calc: int
+        #     The number of job scripts for DFT calculations
+        self.num_calc = 20
 
         ##[Molecular dynamics]
         # ensemble: str
@@ -367,8 +370,11 @@ class almd:
 
         # Submit job-scripts for DFT calculations with sampled configurations and job-dependence for run_dft_gen
         if rank == 0:
-            run_DFT(self.temperature, self.pressure, self.index, (self.ntrain + self.nval) * self.nstep)
+            run_DFT(self.temperature, self.pressure, self.index, (self.ntrain + self.nval) * self.nstep, self.num_calc)
 
+        # Submit a job-dependence to execute run_dft_gen after the DFT calculations
+        if rank == 0:
+            job_dependency('gen') ##!! check
 
 
     def run_dft_gen(self):

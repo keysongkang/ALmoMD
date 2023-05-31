@@ -44,7 +44,7 @@ def eval_uncert(
     ## Depending on an active learning type (al_type), the format of output changes
     # Active learning based on the uncertainty of predicted energy
     if al_type == 'energy':
-        Epot_step_avg, Epot_step_std, Etot_step_avg = eval_uncert_E(
+        Epot_step_avg, Epot_step_std = eval_uncert_E(
             struc_step, nstep, nmodel, E_ref, calculator, al_type
         )
         
@@ -53,13 +53,17 @@ def eval_uncert(
             Epot_step_std / Epot_step_avg,
             '----          ',
             '----          ',
-            Etot_step_avg
+            Epot_step_avg
         )
 
     # Active learning based on the AVERAGED uncertainty of predicted force
     elif al_type == 'force':
-        F_step_norm_avg, F_step_norm_std, Etot_step_avg = eval_uncert_F(
+        # Just get potential energy for the ensemble probability
+        Epot_step_avg, Epot_step_std = eval_uncert_E(
             struc_step, nstep, nmodel, E_ref, calculator, al_type
+        )
+        F_step_norm_avg, F_step_norm_std = eval_uncert_F(
+            struc_step, nstep, nmodel, E_ref, calculator
         )
 
         return (
@@ -67,13 +71,17 @@ def eval_uncert(
             '----          ',
             np.average(F_step_norm_std),
             np.average(F_step_norm_std / F_step_norm_avg),
-            Etot_step_avg
+            Epot_step_avg
         )
 
     # Active learning based on the MAXIUM uncertainty of predicted force
     elif al_type == 'force_max':
-        F_step_norm_avg, F_step_norm_std, Etot_step_avg = eval_uncert_F(
+        # Just get potential energy for the ensemble probability
+        Epot_step_avg, Epot_step_std = eval_uncert_E(
             struc_step, nstep, nmodel, E_ref, calculator, al_type
+        )
+        F_step_norm_avg, F_step_norm_std = eval_uncert_F(
+            struc_step, nstep, nmodel, E_ref, calculator
         )
 
         return (
@@ -83,15 +91,15 @@ def eval_uncert(
             np.ndarray.max(
                 np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std) if avg > 0.05])
             ),
-            Etot_step_avg
+            Epot_step_avg
         )
 
     ##!! this part is needed to be check. it might need F instead of Fmax
     elif al_type == 'EandFmax' or al_type == 'EorFmax':
-        Epot_step_avg, Epot_step_std, Etot_step_avg = eval_uncert_E(
+        Epot_step_avg, Epot_step_std, Epot_step_avg = eval_uncert_E(
             struc_step, nstep, nmodel, E_ref, calculator, al_type
         )
-        F_step_norm_avg, F_step_norm_std, Etot_step_avg = eval_uncert_F(
+        F_step_norm_avg, F_step_norm_std, Epot_step_avg = eval_uncert_F(
             struc_step, nstep, nmodel, E_ref, calculator, al_type
         )
 
@@ -102,7 +110,7 @@ def eval_uncert(
             np.ndarray.max(
                 np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std) if avg > 0.05])
             ),
-            Etot_step_avg
+            Epot_step_avg
         )
     
     else:
@@ -138,8 +146,6 @@ def eval_uncert_E(
         Average of predicted energies
     Epot_step_std: float
         Standard deviation of predicted energies
-    Etot_step_avg: float
-        Averged of predicted total energies ##!! Do we really need total energy?
     """
 
     # Extract MPI infos
@@ -149,7 +155,6 @@ def eval_uncert_E(
 
     # Prepare empty lists for potential and total energies
     Epot_step = []
-    Etot_step = []
     zndex = 0
 
     # Get predicted potential and total energies shifted by E_ref (ground state energy)
@@ -158,26 +163,25 @@ def eval_uncert_E(
             if (index_nmodel*nstep + index_nstep) % size == rank:
                 struc_step.calc = calculator[zndex]
                 Epot_step.append(struc_step.get_potential_energy() - E_ref)
-                Etot_step.append(struc_step.get_total_energy() - E_ref)
                 zndex += 1
     Epot_step = comm.allgather(Epot_step)
-    Etot_step = comm.allgather(Etot_step)
 
     # Get the average and standard deviation of predicted potential energies
     # and the average of total energies
     Epot_step_avg =\
     np.average(np.array([i for items in Epot_step for i in items]), axis=0)
-    Epot_step_std =\
-    np.std(np.array([i for items in Epot_step for i in items]), axis=0)
-    Etot_step_avg =\
-    np.average(np.array([i for items in Etot_step for i in items]), axis=0)
+    if al_type == 'force' or al_type == 'force_max':
+        Epot_step_std = '--------'
+    else:
+        Epot_step_std =\
+        np.std(np.array([i for items in Epot_step for i in items]), axis=0)
     
-    return Epot_step_avg, Epot_step_std, Etot_step_avg
+    return Epot_step_avg, Epot_step_std
 
 
 
 def eval_uncert_F(
-    struc_step, nstep, nmodel, E_ref, calculator, al_type
+    struc_step, nstep, nmodel, E_ref, calculator
 ):
     """Function [eval_uncert_F]
     Evalulate the average and standard deviation of predicted forces.
@@ -194,8 +198,6 @@ def eval_uncert_F(
         The energy of reference state (Here, ground state)
     calculator: ASE calculator
         Calculators from trained models
-    al_type: str
-        Type of active learning: 'energy', 'force', 'force_max'
 
     Returns:
 
@@ -203,8 +205,6 @@ def eval_uncert_F(
         Average of the norm of predicted forces
     F_step_norm_std: float
         Standard deviation of the norm of predicted forces
-    Etot_step_avg: float
-        Averged of predicted total energies ##!! Do we really need total energy?
     """
 
     # Extract MPI infos
@@ -213,7 +213,6 @@ def eval_uncert_F(
     rank = comm.Get_rank()
 
     # Prepare empty lists for forces and total energies
-    Etot_step = []
     F_step = []
     zndex = 0
 
@@ -223,10 +222,8 @@ def eval_uncert_F(
             if (index_nmodel*nstep + index_nstep) % size == rank:
                 struc_step.calc = calculator[zndex]
                 F_step.append(struc_step.get_forces())
-                Etot_step.append(struc_step.get_total_energy() - E_ref)
                 zndex += 1
     F_step = comm.allgather(F_step)
-    Etot_step = comm.allgather(Etot_step)
 
     # Get the average and standard deviation of the norm of predicted forces
     F_step_filtered = np.array([i for items in F_step for i in items])
@@ -234,12 +231,8 @@ def eval_uncert_F(
     F_step_norm = np.linalg.norm(F_step_filtered - F_step_avg, axis=1)
     F_step_norm_std = np.sqrt(np.average(F_step_norm ** 2, axis=0))
     F_step_norm_avg = np.linalg.norm(F_step_avg, axis=0)
-
-    # Get the average of total energies
-    Etot_step_avg =\
-    np.average(np.array([i for items in Etot_step for i in items]), axis=0)
     
-    return F_step_norm_avg, F_step_norm_std, Etot_step_avg
+    return F_step_norm_avg, F_step_norm_std
 
 
 def get_criteria(
@@ -279,10 +272,10 @@ def get_criteria(
         Average of relative uncertainty of forces
     criteria_UncertRel_F_std: float
         Standard deviation of relative uncertainty of forces
-    criteria_Etot_step_avg: float
-        Average of total energies
-    criteria_Etot_step_std: float
-        Standard deviation of total energies
+    criteria_Epot_step_avg: float
+        Average of potential energies
+    criteria_Epot_step_std: float
+        Standard deviation of potential energies
     """
 
     # Extract MPI infos
@@ -298,7 +291,7 @@ def get_criteria(
     UncerRel_E_list = uncert_data.loc[:steps_init, 'UncertRel_E'].values
     UncerAbs_F_list = uncert_data.loc[:steps_init, 'UncertAbs_F'].values
     UncerRel_F_list = uncert_data.loc[:steps_init, 'UncertRel_F'].values
-    Etot_step_list = uncert_data.loc[:steps_init, 'E_average'].values
+    Epot_step_list = uncert_data.loc[:steps_init, 'Epot_average'].values
     del uncert_data  # To reduce the memory usage
     
     # Get their average and standard deviation
@@ -310,8 +303,8 @@ def get_criteria(
     criteria_UncertAbs_F_std = uncert_std(UncerAbs_F_list)
     criteria_UncertRel_F_avg = uncert_average(UncerRel_F_list)
     criteria_UncertRel_F_std = uncert_std(UncerRel_F_list)
-    criteria_Etot_step_avg = np.average(Etot_step_list)
-    criteria_Etot_step_std = np.std(Etot_step_list)
+    criteria_Epot_step_avg = np.average(Epot_step_list)
+    criteria_Epot_step_std = np.std(Epot_step_list)
     
     # Record the average values
     if rank == 0:
@@ -329,7 +322,7 @@ def get_criteria(
         criteria_UncertRel_E_avg, criteria_UncertRel_E_std,
         criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
         criteria_UncertRel_F_avg, criteria_UncertRel_F_std,
-        criteria_Etot_step_avg, criteria_Etot_step_std
+        criteria_Epot_step_avg, criteria_Epot_step_std
     )
 
 
@@ -435,7 +428,7 @@ def uncert_strconvter(value):
     
 def get_criteria_prob(
     al_type, uncert_type, kB, NumAtoms, temperature, 
-    Etot_step, criteria_Etot_step_avg, criteria_Etot_step_std,
+    Epot_step, criteria_Epot_step_avg, criteria_Epot_step_std,
     UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
     UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std,
     UncertAbs_F, criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
@@ -462,36 +455,36 @@ def get_criteria_prob(
     temperature: float
         The desired temperature in units of Kelvin (K)
 
-    Etot_step: float
-        Averged of predicted total energies ##!! Do we really need total energy?
-    criteria_Etot_step_avg: float
-        Average of total energies
-    criteria_Etot_step_std: float
-        Standard deviation of total energies
+    Epot_step: float
+        Averged of predicted potential energies at current step ##!! Do we really need total energy?
+    criteria_Epot_step_avg: float
+        Average of potential energies
+    criteria_Epot_step_std: float
+        Standard deviation of potential energies
 
     UncertAbs_E: float or str
-        Absolute uncertainty of predicted energy
+        Absolute uncertainty of predicted energy at current step
     criteria_UncertAbs_E_avg: float
         Average of absolute uncertainty of energies
     criteria_UncertAbs_E_std: float
         Standard deviation of absolute uncertainty of energies
 
     UncertRel_E: float or str
-        Relative uncertainty of predicted energy
+        Relative uncertainty of predicted energy at current step
     criteria_UncertRel_E_avg: float
         Average of relative uncertainty of energies
     criteria_UncertRel_E_std: float
         Standard deviation of relative uncertainty of energies
 
     UncertAbs_F: float or str
-        Absolute uncertainty of predicted force
+        Absolute uncertainty of predicted force at current step
     criteria_UncertAbs_F_avg: float
         Average of absolute uncertainty of forces
     criteria_UncertAbs_F_std: float
         Standard deviation of absolute uncertainty of forces
 
     UncertRel_F: float or str
-        Relative uncertainty of predicted force
+        Relative uncertainty of predicted force at current step
     criteria_UncertRel_F_avg: float
         Average of relative uncertainty of forces
     criteria_UncertRel_F_std: float
@@ -535,13 +528,13 @@ def get_criteria_prob(
         single_print('You need to assign al_type.')
 
     # Caculate the canonical ensemble propbability using the total energy
-    Prob = np.exp((-1) * (Etot_step / NumAtoms) / (kB * temperature))
+    Prob = np.exp((-1) * (Epot_step / NumAtoms) / (kB * temperature))
     Prob_upper_limit = np.exp(
-        (-1) * (criteria_Etot_step_avg / NumAtoms) / 
+        (-1) * (criteria_Epot_step_avg / NumAtoms) / 
         (kB * temperature)
         )
     Prob_lower_limit = np.exp(
-        (-1) * ((criteria_Etot_step_avg + criteria_Etot_step_std) / NumAtoms) /
+        (-1) * ((criteria_Epot_step_avg + criteria_Epot_step_std) / NumAtoms) /
         (kB * temperature)
         )
 
@@ -579,14 +572,14 @@ def get_criteria_uncert(
         Type of uncertainty; 'absolute', 'relative'
 
     UncertAbs: float or str
-        Absolute uncertainty
+        Absolute uncertainty at current step
     criteria_UncertAbs_avg: float
         Average of absolute uncertainty
     criteria_UncertAbs_std: float
         Standard deviation of absolute uncertainty
 
     UncertRel: float or str
-        Relative uncertainty
+        Relative uncertainty at current step
     criteria_UncertRel_avg: float
         Average of relative uncertainty
     criteria_UncertRel_std: float

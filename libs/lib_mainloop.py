@@ -115,7 +115,7 @@ def MLMD_initial(
                     trajfile = open(uncert_file_next, 'w')
                     trajfile.write(
                         'Temp.[K]\tUncertRel_E\tUncertAbs_E\tUncertRel_F\tUncertAbs_F\t'
-                        + 'E_average\tCounting\tProbability\tAcceptance\n'
+                        + 'Epot_average\tCounting\tProbability\tAcceptance\n'
                     )
                     trajfile.close()
             else: # If there is no privous uncertainty file
@@ -162,7 +162,7 @@ def MLMD_initial(
 
         # Get absolute and relative uncertainties of energy and force
         # and also total energy
-        UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, Etot_step =\
+        UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, Epot_step =\
         eval_uncert(struc_step, nstep, nmodel, E_ref, calculator, al_type)
 
         # Record the all uncertainty and total energy information at the current step
@@ -174,7 +174,7 @@ def MLMD_initial(
                 uncert_strconvter(UncertAbs_E) + '\t' +
                 uncert_strconvter(UncertRel_F) + '\t' +
                 uncert_strconvter(UncertAbs_F) + '\t' +
-                '{:.5e}'.format(Decimal(str(Etot_step))) + '\t' +
+                '{:.5e}'.format(Decimal(str(Epot_step))) + '\t' +
                 f'initial_{jndex+1}' +
                 '\t--         \t--         \t\n'
             )
@@ -260,7 +260,7 @@ def MLMD_main(
     criteria_UncertRel_E_avg, criteria_UncertRel_E_std,\
     criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,\
     criteria_UncertRel_F_avg, criteria_UncertRel_F_std,\
-    criteria_Etot_step_avg, criteria_Etot_step_std\
+    criteria_Epot_step_avg, criteria_Epot_step_std\
     = get_criteria(temperature, pressure, index, steps_init)
     
     # Open a trajectory file to store the sampled configurations
@@ -316,13 +316,13 @@ def MLMD_main(
 
         # Get absolute and relative uncertainties of energy and force
         # and also total energy
-        UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, Etot_step =\
+        UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, Epot_step =\
         eval_uncert(struc_step, nstep, nmodel, E_ref, calc_MLIP, al_type)
         
         # Get a criteria probability from uncertainty and energy informations
         criteria = get_criteria_prob(
             al_type, uncert_type, kB, NumAtoms, temperature,
-            Etot_step, criteria_Etot_step_avg, criteria_Etot_step_std,
+            Epot_step, criteria_Epot_step_avg, criteria_Epot_step_std,
             UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
             UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std,
             UncertAbs_F, criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
@@ -331,8 +331,8 @@ def MLMD_main(
         
         if rank == 0:
             # Acceptance check with criteria
-            ##!! Etot_step should be rechecked.
-            if random.random() < criteria and Etot_step > 0.1:
+            ##!! Epot_step should be rechecked.
+            if random.random() < criteria and Epot_step > 0.1:
                 accept = 'Accepted'
                 MD_index += 1
                 write_traj.write(atoms=struc_step)
@@ -347,7 +347,7 @@ def MLMD_main(
                 uncert_strconvter(UncertAbs_E) + '\t' +
                 uncert_strconvter(UncertRel_F) + '\t' +
                 uncert_strconvter(UncertAbs_F) + '\t' +
-                uncert_strconvter(Etot_step) + '\t' +
+                uncert_strconvter(Epot_step) + '\t' +
                 str(MD_index) + '          \t' +
                 '{:.5e}'.format(Decimal(str(criteria))) + '\t' +
                 str(accept) + '   \n'
@@ -402,7 +402,7 @@ def traj_fromRealE(temperature, pressure, E_ref, index):
             f'calc/{temperature}K-{pressure}bar_1/{jndex}/aims/calculations/aims.out'
             )
         RealError = np.absolute(
-            np.array(RealError_data['E_average'])[jndex] + E_ref - atoms_potE
+            np.array(RealError_data['Epot_average'])[jndex] + E_ref - atoms_potE
             )
         if RealError > max_RealError:
             max_RealError = RealError

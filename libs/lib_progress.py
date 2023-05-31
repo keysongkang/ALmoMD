@@ -83,7 +83,7 @@ def check_progress(
                 trajfile = open(uncert_file, 'w')
                 trajfile.write(
                     'Temperature[K]\tUncertRel_E\tUncertAbs_E\tUncertRel_F\tUncertAbs_F'
-                    +'\tE_average\tCounting\tProbability\tAcceptance\n'
+                    +'\tEpot_average\tCounting\tProbability\tAcceptance\n'
                 )
                 trajfile.close()
                 break
@@ -122,7 +122,7 @@ def check_progress(
             trajfile = open(uncert_file, 'w')
             trajfile.write(
                 'Temperature[K]\tUncertRel_E\tUncertAbs_E\tUncertRel_F\tUncertAbs_F'
-                +'\tE_average\tCounting\tProbability\tAcceptance\n'
+                +'\tEpot_average\tCounting\tProbability\tAcceptance\n'
             )
             trajfile.close()
             break

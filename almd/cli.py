@@ -1,6 +1,6 @@
 import argparse
 import argcomplete
-from scripts.utils import aims2son, split_son, harmonic_run
+from scripts.utils import aims2son, split_son, harmonic_run, harmonic2son
 
 
 def init_command(args):
@@ -123,6 +123,29 @@ def harmonic_run_command(args):
         harmonic_run(args.temperature, args.num_sample, args.num_calc)
 
 
+def harmonic2son_command(args):
+    """
+    Implement the logic for "almomd utils harmonic2son" command
+
+    Parameters:
+
+    args: class
+        Contains inputs from the command line
+    args.temperature: float
+        Temperature (K)
+    args.num_sample: int
+        The number of harmonic samples
+    """
+    if not hasattr(args, 'temperature') or args.temperature is None or \
+            not hasattr(args, 'num_sample') or args.num_sample is None:
+        print(
+            'Please provide the temperature and the number of harmoic samples'
+            '(e.g. almomd utils harmonic2son 300 10)'
+            )
+    else:
+        harmonic2son(args.temperature, args.num_sample)
+
+
 def main():
     """
     Main parser for "ALmoMD" command
@@ -185,7 +208,7 @@ def main():
     # Subparser for "utils aims2son" subcommand
     aims2son_parser = utils_subparsers.add_parser(
         'aims2son',
-        help="Convert aims.out to trajectory.son"
+        help="Convert aims.out to trajectory.son "
              "(Temperature is used for assigning atom velocities, "
              "utilizing the Maxwell-Boltzmann distribution)"
         )
@@ -214,8 +237,8 @@ def main():
     # Subparser for "utils harmonic_run" subcommand
     harmonic_run_parser = utils_subparsers.add_parser(
         'harmonic_run',
-        help='Initiate the FHI-vibes with structural configurations '
-             'from a harmonic sampling'
+        help='Initiate the FHI-vibes calculations '
+             'using structural configurations from a harmonic sampling'
         )
     harmonic_run_parser.add_argument(
         'temperature', nargs='?', type=float,
@@ -230,6 +253,22 @@ def main():
         help='The number of job scripts to be submitted'
         )
     harmonic_run_parser.set_defaults(func=harmonic_run_command)
+
+    # Subparser for "utils harmonic2son" subcommand
+    harmonic2son_parser = utils_subparsers.add_parser(
+        'harmonic2son',
+        help='Collect all results of FHI-vibes calculations '
+             'with harmonic samplings and convert it to SON file'
+        )
+    harmonic2son_parser.add_argument(
+        'temperature', nargs='?', type=float,
+        help='Temperature (K)'
+        )
+    harmonic2son_parser.add_argument(
+        'num_sample', nargs='?', type=int,
+        help='The number of harmonic samples'
+        )
+    harmonic2son_parser.set_defaults(func=harmonic2son_command)
 
     args = parser.parse_args()
 

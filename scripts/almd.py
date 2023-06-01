@@ -242,8 +242,8 @@ class almd:
         # Generate first set of training data in npz files from trajectory file
         if rank == 0:
             generate_npz_DFT_init(
-                traj, self.ntrain_init, self.nval_init, self.nstep, self.E_gs, self.index,
-                self.temperature, self.pressure, workpath
+                traj, self.ntrain_init, self.nval_init,
+                self.nstep, self.E_gs, workpath
             )
         del traj  # Remove it to reduce the memory usage
         comm.Barrier()
@@ -506,8 +506,8 @@ class almd:
 
             # Generate first set of training data in npz files from trajectory file
             traj_idx = generate_npz_DFT_rand_init(
-                traj, self.ntrain_init, self.nval_init, self.nstep, self.E_gs, index, self.temperature,
-                self.pressure, workpath
+                traj, self.ntrain_init, self.nval_init,
+                self.nstep, self.E_gs, workpath
             )
         comm.Barrier()
 

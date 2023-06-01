@@ -11,8 +11,7 @@ import son
 
 
 def generate_npz_DFT_init(
-    traj, ntrain, nval, nstep, E_gs, index,
-    temperature, pressure, workpath
+    traj, ntrain, nval, nstep, E_gs, workpath
 ):
     """Function [generate_npz_DFT_init]
     Generate the initial training data sets from trajectory
@@ -33,15 +32,8 @@ def generate_npz_DFT_init(
         and avoid unusually high total energy values
         that may lead to unusual weightings with force values.
         Recommend to use the ground state total energy.
-    index: int
-        The index of AL interactive step
-
-    temperature: float
-        The desired temperature in units of Kelvin (K)
-    pressure: float
-        The desired pressure in units of eV/Angstrom**3
     workpath: str
-        The path to the working directory ##!! this or temperature/pressrue/index might be removed
+        The path to the working directory
     """
 
     # Prepare the empty list of propreties for each subsampling set
@@ -131,7 +123,7 @@ def generate_npz_DFT(
     pressure: float
         The desired pressure in units of eV/Angstrom**3
     workpath: str
-        The path to the working directory ##!! this or temperature/pressrue/index might be removed
+        The path to the working directory
     """
 
     # Prepare the empty list of propreties for each subsampling set
@@ -246,8 +238,7 @@ def generate_npz_DFT(
         
         
 def generate_npz_DFT_rand_init(
-    traj, ntrain, nval, nstep, E_gs, index,
-    temperature, pressure, workpath
+    traj, ntrain, nval, nstep, E_gs, workpath
 ):
     """Function [generate_npz_DFT_rand_init]
     Generate the initial training data sets from trajectory.
@@ -271,13 +262,6 @@ def generate_npz_DFT_rand_init(
         and avoid unusually high total energy values
         that may lead to unusual weightings with force values.
         Recommend to use the ground state total energy.
-    index: int
-        The index of AL interactive step
-
-    temperature: float
-        The desired temperature in units of Kelvin (K)
-    pressure: float
-        The desired pressure in units of eV/Angstrom**3
     workpath: str
         The path to the working directory ##!! this or temperature/pressrue/index might be removed
 
@@ -311,7 +295,7 @@ def generate_npz_DFT_rand_init(
                 E_train[index_nstep].append(traj[i]['calculator']['energy'] - E_gs);
                 F_train[index_nstep].append(traj[i]['calculator']['forces']);
                 R_train[index_nstep].append(traj[i]['atoms']['positions']);
-                z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for index in range(item[0])]);
+                z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for idx in range(item[0])]);
                 CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
                 PBC_train[index_nstep].append(traj[i]['atoms']['pbc'])
                 traj_idx.append(i)
@@ -381,7 +365,7 @@ def generate_npz_DFT_rand(
     pressure: float
         The desired pressure in units of eV/Angstrom**3
     workpath: str
-        The path to the working directory ##!! this or temperature/pressrue/index might be removed
+        The path to the working directory
     traj_idx: list of int
         The list of randomly selected sample indices until previous step
 
@@ -421,7 +405,7 @@ def generate_npz_DFT_rand(
                     E_train[index_nstep].append(traj[i]['calculator']['energy'] - E_gs);
                     F_train[index_nstep].append(traj[i]['calculator']['forces']);
                     R_train[index_nstep].append(traj[i]['atoms']['positions']);
-                    z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for index in range(item[0])]);
+                    z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for idx in range(item[0])]);
                     CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
                     PBC_train[index_nstep].append(traj[i]['atoms']['pbc'])
                     traj_idx.append(i)
@@ -448,13 +432,6 @@ def generate_npz_DFT_rand(
                 ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
                 PBC_train_store  = np.concatenate\
                 ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
-            else: ##!! I don't think this part is no longer needed
-                E_train_store    = E_train[index_nstep]
-                F_train_store    = F_train[index_nstep]
-                R_train_store    = R_train[index_nstep]
-                z_train_store    = z_train[index_nstep]
-                CELL_train_store = CELL_train[index_nstep]
-                PBC_train_store  = PBC_train[index_nstep]
 
             # Path to new data
             npz_name = f'{workpath}/data-train_{index_nstep}.npz'

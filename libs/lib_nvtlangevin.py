@@ -307,7 +307,6 @@ def get_MDinfo_temp(
     info_T_avg: float
         Averaged temeprature across trained models
     """
-    ##!! Need to check wich quantity (TE, PE, KE, T) we need.
 
     # Extract MPI infos
     comm = MPI.COMM_WORLD
@@ -322,9 +321,12 @@ def get_MDinfo_temp(
             for index_nstep in range(nstep):
                 if (index_nmodel*nstep + index_nstep) % size == rank:
                     struc.calc = calculator[zndex]
-                    info_TE.append(struc.get_total_energy())
-                    info_PE.append(struc.get_potential_energy())
-                    info_KE.append(struc.get_kinetic_energy())
+                    PE = struc.get_potential_energy()
+                    KE = struc.get_kinetic_energy()
+                    TE = PE + KE
+                    info_TE.append(TE)
+                    info_PE.append(PE)
+                    info_KE.append(KE)
                     info_T.append(struc.get_temperature())
                     zndex += 1
         info_TE = comm.allgather(info_TE)
@@ -345,9 +347,9 @@ def get_MDinfo_temp(
         info_TE, info_PE, info_KE, info_T = None, None, None, None
         if rank == 0:
             struc.calc = calculator
-            info_TE = struc.get_total_energy()
             info_PE = struc.get_potential_energy()
             info_KE = struc.get_kinetic_energy()
+            info_TE = info_PE + info_KE
             info_T = struc.get_temperature()
         info_TE_avg = comm.bcast(info_TE, root=0)
         info_PE_avg = comm.bcast(info_PE, root=0)

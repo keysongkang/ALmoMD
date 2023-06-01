@@ -456,7 +456,7 @@ def get_criteria_prob(
         The desired temperature in units of Kelvin (K)
 
     Epot_step: float
-        Averged of predicted potential energies at current step ##!! Do we really need total energy?
+        Averged of predicted potential energies at current step
     criteria_Epot_step_avg: float
         Average of potential energies
     criteria_Epot_step_std: float

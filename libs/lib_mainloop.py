@@ -264,16 +264,10 @@ def MLMD_main(
     = get_criteria(temperature, pressure, index, steps_init)
     
     # Open a trajectory file to store the sampled configurations
-    if index == 'init': ##!! I think there is no more index = 'init'
-        write_traj = TrajectoryWriter(
-            filename=f'traj-{temperature}K-{pressure}bar_0.traj',
-            mode='a'
-            )
-    else:
-        write_traj = TrajectoryWriter(
-            filename=f'traj-{temperature}K-{pressure}bar_{index+1}.traj',
-            mode='a'
-            )
+    write_traj = TrajectoryWriter(
+        filename=f'traj-{temperature}K-{pressure}bar_{index+1}.traj',
+        mode='a'
+        )
 
     # When it resumes the calculation,
     if MD_index != 0:
@@ -383,6 +377,8 @@ def traj_fromRealE(temperature, pressure, E_ref, index):
 
     ##!! We need to develop the method to check 
     ##!! real error of not only energy but also force or force_max
+    ##!! But, it is pratically not easy to do that
+    ##!! since we need to store all force information.
     # Read the uncertainty file
     uncertainty_data = pd.read_csv(
         f'uncertainty-{temperature}K-{pressure}bar_{index-1}.txt',
@@ -422,7 +418,7 @@ def traj_fromRealE(temperature, pressure, E_ref, index):
     
 def MLMD_random(
     kndex, index, ensemble, temperature, pressure, timestep, friction,
-    compressibility, taut, taup, mask, loginterval, steps_init, nstep,
+    compressibility, taut, taup, mask, loginterval, steps_random, nstep,
     nmodel, calculator, E_ref
 ):
     """Function [MLMD_random]
@@ -460,10 +456,7 @@ def MLMD_random(
 
     loginterval: int
         The step interval for printing MD steps
-    steps_init: int
-        ##!!The number of initialization MD steps
-        ##!!to get averaged uncertainties and energies
-        Here, it has different meaning,
+    steps_random: int
         the length of MD run for random sampling
 
     nstep: int
@@ -519,14 +512,14 @@ def MLMD_random(
         # Resume the MD calculatio nfrom last configuration
         struc_step = comm.bcast(struc_step, root=0)
     
-    # Implement MD calculation as long as steps_init
+    # Implement MD calculation as long as steps_random
     logfile      = f'traj-{temperature}K-{pressure}bar_{index+1}.log'
     trajectory   = f'traj-{temperature}K-{pressure}bar_{index+1}.traj'
     runMD(
         struc=struc_step, ensemble=ensemble, temperature=temperature,
         pressure=pressure, timestep=timestep, friction=friction,
         compressibility=compressibility, taut=taut, taup=taup,
-        mask=mask, loginterval=loginterval, steps=steps_init,
+        mask=mask, loginterval=loginterval, steps=steps_random,
         nstep=nstep, nmodel=nmodel, E_ref=E_ref, al_type=al_type,
         logfile=logfile, trajectory=trajectory, calculator=calculator,
         signal_uncert=False, signal_append=False

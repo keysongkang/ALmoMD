@@ -9,6 +9,7 @@ import numpy as np
 import ase.units as units
 from ase import Atoms
 from ase.data import atomic_numbers
+from ase.io.trajectory import Trajectory
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from libs.lib_util import check_mkdir, rm_file
 
@@ -277,9 +278,9 @@ def split_son(num_split, E_gs):
         print('Finish the sampling testing data: data-train.npz')
 
 
-def harmonic_run(temperature, num_sample, num_calc):
+def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
     """Frunction [harmonic_run]
-    Initiate the FHI-vibes with structral configurations
+    Initiate FHI-aims and FHI-vibes with structral configurations
     from a harmonic sampling
 
     Parameters:
@@ -288,6 +289,8 @@ def harmonic_run(temperature, num_sample, num_calc):
         Temperature (K)
     num_sample: int
         The number of harmonic samples
+    DFT_calc: str
+        The name of the DFT calculator
     num_calc: int
         The number of job scripts to be submitted
     """
@@ -298,61 +301,86 @@ def harmonic_run(temperature, num_sample, num_calc):
     index_calc_list = [f'{i:03d}' for i in range(num_sample)]
 
     # Create the calculation directory
-    check_mkdir(f'calc')
+    check_mkdir(f'raw')
 
     # Get the current path
     mainpath_cwd = os.getcwd()
 
     # Move to the calculation directory
-    os.chdir(f'calc')
+    os.chdir(f'raw')
 
     # Get the full path to the calculation directotry
     calcpath_cwd = os.getcwd()
 
     # Get the template of the job script
-    with open('../template/job-vibes.slurm', 'r') as job_script_DFT_initial:
+    with open('../template/job.slurm', 'r') as job_script_DFT_initial:
         job_script_DFT_default = job_script_DFT_initial.read()
-    # Prepare the command line for FHI-vibes
-    vibes_command = 'vibes run singlepoint aims.in &> log.aims'
+    # Prepare the command line for FHI-aims for DeepH or FHI-vibes
+    if DFT_calc == 'aims':
+        DFT_command = 'srun /u/kkang/programs/FHIaims-DeepH/build/aims.220609.scalapack.mpi.x > aims.out 2>&1'
+    elif DFT_calc == 'vibes':
+        DFT_command = 'vibes run singlepoint aims.in &> log.aims'
+
     # Prepare an empty list for the calculation paths
     execute_cwd = []
 
 
-    for index_calc_each in index_calc_list:
+    for idx in range(num_sample):
         # Create a folder for each structral configuration
-        check_mkdir(f'{index_calc_each}')
+        check_mkdir(f'{idx}')
         # Move to that folder
-        os.chdir(f'{index_calc_each}')
+        os.chdir(f'{idx}')
 
-        if os.path.exists(f'aims/calculations/aims.out'):
-            # Check whether calculation is finished
-            if 'Have a nice day.' in open('aims/calculations/aims.out').read():
-                os.chdir(calcpath_cwd)
+        if DFT_calc == 'aims':
+            if os.path.exists(f'aims.out'):
+                # Check whether calculation is finished
+                if 'Have a nice day.' in open('aims.out').read():
+                    os.chdir(calcpath_cwd)
+                else:
+                    # Collect the current calculation path
+                    execute_cwd.append(os.getcwd())
+                    # Move back to 'calc' folder
+                    os.chdir(calcpath_cwd)
             else:
+                # Copy a configuration from the harmonic sampling
+                harmonic_file = f'geometry.in.supercell.{index_temp}K.{index_calc_list[idx]}'
+                subprocess.run(['cp', f'./../../harmonic/{harmonic_file}', 'geometry.in'])
+                # Get FHI-aims inputs from the template folder
+                subprocess.run(['cp', './../../template/control.in', '.'])
                 # Collect the current calculation path
                 execute_cwd.append(os.getcwd())
                 # Move back to 'calc' folder
                 os.chdir(calcpath_cwd)
-        else:
-            # Copy a configuration from the harmonic sampling
-            harmonic_file = f'geometry.in.supercell.{index_temp}K.{index_calc_each}'
-            subprocess.run(['cp', f'./../../{harmonic_file}', 'geometry.in'])
-            # Get FHI-aims inputs from the template folder
-            subprocess.run(['cp', './../../template/aims.in', '.'])
-            # Collect the current calculation path
-            execute_cwd.append(os.getcwd())
-            # Move back to 'calc' folder
-            os.chdir(calcpath_cwd)
+        elif DFT_calc == 'vibes':
+            if os.path.exists(f'aims/calculations/aims.out'):
+                # Check whether calculation is finished
+                if 'Have a nice day.' in open('aims/calculations/aims.out').read():
+                    os.chdir(calcpath_cwd)
+                else:
+                    # Collect the current calculation path
+                    execute_cwd.append(os.getcwd())
+                    # Move back to 'calc' folder
+                    os.chdir(calcpath_cwd)
+            else:
+                # Copy a configuration from the harmonic sampling
+                harmonic_file = f'geometry.in.supercell.{index_temp}K.{index_calc_list[idx]}'
+                subprocess.run(['cp', f'./../../harmonic/{harmonic_file}', 'geometry.in'])
+                # Get FHI-aims inputs from the template folder
+                subprocess.run(['cp', './../../template/aims.in', '.'])
+                # Collect the current calculation path
+                execute_cwd.append(os.getcwd())
+                # Move back to 'calc' folder
+                os.chdir(calcpath_cwd)
 
     # Create job scripts and submit them
     for index_calc in range(num_calc):
-        job_script = f'job-vibes_{index_calc}.slurm'
+        job_script = f'job_{index_calc}.slurm'
         with open(job_script, 'w') as writing_input:
             writing_input.write(job_script_DFT_default)
             for index_execute_cwd, value_execute_cwd in enumerate(execute_cwd):
                 if index_execute_cwd % num_calc == index_calc:
                     writing_input.write('cd '+value_execute_cwd+'\n')
-                    writing_input.write(vibes_command+'\n')
+                    writing_input.write(DFT_command+'\n')
         # If the previous calculation is not finished, rerun it
         subprocess.run(['sbatch', job_script])
 
@@ -381,16 +409,16 @@ def harmonic2son(temperature, num_sample):
     mainpath_cwd = os.getcwd()
 
     # Move to the calculation directory
-    os.chdir(f'calc')
+    os.chdir(f'raw')
 
     # Get the full path to the calculation directotry
     calcpath_cwd = os.getcwd()
 
-    for index_calc_each in index_calc_list:
+    for idx in range(num_sample):
         # Create a folder for each structral configuration
-        check_mkdir(f'{index_calc_each}')
+        check_mkdir(f'{idx}')
         # Move to that folder
-        os.chdir(f'{index_calc_each}')
+        os.chdir(f'{idx}')
 
         if os.path.exists(f'aims/calculations/aims.out'):
             # Check whether calculation is finished
@@ -567,12 +595,129 @@ def harmonic2son(temperature, num_sample):
                 os.chdir(calcpath_cwd)
 
             else:
-                print(f'Calculation has not been finished: a directory {index_calc_each}')
+                print(f'Calculation has not been finished: a directory {index_calc_list[idx]}')
 
                 # Move back to 'calc' folder
                 os.chdir(calcpath_cwd)
         else:
-            print(f'Calculation has not been finished: a directory {index_calc_each}')
+            print(f'Calculation has not been finished: a directory {index_calc_list[idx]}')
 
             # Move back to 'calc' folder
             os.chdir(calcpath_cwd)
+
+
+
+def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
+    """Frunction [traj_run]
+    Initiate FHI-aims or FHI-vibes for configurations
+    from a trajectory file
+
+    Parameters:
+
+    traj_path: str
+        Path to the trajectory file
+    thermal_cutoff: int
+        Thermalization cutoff
+    num_traj: int
+        The number of configurations to be calculated by DFT
+    DFT_calc: str
+        The name of the DFT calculator
+    """
+
+    # Read the trajectory file
+    traj = Trajectory(
+        traj_path,
+        properties='energy, forces'
+        )
+    # Truncate the head part until the thermalization cutoff
+    traj = traj[thermal_cutoff:]
+    # Collect the ramdonly picked index
+    selected_traj_index = random.sample(range(len(traj)), k=num_traj)
+
+    # Set the path to folders implementing DFT calculations
+    calcpath = f'raw'
+    # Create this folder
+    check_mkdir(calcpath)
+
+    # Get the current path
+    mainpath_cwd = os.getcwd()
+
+    # Move to the path to 'calc' folder implementing DFT calculations
+    os.chdir(calcpath)
+    # Get the new path
+    calcpath_cwd = os.getcwd()
+
+    # Get the template of the job script
+    with open('../template/job.slurm', 'r') as job_script_DFT_initial:
+        job_script_DFT_default = job_script_DFT_initial.read()
+    # Prepare the command line for FHI-aims for DeepH or FHI-vibes
+    if DFT_calc == 'aims':
+        DFT_command = 'srun /u/kkang/programs/FHIaims-DeepH/build/aims.220609.scalapack.mpi.x > aims.out 2>&1'
+    elif DFT_calc == 'vibes':
+        DFT_command = 'vibes run singlepoint aims.in &> log.aims'
+    # Prepare an empty list for the calculation paths
+    execute_cwd = []
+
+    # Go through all sampled structral configurations
+    # Collect the calculations and deploy all inputs for FHI-vibes
+    for jndex, jtem in enumerate(selected_traj_index):
+        # Get configurations until the number of target subsampling data
+        if jndex < numstep:
+            # Create a folder for each structral configuration
+            check_mkdir(f'{jndex}')
+            # Move to that folder
+            os.chdir(f'{jndex}')
+            
+            if DFT_calc == 'aims':
+                # Check if a previous calculation exists
+                if os.path.exists(f'aims.out'):
+                    # Check whether calculation is finished
+                    if 'Have a nice day.' in open('aims.out').read():
+                        os.chdir(calcpath_cwd)
+                    else:
+                        # Collect the current calculation path
+                        execute_cwd.append(os.getcwd())
+                        # Move back to 'calc' folder
+                        os.chdir(calcpath_cwd)
+                else:
+                    # Get FHI-aims inputs from the template folder
+                    aims_write('geometry.in', traj[jtem])
+                    subprocess.run(['cp', '../../template/control.in', '.'])
+                    # Collect the current calculation path
+                    execute_cwd.append(os.getcwd())
+                    # Move back to 'calc' folder
+                    os.chdir(calcpath_cwd)
+            elif DFT_calc == 'vibes':
+                # Check if a previous calculation exists
+                if os.path.exists(f'aims/calculations/aims.out'):
+                    # Check whether calculation is finished
+                    if 'Have a nice day.' in open('aims/calculations/aims.out').read():
+                        os.chdir(calcpath_cwd)
+                    else:
+                        # Collect the current calculation path
+                        execute_cwd.append(os.getcwd())
+                        # Move back to 'calc' folder
+                        os.chdir(calcpath_cwd)
+                else:
+                    # Get FHI-aims inputs from the template folder
+                    aims_write('geometry.in', traj[jtem])
+                    subprocess.run(['cp', '../../template/aims.in', '.'])
+                    # Collect the current calculation path
+                    execute_cwd.append(os.getcwd())
+                    # Move back to 'calc' folder
+                    os.chdir(calcpath_cwd)
+
+    # Create job scripts and submit them
+    for index_calc in range(num_calc):
+        job_script = f'job_{index_calc}.slurm'
+        with open(job_script, 'w') as writing_input:
+            writing_input.write(job_script_DFT_default)
+            for index_execute_cwd, value_execute_cwd in enumerate(execute_cwd):
+                if index_execute_cwd % num_calc == index_calc:
+                    writing_input.write('cd '+value_execute_cwd+'\n')
+                    writing_input.write(DFT_command+'\n')
+        # If the previous calculation is not finished, rerun it
+        subprocess.run(['sbatch', job_script])
+
+    # Move back to the original position
+    os.chdir(mainpath_cwd)

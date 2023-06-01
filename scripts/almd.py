@@ -84,6 +84,9 @@ class almd:
         # steps_init: int
         #     Initialize MD steps to get averaged uncertainties and energies
         self.steps_init = 125
+        # steps_random: int
+        #     the length of MD run for random sampling
+        self.steps_random = 125
         # ntrain_init: int
         #     The number of training data for first iterative step
         self.ntrain_init = 5
@@ -362,7 +365,7 @@ class almd:
             # Run MLMD calculation with random sampling
             struc_step = MLMD_random(
                 kndex, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
-                self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.steps_init * self.loginterval,
+                self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.steps_random,
                 self.nstep, self.nmodel, calc_MLIP, E_ref
             )
         else:

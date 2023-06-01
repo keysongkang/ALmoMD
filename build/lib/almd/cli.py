@@ -113,14 +113,15 @@ def harmonic_run_command(args):
     """
     if not hasattr(args, 'temperature') or args.temperature is None or \
             not hasattr(args, 'num_sample') or args.num_sample is None or \
+            not hasattr(args, 'DFT_calc') or args.DFT_calc is None or \
             not hasattr(args, 'num_calc') or args.num_calc is None:
         print(
             'Please provide the temperature, the number of harmoic samples'
-            ', and the number of job scripts to be submitted.'
-            '(e.g. almomd utils harmonic_run 300 10 3)'
+            ', DFT calculator and the number of job scripts to be submitted.'
+            '(e.g. almomd utils harmonic_run 300 10 aims 3)'
             )
     else:
-        harmonic_run(args.temperature, args.num_sample, args.num_calc)
+        harmonic_run(args.temperature, args.num_sample, args.DFT_calc, args.num_calc)
 
 
 def harmonic2son_command(args):
@@ -144,6 +145,37 @@ def harmonic2son_command(args):
             )
     else:
         harmonic2son(args.temperature, args.num_sample)
+
+
+def traj_run_command(args):
+    """
+    Implement the logic for "almomd utils harmonic_run" command
+
+    Parameters:
+
+    args: class
+        Contains inputs from the command line
+    args.traj_path: str
+        Path to the trajectory file
+    args.thermal_cutoff: int
+        Thermalization cutoff
+    args.num_traj: int
+        The number of configurations to be calculated by DFT
+    args.DFT_calc: str
+        The name of the DFT calculator
+    """
+    if not hasattr(args, 'traj_path') or args.traj_path is None or \
+            not hasattr(args, 'thermal_cutoff') or args.thermal_cutoff is None or \
+            not hasattr(args, 'num_traj') or args.num_traj is None or \
+            not hasattr(args, 'DFT_calc') or args.DFT_calc is None:
+        print(
+            'Please provide the path to the trajectory file, '
+            'thermalization cutoff, the number of configurations '
+            'to be calculated by DFT and the DFT calclulator'
+            '(e.g. almomd utils traj_run md.traj 300 500 aims)'
+            )
+    else:
+        harmonic_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc)
 
 
 def main():
@@ -237,8 +269,8 @@ def main():
     # Subparser for "utils harmonic_run" subcommand
     harmonic_run_parser = utils_subparsers.add_parser(
         'harmonic_run',
-        help='Initiate the FHI-vibes calculations '
-             'using structural configurations from a harmonic sampling'
+        help='Initiate FHI-aims and FHI-vibes with '
+             'structural configurations from a harmonic sampling'
         )
     harmonic_run_parser.add_argument(
         'temperature', nargs='?', type=float,
@@ -247,6 +279,10 @@ def main():
     harmonic_run_parser.add_argument(
         'num_sample', nargs='?', type=int,
         help='The number of harmonic samples'
+        )
+    harmonic_run_parser.add_argument(
+        'DFT_calc', nargs='?', type=str,
+        help='The name of the DFT calculator'
         )
     harmonic_run_parser.add_argument(
         'num_calc', nargs='?', type=int,
@@ -269,6 +305,30 @@ def main():
         help='The number of harmonic samples'
         )
     harmonic2son_parser.set_defaults(func=harmonic2son_command)
+
+    # Subparser for "utils harmonic_run" subcommand
+    traj_run_parser = utils_subparsers.add_parser(
+        'traj_run',
+        help='Initiate FHI-aims or FHI-vibes for configurations '
+             'from a trajectory file'
+        )
+    traj_run_parser.add_argument(
+        'traj_path', nargs='?', type=str,
+        help='Path to the trajectory file'
+        )
+    traj_run_parser.add_argument(
+        'thermal_cutoff', nargs='?', type=int,
+        help='Thermalization cutoff'
+        )
+    traj_run_parser.add_argument(
+        'num_traj', nargs='?', type=int,
+        help='The number of configurations to be calculated by DFT'
+        )
+    traj_run_parser.add_argument(
+        'DFT_calc', nargs='?', type=str,
+        help='The name of the DFT calculator'
+        )
+    traj_run_parser.set_defaults(func=traj_run_command)
 
     args = parser.parse_args()
 

@@ -29,11 +29,11 @@ def get_train_job(
     nval: int
         The number of added validating data for each iterative step
     rmax: float
-        rmaxrmax ##!! We don't need it anymore
+        The rmax input for NequIP
     lmax: int
-        lmaxlmax ##!! We don't need it anymore
+        The lmax input for NequIP
     nfeatures: int
-        nfeatures ##!! We don't need it anymore
+        The nfeatures input for NequIP
     workpath: str
         Path to the working directory
     nstep: int
@@ -142,11 +142,11 @@ def nequip_train_job(
     nval: int
         The number of added validating data for each iterative step
     rmax: float
-        rmaxrmax ##!! We don't need it anymore
+        The rmax input for NequIP
     lmax: int
-        lmaxlmax ##!! We don't need it anymore
+        The lmax input for NequIP
     nfeatures: int
-        nfeatures ##!! We don't need it anymore
+        The nfeatures input for NequIP
     workpath: str
         Path to the working directory
     index_nstep: int
@@ -221,11 +221,11 @@ def execute_train_job(
     nval: int
         The number of added validating data for each iterative step
     rmax: float
-        rmaxrmax ##!! We don't need it anymore
+        The rmax input for NequIP
     lmax: int
-        lmaxlmax ##!! We don't need it anymore
+        The lmax input for NequIP
     nfeatures: int
-        nfeatures ##!! We don't need it anymore
+        The nfeatures input for NequIP
     workpath: str
         Path to the working directory
     nstep: int

@@ -1,5 +1,4 @@
 import argparse
-import argcomplete
 from scripts.utils import aims2son, split_son, harmonic_run, harmonic2son
 
 
@@ -121,7 +120,7 @@ def harmonic_run_command(args):
             '(e.g. almomd utils harmonic_run 300 10 aims 3)'
             )
     else:
-        harmonic_run(args.temperature, args.num_sample, args.num_calc)
+        harmonic_run(args.temperature, args.num_sample, args.DFT_calc, args.num_calc)
 
 
 def harmonic2son_command(args):
@@ -341,6 +340,5 @@ if __name__ == '__main__':
     # pip install argcomplete
     # eval "$(register-python-argcomplete almomd)"
     # source ~/.bashrc
-    argcomplete.autocomplete(parser)
-
+    # argcomplete.autocomplete(parser)
     main()

@@ -1,5 +1,4 @@
 import argparse
-import argcomplete
 from scripts.utils import aims2son, split_son, harmonic_run, harmonic2son
 
 
@@ -341,6 +340,5 @@ if __name__ == '__main__':
     # pip install argcomplete
     # eval "$(register-python-argcomplete almomd)"
     # source ~/.bashrc
-    argcomplete.autocomplete(parser)
-
+    # argcomplete.autocomplete(parser)
     main()

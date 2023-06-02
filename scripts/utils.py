@@ -11,7 +11,9 @@ from ase import Atoms
 from ase.data import atomic_numbers
 from ase.io.trajectory import Trajectory
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
-from libs.lib_util import check_mkdir, rm_file
+from libs.lib_util import check_mkdir, rm_file, single_print, output_init
+
+version = '0.0.0'
 
 def aims2son(temperature):
     """Function [aims2son]
@@ -25,6 +27,10 @@ def aims2son(temperature):
     temperature: float
         temperature in units of Kelvin.
     """
+
+    # Print the head
+    output_init('aims2son', version)
+    single_print(f'[aims2son]\tConvert aims.out to trajectory.son')
 
     # Tracking the reading line for the specific contents
     index_struc = 0             # Read a structral information
@@ -45,6 +51,7 @@ def aims2son(temperature):
     pbc = [True, True, True]    # Currently, always periodic 
     NumAtoms = 0
 
+    single_print(f'[aims2son]\tRead aims.out file ...')
     with open('aims.out', "r") as file_one: # Open aims.out file
         for line in file_one: # Go through whole contents line by line
 
@@ -194,6 +201,8 @@ def aims2son(temperature):
                 # Dump extracted atom info summary of current MD step into trajectory.son
                 son.dump(atom_dict, 'trajectory.son', is_metadata=False)
 
+    single_print(f'[aims2son]\t!! Finish converting aims.out to trajectory.son')
+
 
 def split_son(num_split, E_gs):
     """Function [split_son]
@@ -213,7 +222,11 @@ def split_son(num_split, E_gs):
         Recommend to use the ground state total energy.
     """
 
+    # Print the head
+    output_init('split_son', version)
+    single_print(f'[split_son]\tInitiate splitting trajectory.son')
 
+    single_print(f'[split_son]\tRead trajectory.son file')
     # Read trajectory.son file
     metadata, data = son.load('trajectory.son')
 
@@ -225,14 +238,14 @@ def split_son(num_split, E_gs):
     # Check the existance of trajectory_test.son and trajectory_train.son files,
     # because it is annoying when we mixuse these files with different sampling
     if os.path.exists('trajectory_test.son') and os.path.exists('trajectory_train.son'):
-        print('The files trajectory_test.son and trajectory_train.son already exist.')
+        single_print('[split_son]\tThe files trajectory_test.son and trajectory_train.son already exist.')
         # May need to prepare for the conversion of SON file to NPZ file
         metadata, test_data = son.load('trajectory_test.son')
     else:
-        print('Collect samples for training and testing data.')
+        single_print('[split_son]\tCollect samples for training and testing data.')
         rm_file('trajectory_test.son')
         rm_file('trajectory_train.son')
-        rm_file('data/data-test.npz')
+        rm_file('MODEL/data-test.npz')
         for test_item in test_data:
             son.dump(test_item, 'trajectory_test.son')   # Save testing data into trajectory_test.son file
         for train_item in train_data:
@@ -240,11 +253,11 @@ def split_son(num_split, E_gs):
 
     ### Save testing data in form of npz file for validation error checking.
     # Create a folder named data
-    check_mkdir('data')
+    check_mkdir('MODEL')
 
     # Check if the data-test.npz file exists
-    if os.path.exists('data/data-test.npz'):
-        print('The file data-test.npz already exists.')
+    if os.path.exists('MODEL/data-test.npz'):
+        single_print('[split_son]\tThe file data-test.npz already exists.')
     else:
         # Prepare the empty lists for properties
         E_test      = [] # Total energy
@@ -264,7 +277,7 @@ def split_son(num_split, E_gs):
             PBC_test.append(test_item['atoms']['pbc'])
         
         # Save all information into data-test.npz
-        npz_name = 'data/data-test.npz'
+        npz_name = 'MODEL/data-test.npz'
         np.savez(
             npz_name[:-4],
             E=np.array(E_test),
@@ -275,7 +288,9 @@ def split_son(num_split, E_gs):
             PBC=np.array(PBC_test)
         )
         
-        print('Finish the sampling testing data: data-train.npz')
+        single_print('[split_son]\tFinish the sampling testing data: data-train.npz')
+
+    single_print('[split_son]\t!! Finish the splitting process')
 
 
 def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
@@ -296,6 +311,10 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
     """
     import subprocess
 
+    # Print the head
+    output_init('harmo_run', version)
+    single_print(f'[harmo_run]\tInitiate DFT calc. with harmonic samples')
+
     # Prepare the index inputs
     index_temp = '{:0>4.0f}'.format(temperature)
     index_calc_list = [f'{i:03d}' for i in range(num_sample)]
@@ -312,8 +331,9 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
     # Get the full path to the calculation directotry
     calcpath_cwd = os.getcwd()
 
+    single_print(f'[harmo_run]\tGet the template of the inputs')
     # Get the template of the job script
-    with open('../template/job.slurm', 'r') as job_script_DFT_initial:
+    with open('../DFT_INPUTS/job.slurm', 'r') as job_script_DFT_initial:
         job_script_DFT_default = job_script_DFT_initial.read()
     # Prepare the command line for FHI-aims for DeepH or FHI-vibes
     if DFT_calc == 'aims':
@@ -324,7 +344,7 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
     # Prepare an empty list for the calculation paths
     execute_cwd = []
 
-
+    single_print(f'[harmo_run]\tDeploy all DFT calculations')
     for idx in range(num_sample):
         # Create a folder for each structral configuration
         check_mkdir(f'{idx}')
@@ -344,9 +364,9 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
             else:
                 # Copy a configuration from the harmonic sampling
                 harmonic_file = f'geometry.in.supercell.{index_temp}K.{index_calc_list[idx]}'
-                subprocess.run(['cp', f'./../../harmonic/{harmonic_file}', 'geometry.in'])
+                subprocess.run(['cp', f'./../../HARMONIC/{harmonic_file}', 'geometry.in'])
                 # Get FHI-aims inputs from the template folder
-                subprocess.run(['cp', './../../template/control.in', '.'])
+                subprocess.run(['cp', './../../DFT_INPUTS/control.in', '.'])
                 # Collect the current calculation path
                 execute_cwd.append(os.getcwd())
                 # Move back to 'calc' folder
@@ -364,14 +384,15 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
             else:
                 # Copy a configuration from the harmonic sampling
                 harmonic_file = f'geometry.in.supercell.{index_temp}K.{index_calc_list[idx]}'
-                subprocess.run(['cp', f'./../../harmonic/{harmonic_file}', 'geometry.in'])
+                subprocess.run(['cp', f'./../../HARMONIC/{harmonic_file}', 'geometry.in'])
                 # Get FHI-aims inputs from the template folder
-                subprocess.run(['cp', './../../template/aims.in', '.'])
+                subprocess.run(['cp', './../../DFT_INPUTS/aims.in', '.'])
                 # Collect the current calculation path
                 execute_cwd.append(os.getcwd())
                 # Move back to 'calc' folder
                 os.chdir(calcpath_cwd)
 
+    single_print(f'[harmo_run]\tSubmit all job scripts for all DFT calculations')
     # Create job scripts and submit them
     for index_calc in range(num_calc):
         job_script = f'job_{index_calc}.slurm'
@@ -386,12 +407,13 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
 
     # Move back to the original position
     os.chdir(mainpath_cwd)
+    single_print(f'[harmo_run]\t!! Finish the DFT calculations with harmonic samples')
 
 
 def harmonic2son(temperature, num_sample):
     """Frunction [harmonic_run]
     Collect all results of FHI-vibes calculations
-    with harmonic samplings and convert it to SON file
+    with harmonic samplings and convert them to SON file
 
     Parameters:
 
@@ -400,6 +422,10 @@ def harmonic2son(temperature, num_sample):
     num_sample: int
         The number of harmonic samples
     """
+
+    # Print the head
+    output_init('harmo2son', version)
+    single_print(f'[harmo2son]\tCollect all DFT results and convert them to SON file')
 
     # Prepare the index inputs
     index_temp = '{:0>4.0f}'.format(temperature)
@@ -414,6 +440,7 @@ def harmonic2son(temperature, num_sample):
     # Get the full path to the calculation directotry
     calcpath_cwd = os.getcwd()
 
+    single_print(f'[harmo2son]\tGo through all DFT results')
     for idx in range(num_sample):
         # Create a folder for each structral configuration
         check_mkdir(f'{idx}')
@@ -595,17 +622,17 @@ def harmonic2son(temperature, num_sample):
                 os.chdir(calcpath_cwd)
 
             else:
-                print(f'Calculation has not been finished: a directory {index_calc_list[idx]}')
+                single_print(f'[harmo2son]\tCalculation has not been finished: a directory {index_calc_list[idx]}')
 
                 # Move back to 'calc' folder
                 os.chdir(calcpath_cwd)
         else:
-            print(f'Calculation has not been finished: a directory {index_calc_list[idx]}')
+            single_print(f'[harmo2son]\tCalculation has not been finished: a directory {index_calc_list[idx]}')
 
             # Move back to 'calc' folder
             os.chdir(calcpath_cwd)
 
-
+    single_print(f'[harmo2son]\t!! Finish converting')
 
 def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
     """Frunction [traj_run]
@@ -624,6 +651,11 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
         The name of the DFT calculator
     """
 
+    # Print the head
+    output_init('traj_run', version)
+    single_print(f'[traj_run]\tInitiate DFT calc. for configurations from a trajectory file')
+
+    single_print(f'[traj_run]\tRead {traj_path} file and truncate the thermalization steps {thermal_cutoff}')
     # Read the trajectory file
     traj = Trajectory(
         traj_path,
@@ -647,8 +679,9 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
     # Get the new path
     calcpath_cwd = os.getcwd()
 
+    single_print(f'[traj_run]\tGet the template of the inputs')
     # Get the template of the job script
-    with open('../template/job.slurm', 'r') as job_script_DFT_initial:
+    with open('../DFT_INPUTS/job.slurm', 'r') as job_script_DFT_initial:
         job_script_DFT_default = job_script_DFT_initial.read()
     # Prepare the command line for FHI-aims for DeepH or FHI-vibes
     if DFT_calc == 'aims':
@@ -658,8 +691,9 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
     # Prepare an empty list for the calculation paths
     execute_cwd = []
 
+    single_print(f'[traj_run]\tGo through all sampled structral configurations')
     # Go through all sampled structral configurations
-    # Collect the calculations and deploy all inputs for FHI-vibes
+    # Collect the calculations and deploy all inputs for FHI-vibes or FHI-aims
     for jndex, jtem in enumerate(selected_traj_index):
         # Get configurations until the number of target subsampling data
         if jndex < numstep:
@@ -680,9 +714,9 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
                         # Move back to 'calc' folder
                         os.chdir(calcpath_cwd)
                 else:
-                    # Get FHI-aims inputs from the template folder
+                    # Get FHI-aims inputs from the DFT_INPUTS folder
                     aims_write('geometry.in', traj[jtem])
-                    subprocess.run(['cp', '../../template/control.in', '.'])
+                    subprocess.run(['cp', '../../DFT_INPUTS/control.in', '.'])
                     # Collect the current calculation path
                     execute_cwd.append(os.getcwd())
                     # Move back to 'calc' folder
@@ -699,14 +733,15 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
                         # Move back to 'calc' folder
                         os.chdir(calcpath_cwd)
                 else:
-                    # Get FHI-aims inputs from the template folder
+                    # Get FHI-aims inputs from the DFT_INPUTS folder
                     aims_write('geometry.in', traj[jtem])
-                    subprocess.run(['cp', '../../template/aims.in', '.'])
+                    subprocess.run(['cp', '../../DFT_INPUTS/aims.in', '.'])
                     # Collect the current calculation path
                     execute_cwd.append(os.getcwd())
                     # Move back to 'calc' folder
                     os.chdir(calcpath_cwd)
 
+    single_print(f'[traj_run]\tCreate job scripts and submit them')
     # Create job scripts and submit them
     for index_calc in range(num_calc):
         job_script = f'job_{index_calc}.slurm'
@@ -721,3 +756,4 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
 
     # Move back to the original position
     os.chdir(mainpath_cwd)
+    single_print(f'[traj_run]\t!! Finish DFT calc. with the trajectory file')

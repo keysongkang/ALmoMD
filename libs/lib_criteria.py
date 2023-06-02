@@ -1,3 +1,4 @@
+import os
 import sys
 import numpy as np
 import pandas as pd
@@ -284,7 +285,7 @@ def get_criteria(
 
     # Read all uncertainty results
     uncert_data = pd.read_csv(
-        f'uncertainty-{temperature}K-{pressure}bar_{index}.txt',
+        f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt',
         index_col=False, delimiter='\t'
         )
     UncerAbs_E_list = uncert_data.loc[:steps_init, 'UncertAbs_E'].values
@@ -306,16 +307,27 @@ def get_criteria(
     criteria_Epot_step_avg = np.average(Epot_step_list)
     criteria_Epot_step_std = np.std(Epot_step_list)
     
-    # Record the average values
-    if rank == 0:
-        with open('result.txt', 'a') as criteriafile:
-            criteriafile.write(
-                f'{temperature}\t{index}\t' +
-                uncert_strconvter(criteria_UncertRel_E_avg) + '\t' +
-                uncert_strconvter(criteria_UncertAbs_E_avg) + '\t' +
-                uncert_strconvter(criteria_UncertRel_F_avg) + '\t' +
-                uncert_strconvter(criteria_UncertAbs_F_avg) + '\t'
-            )
+    # Check the contents in 'result.txt' before recording
+    if os.path.exists('result.txt'):
+        result_data = \
+        pd.read_csv('result.txt', index_col=False, delimiter='\t')
+        get_criteria_index = result_data.loc[:,'UncerAbs_F_ini'].iloc[-1];
+        if get_criteria_index == '----          ':
+            get_criteria_index = 0
+    else:
+        get_criteria_index = np.nan
+
+    # Record when the corresponding slots in 'result.txt' are empty
+    if np.isnan(get_criteria_index):
+        # Record the average values
+        if rank == 0:
+            with open('result.txt', 'a') as criteriafile:
+                criteriafile.write(
+                    uncert_strconvter(criteria_UncertRel_E_avg) + '\t' +
+                    uncert_strconvter(criteria_UncertAbs_E_avg) + '\t' +
+                    uncert_strconvter(criteria_UncertRel_F_avg) + '\t' +
+                    uncert_strconvter(criteria_UncertAbs_F_avg) + '\t'
+                )
     
     return (
         criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
@@ -325,8 +337,8 @@ def get_criteria(
         criteria_Epot_step_avg, criteria_Epot_step_std
     )
 
-
     
+
 def get_result(temperature, pressure, index, steps_init):
     """Function [get_result]
     Get average and standard deviation of absolute and relative undertainty
@@ -350,7 +362,7 @@ def get_result(temperature, pressure, index, steps_init):
 
     # Read all uncertainty results
     uncert_data = pd.read_csv(
-        f'uncertainty-{temperature}K-{pressure}bar_{index}.txt',
+        f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt',
         index_col=False, delimiter='\t'
         )
     UncerAbs_E_list = uncert_data.loc[:steps_init,'UncertAbs_E'].values
@@ -362,27 +374,30 @@ def get_result(temperature, pressure, index, steps_init):
     # Get their average and standard deviation
     criteria_UncertAbs_E_avg_all = uncert_average(UncerAbs_E_list[:])
     criteria_UncertRel_E_avg_all = uncert_average(UncerRel_E_list[:])
-    criteria_UncertAbs_E_avg     = uncert_average(UncerAbs_E_list[:steps_init])
-    criteria_UncertRel_E_avg     = uncert_average(UncerRel_E_list[:steps_init])
     criteria_UncertAbs_F_avg_all = uncert_average(UncerAbs_F_list[:])
     criteria_UncertRel_F_avg_all = uncert_average(UncerRel_F_list[:])
-    criteria_UncertAbs_F_avg     = uncert_average(UncerAbs_F_list[:steps_init])
-    criteria_UncertRel_F_avg     = uncert_average(UncerRel_F_list[:steps_init])
 
-    # Record the average values
-    if rank == 0:
-        with open('result.txt', 'a') as criteriafile:
-            criteriafile.write(
-                f'{temperature}\t{index}\t' +
-                uncert_strconvter(criteria_UncertRel_E_avg) + '\t' +
-                uncert_strconvter(criteria_UncertAbs_E_avg) + '\t' +
-                uncert_strconvter(criteria_UncertRel_F_avg) + '\t' +
-                uncert_strconvter(criteria_UncertAbs_F_avg) + '\t' +
-                uncert_strconvter(criteria_UncertRel_E_avg_all) + '\t' +
-                uncert_strconvter(criteria_UncertAbs_E_avg_all) + '\t' +
-                uncert_strconvter(criteria_UncertRel_F_avg_all) + '\t' +
-                uncert_strconvter(criteria_UncertAbs_F_avg_all) + '\n'
-            )
+    # Check the contents in 'result.txt' before recording
+    if os.path.exists('result.txt'):
+        result_data = \
+        pd.read_csv('result.txt', index_col=False, delimiter='\t')
+        get_criteria_index = result_data.loc[:,'UncerAbs_F_all'].iloc[-1];
+        if get_criteria_index == '----          ':
+            get_criteria_index = 0
+    else:
+        get_criteria_index = np.nan
+
+    # Record when the corresponding slots in 'result.txt' are empty
+    if np.isnan(get_criteria_index):
+        # Record the average values
+        if rank == 0:
+            with open('result.txt', 'a') as criteriafile:
+                criteriafile.write(
+                    uncert_strconvter(criteria_UncertRel_E_avg_all) + '\t' +
+                    uncert_strconvter(criteria_UncertAbs_E_avg_all) + '\t' +
+                    uncert_strconvter(criteria_UncertRel_F_avg_all) + '\t' +
+                    uncert_strconvter(criteria_UncertAbs_F_avg_all) + '\n'
+                )
 
     
 def uncert_average(itemlist):

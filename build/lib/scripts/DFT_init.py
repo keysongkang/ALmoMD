@@ -3,7 +3,7 @@ from mpi4py import MPI
 from read_input import *
 from libs.lib_util import check_mkdir, job_dependency
 from libs.lib_npz import generate_npz_DFT_init
-from libs.lib_train import execute_train_job
+from libs.lib_MODEL import execute_MODEL_job
 
 def run_dft_init():
     comm = MPI.COMM_WORLD
@@ -25,18 +25,18 @@ def run_dft_init():
     workpath = f'./data/{temperature}K-{pressure}bar_{index}'
     check_mkdir(workpath)
 
-    total_ntrain = ntrain_init
+    total_nMODEL = nMODEL_init
     total_nval = nval_init
 
     if rank == 0:
         generate_npz_DFT_init(
-            traj_ther, ntrain_init, nval_init, nstep, E_gs, index, temperature,
+            traj_ther, nMODEL_init, nval_init, nstep, E_gs, index, temperature,
             init_temp, step_temp, pressure, workpath
         )
         del traj_ther
 
-    execute_train_job(
-        total_ntrain, total_nval, rmax, lmax, nfeatures,
+    execute_MODEL_job(
+        total_nMODEL, total_nval, rmax, lmax, nfeatures,
         workpath, nstep, nmodel, comm, size, rank
     )
 

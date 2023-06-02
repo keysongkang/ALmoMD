@@ -47,7 +47,7 @@ def generate_npz_DFT_init(
     # The total number of data we need for the training process
     total_ntrain = (ntrain+nval) * nstep
 
-    single_print(f'Sample {nstep} different training data\n')
+    single_print(f'[npz]\tSample {nstep} different training data\n')
     # Random sampling for the structural configurations from trajectory
     for i, step in zip(
         random.sample(range(0,len(traj)),total_ntrain),
@@ -86,7 +86,7 @@ def generate_npz_DFT_init(
             PBC = np.array(PBC_train_store)
             )
 
-    single_print('Finish the sampling process: data-train_*.npz')
+    single_print('[npz]\tFinish the sampling process: data-train_*.npz')
     
     
 def generate_npz_DFT(
@@ -144,7 +144,7 @@ def generate_npz_DFT(
     # For first run, of course there is no NPZ file
     if all(npz_check) == False: # If there is any missing NPZ file,
         del npz_check
-        single_print(f'Sample {nstep} different training data\n')
+        single_print(f'[npz]\tSample {nstep} different training data\n')
 
         # Randomly sample the new data
         for i, step in zip(
@@ -157,7 +157,7 @@ def generate_npz_DFT(
                     if output_format == 'aims.out':
                         # Convert 'aims.out' format to ASE trajectory format
                         atoms, atoms_potE, atoms_forces = read_aims(
-                            f'./calc/{temperature}K-{pressure}bar_{index}/{i}/aims/calculations/aims.out'
+                            f'./CALC/{temperature}K-{pressure}bar_{index}/{i}/aims/calculations/aims.out'
                             )
                         # Energy is shifted by the reference energy
                         # to avoid the unsual weighting with forces in NequIP
@@ -171,7 +171,7 @@ def generate_npz_DFT(
                     elif output_format == 'trajectory.son':
                         # Convert 'trajectory.son' format to ASE trajectory format
                         metadata, data = son.load(
-                            f'./calc/{temperature}K-{pressure}bar_{index}/{i}/aims/trajectory.son'
+                            f'./CALC/{temperature}K-{pressure}bar_{index}/{i}/aims/trajectory.son'
                             )
                         atom_numbers = []
                         for items in data[0]['atoms']['symbols']:
@@ -187,13 +187,13 @@ def generate_npz_DFT(
                         PBC_train[index_nstep].append(data[0]['atoms']['pbc']);
                         break
                     else:
-                        'You need to define the output format.'
+                        single_print('[npz]\tYou need to define the output format.')
 
         # Merge new data with previous data
         # Split the sampled data into individual files for each subsampling set
         for index_nstep in range(nstep):
             # Path to previous data
-            npz_previous = f'./data/{temperature}K-{pressure}bar_{index-1}'\
+            npz_previous = f'./MODEL/{temperature}K-{pressure}bar_{index-1}'\
                            + f'/data-train_{index_nstep}.npz'
             
             # When there is previous data, merge them together
@@ -231,9 +231,9 @@ def generate_npz_DFT(
                 CELL=np.array(CELL_train_store),\
                 PBC=np.array(PBC_train_store)
             )
-        single_print('Finish the sampling process: data-train_*.npz')
+        single_print('[npz]\tFinish the sampling process: data-train_*.npz')
     else:
-        single_print('Found all sampled training data: data-train_*.npz')
+        single_print('[npz]\tFound all sampled training data: data-train_*.npz')
 
         
         
@@ -282,7 +282,7 @@ def generate_npz_DFT_rand_init(
     # The total number of data we need for the training process
     total_ntrain = (ntrain+nval) * nstep
 
-    single_print(f'Sample {nstep} different training data\n')
+    single_print(f'[npz]\tSample {nstep} different training data\n')
     # Random sampling for the structural configurations from trajectory
     for i, step in zip(
         random.sample(range(0,len(traj)),total_ntrain),
@@ -321,7 +321,7 @@ def generate_npz_DFT_rand_init(
             CELL=np.array(CELL_train_store),
             PBC=np.array(PBC_train_store)
         )
-    single_print('Finish the sampling process: data-train_*.npz')
+    single_print('[npz]\tFinish the sampling process: data-train_*.npz')
     
     return traj_idx
     
@@ -392,7 +392,7 @@ def generate_npz_DFT_rand(
     # For first run, of course there is no NPZ file
     if all(npz_check) == False: # If there is any missing NPZ file,
         del npz_check
-        single_print(f'Sample {nstep} different training data\n')
+        single_print(f'[npz]\tSample {nstep} different training data\n')
 
         # Randomly sample the new data except previously sampled ones
         for i, step in zip(
@@ -414,7 +414,7 @@ def generate_npz_DFT_rand(
         # Merge new data with previous data
         # Split the sampled data into individual files for each subsampling set   
         for index_nstep in range(nstep):
-            npz_previous = f'./data/{temperature}K-{pressure}bar_{index-1}'\
+            npz_previous = f'./MODEL/{temperature}K-{pressure}bar_{index-1}'\
                            + f'/data-train_{index_nstep}.npz'
             
             # When there is previous data, merge them together
@@ -445,9 +445,9 @@ def generate_npz_DFT_rand(
                 CELL=np.array(CELL_train_store),\
                 PBC=np.array(PBC_train_store)
             )
-        single_print('Finish the sampling process: data-train_*.npz')
+        single_print('[npz]\tFinish the sampling process: data-train_*.npz')
     else:
-        single_print('Found all sampled training data: data-train_*.npz')
+        single_print('[npz]\tFound all sampled training data: data-train_*.npz')
 
         
     return traj_idx

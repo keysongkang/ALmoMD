@@ -12,13 +12,13 @@ from ase.build import make_supercell
 from ase.io import read as atoms_read
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
-from libs.lib_util import check_mkdir, job_dependency, read_input_file, mpi_print, single_print
+from libs.lib_util import check_mkdir, job_dependency, read_input_file, mpi_print, single_print, output_init
 from libs.lib_npz import generate_npz_DFT_init, generate_npz_DFT, generate_npz_DFT_rand_init, generate_npz_DFT_rand
 from libs.lib_train import get_train_job, execute_train_job
 from libs.lib_dft import run_DFT
 from libs.lib_progress    import check_progress, check_index
 from libs.lib_mainloop    import MLMD_initial, MLMD_main, MLMD_random
-from libs.lib_criteria    import get_criteria
+from libs.lib_criteria    import get_result, get_criteria
 from libs.lib_termination import termination
 
 import pandas as pd
@@ -58,6 +58,8 @@ class almd:
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
 
+        ### Version
+        self.version = '0.0.0'
 
         ### Default setting for inputs
         ##[Active learning types]
@@ -125,7 +127,7 @@ class almd:
         ##[runMD default inputs]
         # workpath: str
         #     A path to the directory containing trained models
-        self.workpath = './model'
+        self.modelpath = './MODEL'
         # logfile: str
         #     A file name for MD logging
         self.logfile = 'md.log'
@@ -223,14 +225,19 @@ class almd:
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
 
+        # Print the head
+        output_init('init', self.version, MPI=True)
+        mpi_print(f'[init]\tInitiate the active learning process', rank)
+
         # Read aiMD trajectory file of training data
         metadata, traj = son.load('trajectory_train.son')
+        mpi_print(f'[init]\tRead the initial trajectory data: trajectory_train.son', rank)
 
         # Set the path to folders storing the training data for NequIP
-        workpath = f'./data/{self.temperature}K-{self.pressure}bar_{self.index}'
+        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{self.index}'
         # Create these folders
         if rank == 0:
-            check_mkdir('data')
+            check_mkdir('MODEL')
             check_mkdir(workpath)
         comm.Barrier()
 
@@ -246,6 +253,7 @@ class almd:
                 self.nstep, self.E_gs, workpath
             )
         del traj  # Remove it to reduce the memory usage
+        mpi_print(f'[init]\tGenerate the training data (# of data: {total_ntrain+total_nval})', rank)
         comm.Barrier()
 
         # Training process: Run NequIP
@@ -253,12 +261,17 @@ class almd:
             total_ntrain, total_nval, self.rmax, self.lmax, self.nfeatures,
             workpath, self.nstep, self.nmodel
         )
+        mpi_print(f'[init]\tSubmit the NequIP training processes', rank)
+        comm.Barrier()
 
         # Submit a job-dependence to execute run_dft_cont after the NequIP training
         # For 'converge' setting, we don't needo to submit it.
         if not self.calc_type == 'converge':
             if rank == 0:
-                job_dependency('cont')
+                job_dependency('cont', self.nmodel)
+
+        comm.Barrier()
+        mpi_print(f'[init]\t!! Finish the initialization', rank)
     
 
 
@@ -266,10 +279,16 @@ class almd:
         """Function [run_dft_cont]
         Run and continue the ALMD calculation.
         """
+        from datetime import datetime
 
         # Extract MPI infos
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
+
+        mpi_print(f'[cont]\t' + datetime.now().strftime("Date/Time: %Y %m %d %H:%M"), rank)
+        mpi_print(f'[cont]\tALmoMD Version: {self.version}', rank)
+        mpi_print(f'[cont]\tContinue from the previous step (Mode: {self.calc_type})', rank)
+        comm.Barrier()
 
         ## Prepare the ground state structure
         # Read the ground state structure with the primitive cell
@@ -278,21 +297,31 @@ class almd:
         struc_relaxed = make_supercell(struc_init, self.supercell)
         # Get the number of atoms in the simulation cell
         self.NumAtoms = len(struc_relaxed)
+        mpi_print(f'[cont]\tRead the reference structure: geometry.in.next_step', rank)
+        comm.Barrier()
 
         ### Initizlization step
+        ##!! We need to check whether this one is needed or not.
+        # Get total_index to resume the MLMD calculation
+        if rank == 0:
+            # Open the result.txt file
+            self.index = check_index(self.index)
+        self.index = comm.bcast(self.index, root=0)
+        comm.Barrier()
+
         ## For active learning sampling,
         if self.calc_type == 'active':
             # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
             # to resume the MLMD calculation if a previous one exists.
             kndex, MD_index, signal = None, None, None
-            if rank == 0:
-                # Open the uncertainty output file
-                kndex, MD_index, self.index, signal = check_progress(
-                    self.temperature, self.pressure,
-                    self.ntotal, self.ntrain, self.nval,
-                    self.nstep, self.steps_init,
-                    self.index, self.crtria, self.NumAtoms
-                )
+
+            # Open the uncertainty output file
+            kndex, MD_index, self.index, signal = check_progress(
+                self.temperature, self.pressure,
+                self.ntotal, self.ntrain, self.nval,
+                self.nstep, self.nmodel, self.steps_init,
+                self.index, self.crtria, self.NumAtoms
+            )
             kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
@@ -304,7 +333,6 @@ class almd:
             kndex = 0
             MD_index = 0
             signal = 0   ##!! Termination check should be added here
-            total_index = None
             if rank == 0:
                 self.index = check_index(self.index)
             self.index = comm.bcast(self.index, root=0)
@@ -312,37 +340,34 @@ class almd:
 
         # If we get the signal from check_progress, the script will be terminated.
         if signal == 1:
+            mpi_print(f'[cont]\tCalculation is terminated during the check_progress', rank)
             sys.exit()
 
-        ##!! We need to check whether this one is needed or not.
-        # Get total_index to resume the MLMD calculation
-        total_index = None
-        if rank == 0:
-            # Open the result.txt file
-            total_index = check_index(self.index)
-        total_index = comm.bcast(total_index, root=0)
-
+        mpi_print(f'[cont]\tCurrent iteration index: {self.index}', rank)
         # Get the total number of traning and validating data at current step
-        self.total_ntrain = self.ntrain * total_index + self.ntrain_init
-        self.total_nval = self.nval * total_index + self.nval_init
+        self.total_ntrain = self.ntrain * self.index + self.ntrain_init
+        self.total_nval = self.nval * self.index + self.nval_init
+        comm.Barrier()
 
 
         ### Get calculators
         # Set the path to folders finding the trained model from NequIP
-        workpath = f'./data/{self.temperature}K-{self.pressure}bar_{self.index}'
+        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{self.index}'
         # Create these folders
         if rank == 0:
-            check_mkdir('data')
+            check_mkdir('MODEL')
             check_mkdir(workpath)
         comm.Barrier()
 
+        mpi_print(f'[cont]\tFind the trained models: {workpath}', rank)
         # Get calculators from previously trained MLIP and its total energy of ground state structure
         E_ref, calc_MLIP = get_train_job(
             struc_relaxed, self.total_ntrain, self.total_nval, self.rmax, self.lmax,
             self.nfeatures, workpath, self.nstep, self.nmodel
         )
+        comm.Barrier()
 
-
+        mpi_print(f'[cont]\tImplement MD for active learning (Mode: {self.calc_type})', rank)
         ### MLMD steps
         # For active learning sampling,
         if self.calc_type == 'active':
@@ -369,15 +394,26 @@ class almd:
                 self.nstep, self.nmodel, calc_MLIP, E_ref
             )
         else:
-            raise ValueError("Invalid calc_type. Supported values are 'active' and 'random'.")
+            raise ValueError("[cont]\tInvalid calc_type. Supported values are 'active' and 'random'.")
+        comm.Barrier()
 
+        mpi_print(f'[cont]\tRecord the results: result.txt', rank)
+        # Record uncertainty results at the current step
+        get_result(self.temperature, self.pressure, self.index, self.steps_init)
+        comm.Barrier()
+
+        mpi_print(f'[cont]\tSubmit the DFT calculations for sampled configurations', rank)
         # Submit job-scripts for DFT calculations with sampled configurations and job-dependence for run_dft_gen
         if rank == 0:
             run_DFT(self.temperature, self.pressure, self.index, (self.ntrain + self.nval) * self.nstep, self.num_calc)
+        comm.Barrier()
 
         # Submit a job-dependence to execute run_dft_gen after the DFT calculations
         if rank == 0:
-            job_dependency('gen') ##!! check
+            job_dependency('gen', self.num_calc)
+        comm.Barrier()
+
+        mpi_print(f'[cont]\t!! Finish the MD investigation: Iteration {index}', rank)
 
 
     def run_dft_gen(self):
@@ -389,6 +425,11 @@ class almd:
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
 
+        mpi_print(f'[gen]\t' + datetime.now().strftime("Date/Time: %Y %m %d %H:%M"), rank)
+        mpi_print(f'[gen]\tALmoMD Version: {self.version}', rank)
+        mpi_print(f'[gen]\tGenerate the NequIP inputs from DFT results', rank)
+        comm.Barrier()
+
         ## Prepare the ground state structure
         # Read the ground state structure with the primitive cell
         struc_init = atoms_read('geometry.in.next_step', format='aims')
@@ -396,21 +437,28 @@ class almd:
         struc_relaxed = make_supercell(struc_init, self.supercell)
         # Get the number of atoms in unitcell
         self.NumAtoms = len(struc_relaxed)
+        mpi_print(f'[cont]\tRead the reference structure: geometry.in.next_step', rank)
+        comm.Barrier()
 
         ### Initizlization step
+        ##!! We need to check whether this one is needed or not.
+        # Get total_index to resume the MLMD calculation
+        if rank == 0:
+            self.index = check_index(self.index)
+        self.index = comm.bcast(self.index, root=0)
+
         ## For active learning sampling,
         if self.calc_type == 'active':
             # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
             # to resume the MLMD calculation if a previous one exists.
             kndex, MD_index, signal = None, None, None
-            if rank == 0:
-                # Open the uncertainty output file
-                kndex, MD_index, self.index, signal = check_progress(
-                    self.temperature, self.pressure,
-                    self.ntotal, self.ntrain, self.nval,
-                    self.nstep, self.steps_init,
-                    self.index, self.crtria, self.NumAtoms
-                )
+            # Open the uncertainty output file
+            kndex, MD_index, self.index, signal = check_progress(
+                self.temperature, self.pressure,
+                self.ntotal, self.ntrain, self.nval,
+                self.nstep, self.nmodel, self.steps_init,
+                self.index, self.crtria, self.NumAtoms
+            )
             kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
@@ -431,49 +479,47 @@ class almd:
 
         # If we get the signal from check_progress, the script will be terminated.
         if signal == 1:
+            mpi_print(f'[gen]\tCalculation is terminated during the check_progress', rank)
             sys.exit()
+        comm.Barrier()
 
-        ##!! We need to check whether this one is needed or not.
-        # Get total_index to resume the MLMD calculation
-        total_index = None
-        if rank == 0:
-            total_index = check_index(self.index)
-        total_index = comm.bcast(total_index, root=0)
-
+        mpi_print(f'[gen]\tCurrent iteration index: {self.index}', rank)
         # Get the total number of traning and validating data at current step
-        self.total_ntrain = self.ntrain * total_index + self.ntrain_init
-        self.total_nval = self.nval * total_index + self.nval_init
+        self.total_ntrain = self.ntrain * self.index + self.ntrain_init
+        self.total_nval = self.nval * self.index + self.nval_init
 
 
-        ### Get calculators
+        ### Get DFT results and generate training data
         # Set the path to folders storing the training data for NequIP
-        workpath = f'./data/{self.temperature}K-{self.pressure}bar_{self.index}'
+        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{self.index}'
         if rank == 0:
-            check_mkdir('data')
+            check_mkdir('MODEL')
             check_mkdir(workpath)
         comm.Barrier()
 
+        mpi_print(f'[gen]\tGenerate the training data from DFT results (# of data: {total_ntrain+total_nval})', rank)
         # Generate first set of training data in npz files from trajectory file
         if rank == 0:
             generate_npz_DFT(
                 self.ntrain, self.nval, self.nstep, self.E_gs, self.index, self.temperature,
                 self.output_format, self.pressure, workpath
             )
+        comm.Barrier()
 
         # Training process: Run NequIP
         execute_train_job(
             self.total_ntrain, self.total_nval, self.rmax, self.lmax, self.nfeatures,
             workpath, self.nstep, self.nmodel
         )
-
-        # Check the termination signal
-        if signal == 1:
-            mpi_print(f'{self.temperature}K is converged.')
-            sys.exit()
+        mpi_print(f'[gen]\tSubmit the NequIP training processes', rank)
+        comm.Barrier()
 
         # Submit a job-dependence to execute run_dft_cont after the NequIP training
         if rank == 0:
-            job_dependency('cont')
+            job_dependency('cont', self.nmodel)
+        comm.Barrier()
+
+        mpi_print(f'[gen]\t!! Finish the training data generation: Iteration {index}', rank)
 
 
 
@@ -486,8 +532,14 @@ class almd:
         comm = MPI.COMM_WORLD
         rank = comm.Get_rank()
 
+        # Print the head
+        output_init('rand', self.version, MPI=True)
+        mpi_print(f'[rand]\tInitiate the random sampling process', rank)
+
         # Read aiMD trajectory file of training data
         metadata, traj = son.load('trajectory_train.son')
+        mpi_print(f'[rand]\tRead the initial trajectory data: trajectory_train.son', rank)
+        comm.Barrier()
 
         # As it is an initialization step,
         # the total number of training and validation data matches the initial settings
@@ -497,11 +549,11 @@ class almd:
         # Start from the first step
         index = 0
         # Set the path to folders storing the training data for NequIP
-        workpath = f'./data/{self.temperature}K-{self.pressure}bar_{index}'
+        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{index}'
 
         if rank == 0:
             # Create these folders
-            check_mkdir('data')
+            check_mkdir('MODEL')
             check_mkdir(workpath)
 
             # Generate first set of training data in npz files from trajectory file
@@ -509,6 +561,7 @@ class almd:
                 traj, self.ntrain_init, self.nval_init,
                 self.nstep, self.E_gs, workpath
             )
+        mpi_print(f'[rand]\tGenerate the training data from trajectory_train.son (# of data: {total_ntrain+total_nval})', rank)
         comm.Barrier()
 
         # Training process: Run NequIP
@@ -516,6 +569,8 @@ class almd:
             total_ntrain, total_nval, self.rmax, self.lmax, self.nfeatures,
             workpath, self.nstep, self.nmodel
         )
+        mpi_print(f'[rand]\tSubmit the NequIP training processes for iteration {index}', rank)
+        comm.Barrier()
 
         # Run steps until random_index (which is assigned in input.in)
         while index < self.random_index:
@@ -527,7 +582,7 @@ class almd:
             total_nval += self.nval
 
             # Set the path to folders storing the training data for NequIP at the current step
-            workpath = f'./data/{self.temperature}K-{self.pressure}bar_{index}'
+            workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{index}'
 
             if rank == 0:
                 # Create these folders
@@ -539,12 +594,17 @@ class almd:
                     self.pressure, workpath, traj_idx
                 )
             comm.Barrier()
+            mpi_print(f'[rand]\tGenerate the training data from trajectory_train.son (# of data: {total_ntrain+total_nval})', rank)
 
             # Training process: Run NequIP
             execute_train_job(
                 total_ntrain, total_nval, self.rmax, self.lmax, self.nfeatures,
                 workpath, self.nstep, self.nmodel
             )
+            comm.Barrier()
+            mpi_print(f'[rand]\tSubmit the NequIP training processes for iteration {index}', rank)
+
+        mpi_print(f'[rand]\t!! Finish the random sampling process', rank)
 
 
     def run_dft_test(self):
@@ -557,16 +617,24 @@ class almd:
         size = comm.Get_size()
         rank = comm.Get_rank()
 
+        # Print the head
+        output_init('test', self.version, MPI=True)
+        mpi_print(f'[test]\tInitiate the validation test process', rank)
+        comm.Barrier()
+
         # Read testing data
-        npz_test = f'./../data/data-test.npz' # Path
+        npz_test = f'./MODEL/data-test.npz' # Path
         data_test = np.load(npz_test)         # Load
         NumAtom = len(data_test['z'][0])      # Get the number of atoms in the simulation cell
+        mpi_print(f'[test]\tRead the testing data: data-test.npz', rank)
+        comm.Barrier()
 
         # Set the path to folders storing the training data for NequIP
-        workpath = f'./../data/{self.temperature}K-{self.pressure}bar_{self.wndex}'
+        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{self.wndex}'
         # Initialization of a termination signal
         signal = 0
 
+        mpi_print(f'[test]\tFind the trained models: {workpath}', rank)
         # Load the trained models as calculators
         calc_MLIP = []
         for index_nmodel in range(self.nmodel):
@@ -574,20 +642,21 @@ class almd:
                 if (index_nmodel * self.nstep + index_nstep) % size == rank:
                     dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
                     if os.path.exists(f'{workpath}/{dply_model}'):
-                        mpi_print(f'Found the deployed model: {dply_model}', rank)
+                        mpi_print(f'\t\tFound the deployed model: {dply_model}', rank)
                         calc_MLIP.append(
                             nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
                         )
                     else:
                         # If there is no model, turn on the termination signal
-                        mpi_print(f'Cannot find the model: {dply_model}', rank)
+                        mpi_print(f'\t\tCannot find the model: {dply_model}', rank)
                         signal = 1
                         signal = comm.bcast(signal, root=rank)
 
         # Check the termination signal
         if signal == 1:
-            mpi_print('Some trained models are not finished.', rank)
+            mpi_print('[test]\tSome training processes are not finished.', rank)
             sys.exit()
+        comm.Barrier()
 
         # Open the file to store the results
         if rank == 0:
@@ -595,6 +664,8 @@ class almd:
             outputfile.write('index   \tUncertAbs\tRealErrorAbs\tRealE\tPredictE\n')
             outputfile.close()
 
+        comm.Barrier()
+        mpi_print(f'[test]\tGo through all configurations in the testing data ...', rank)
         # Go through all configurations in the testing data
         config_idx = 1
         for id_E, id_F, id_R, id_z, id_CELL, id_PBC in zip(
@@ -653,9 +724,10 @@ class almd:
                         )
                 trajfile.close()
 
+            comm.Barrier()
             config_idx += 1
 
-
+        mpi_print(f'[test]\tPlot the results ...', rank)
         ## Plot the energy and force prediction results
         # Read the energy data
         data = pd.read_csv(f'result-test_{self.wndex}_energy.txt', sep="\t")
@@ -706,7 +778,11 @@ class almd:
         MAE_F = mean_absolute_error(data[0], data[1])
 
         # Print out the statistic results
-        mpi_print(f'Energy: {R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}')
+        mpi_print(f'[test]\t[[Statistic results]]', rank)
+        mpi_print(f'[test]\tEnergy_R2\tEnergy_MAE\tForces_R2\tForces_MAE', rank)
+        mpi_print(f'[test]\t{R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}', rank)
+
+        mpi_print(f'[test]\t!! Finish the testing process', rank)
 
 
     def run_dft_runmd(self):
@@ -716,16 +792,20 @@ class almd:
         from libs.lib_md import runMD
         from ase.data   import atomic_numbers
 
-        ##!! Need to add uncertainty output
-
         # Extract MPI infos
         comm = MPI.COMM_WORLD
         size = comm.Get_size()
         rank = comm.Get_rank()
 
+        # Print the head
+        output_init('runMD', self.version, MPI=True)
+        mpi_print(f'[runMD]\tInitiate runMD process', rank)
+        comm.Barrier()
+
         # Initialization of a termination signal
         signal = 0
 
+        mpi_print(f'[runMD]\tGet the initial configuration from {self.MD_input}', rank)
         if self.MD_input == 'start.in':
             # Read the ground state structure with the primitive cell
             struc_init = atoms_read(self.MD_input, format='aims')
@@ -749,8 +829,9 @@ class almd:
             struc_son.set_velocities(data[-1]['atoms']['velocities'])
             struc = make_supercell(struc_son, self.supercell_init)
         else:
-            mpi_print(f'You need to assign MD_input appropriately.')
+            mpi_print(f'[runMD]\tYou need to assign MD_input appropriately.', rank)
             signal = 1
+        comm.Barrier()
 
         ## Prepare the ground state structure
         # Read the ground state structure with the primitive cell
@@ -759,43 +840,52 @@ class almd:
         struc_super = make_supercell(struc_init, self.supercell)
         # Get the number of atoms in the simulation cell
         self.NumAtoms = len(struc_super)
+        mpi_print(f'[runMD]\tRead the reference structure: geometry.in.next_step', rank)
+        comm.Barrier()
 
-
+        mpi_print(f'[runMD]\tFind the trained models: {self.modelpath}', rank)
         # Prepare empty lists for potential and total energies
-        Etot_step = []
+        Epot_step = []
         calc_MLIP = []
         for index_nmodel in range(self.nmodel):
             for index_nstep in range(self.nstep):
                 if (index_nmodel * self.nstep + index_nstep) % size == rank:
                     dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-                    if os.path.exists(f'{self.workpath}/{dply_model}'):
-                        single_print(f'Found the deployed model: {dply_model}')
+                    if os.path.exists(f'{self.modelpath}/{dply_model}'):
+                        single_print(f'\t\tFound the deployed model: {dply_model}')
                         calc_MLIP.append(
-                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{self.workpath}/{dply_model}')
+                            nequip_calculator.NequIPCalculator.from_deployed_model(
+                                f'{self.modelpath}/{dply_model}'
+                                )
                         )
                         struc_super.calc = calc_MLIP[-1]
-                        Etot_step.append(struc_super.get_total_energy() - self.E_gs)
+                        Epot_step.append(struc_super.get_potential_energy() - self.E_gs)
                     else:
                         # If there is no model, turn on the termination signal
-                        single_print(f'Cannot find the model: {dply_model}')
+                        single_print(f'\t\tCannot find the model: {dply_model}')
                         signal = 1
                         signal = comm.bcast(signal, root=rank)
-        Etot_step = comm.allgather(Etot_step)
+        Epot_step = comm.allgather(Epot_step)
 
         # Get averaged energy from trained models
-        Etot_step_avg =\
-        np.average(np.array([i for items in Etot_step for i in items]), axis=0)
+        Epot_step_avg =\
+        np.average(np.array([i for items in Epot_step for i in items]), axis=0)
+        mpi_print(f'[runMD]\tGet the potential energy of the reference structure: {self.Epot_step_avg}', rank)
 
         # if the number of trained model is not enough, terminate it
         if signal == 1:
             sys.exit()
+        comm.Barrier()
 
+        mpi_print(f'[runMD]\tInitiate MD with trained models', rank)
         runMD(
             struc, self.ensemble, self.temperature,
             self.pressure, self.timestep, self.friction,
             self.compressibility, self.taut, self.taup,
             self.mask, self.loginterval, self.steps,
-            self.nstep, self.nmodel, Etot_step_avg, self.al_type,
+            self.nstep, self.nmodel, Epot_step_avg, self.al_type,
             self.logfile, self.trajectory, calc_MLIP,
             signal_uncert=True, signal_append=True
             )
+
+        mpi_print(f'[runMD]\t!! Finish MD calculations', rank)

@@ -78,9 +78,43 @@ def rm_file(dir_name):
     """
     if os.path.exists('./'+dir_name):
         os.system('rm ./'+dir_name)
+
+
+def output_init(string, version, MPI=False):
+    from datetime import datetime
+
+    if MPI:
+        from mpi4py import MPI
+        # Extract MPI infos
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+    else:
+        rank = 0
+
+    mpi_print(
+        '\n'
+        '#################################################################\n'
+        '#                                                               #\n'
+        '#     @       @                             @@   @@   @@@@@     #\n'
+        '#     @       @                             @ @ @ @   @    @    #\n'
+        '#    @ @      @                             @ @ @ @   @     @   #\n'
+        '#    @ @      @                             @  @  @   @     @   #\n'
+        '#   @   @     @        @ @@ @@     @@@@@    @     @   @     @   #\n'
+        '#   @@@@@     @         @  @  @   @     @   @     @   @     @   #\n'
+        '#  @     @    @         @  @  @   @     @   @     @   @    @    #\n'
+        '#  @     @    @@@@@@@   @  @  @    @@@@@    @     @   @@@@@     #\n'
+        '#                                                               #\n'
+        '#################################################################\n',
+        rank
+        )
+
+    mpi_print(f'[{string}]\t' + datetime.now().strftime("Date/Time: %Y %m %d %H:%M"), rank)
+
+    mpi_print(f'[{string}]\tALmoMD Version: {version}', rank)
+
         
         
-def job_dependency(job_str):
+def job_dependency(job_str, num_jobs):
     """Function [job_dependency]
     Since it is necessaryt to wait for calculations for DFT or NequIP,
     this script submit the next job script with the dependency.
@@ -90,27 +124,22 @@ def job_dependency(job_str):
 
     job_str: str
         Option for different job_scripts; job-cont or job-gen
+    num_jobs: int
+        The number of previous job scripts
     """
 
-    # Check all file names
-    filename = os.listdir()
-    
-    # Find the latest jobID
-    item_index = 0
-    for item in filename:
-        if item[:4] == 'out.':
-            if item_index < int(item[4:]):
-                item_index = int(item[4:])
+    # Check output file
+    item_index = 'almomd.out'
     
     # Filter out all previously submitted job IDs
-    bashcommand = f'grep Submitted out.{item_index}'
+    bashcommand = f'grep Submitted {item_index}'
     result = subprocess.Popen(bashcommand.split(), stdout=subprocess.PIPE)
     output, error = result.communicate()
     
     # Collect all previously submitted job IDs
     job_index = re.findall("\d+", output.decode("utf-8"))
     dependency_index = ''
-    for jtem in job_index:
+    for jtem in job_index[(-1)*num_jobs:]:
         dependency_index += f'{jtem},'
     
     # Submit a job dependency
@@ -240,7 +269,12 @@ def read_input_file(file_path):
                     value = eval(value)
                 elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs']:
                     value = float(value)
-                elif name in ['ntrain_init', 'ntrain', 'nstep', 'nmodel', 'temperature', 'taut', 'pressure', 'taup', 'steps_ther', 'steps_init', 'steps_random','timestep', 'cutoff_ther', 'lmax', 'nfeatures', 'random_index', 'wndex', 'steps', 'loginterval', 'num_calc']:
+                elif name in [
+                'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'temperature', 'taut',
+                'pressure', 'taup', 'steps_ther', 'steps_init', 'steps_random',
+                'timestep', 'cutoff_ther', 'lmax', 'nfeatures', 'random_index',
+                'wndex', 'steps', 'loginterval', 'num_calc'
+                ]:
                     value = int(value)
                 else:
                     value = str(value)

@@ -69,7 +69,7 @@ def get_train_job(
                 # Check the existence of trained models
                 # If yes, collect trained models
                 if os.path.exists(f'{workpath}/{dply_model}'):
-                    mpi_print(f'Found the deployed model: {dply_model}', rank)
+                    mpi_print(f'\t\tFound the deployed model: {dply_model}', rank)
                     calc_MLIP.append(
                         nequip_calculator.NequIPCalculator.\
                         from_deployed_model(f'{workpath}/{dply_model}')
@@ -80,7 +80,7 @@ def get_train_job(
                         ntrain, nval, rmax, lmax, nfeatures,
                         workpath, index_nstep, index_nmodel, dply_model, rank
                     )
-                    mpi_print(f'Deploying the model: {dply_model}', rank)
+                    mpi_print(f'\t\tDeploying the model: {dply_model}', rank)
                     # Activate the termination signal
                     signal = 1
                     signal = comm.bcast(signal, root=rank)
@@ -251,14 +251,14 @@ def execute_train_job(
                 # Check the existence of trained models
                 # If yes, indicates the existance
                 if os.path.exists(f'{workpath}/{dply_model}'):
-                    single_print(f'Found the deployed model: {dply_model}')
+                    single_print(f'\t\tFound the deployed model: {dply_model}')
                 else: # If not, prepare the training job
                     rm_mkdir(f'{workpath}/train_{index_nmodel}_{index_nstep}')
                     job_script_input += nequip_train_job(
                         ntrain, nval, rmax, lmax, nfeatures,
                         workpath, index_nstep, index_nmodel, dply_model, rank
                     )
-                    single_print(f'Deploying the model: {dply_model}')
+                    single_print(f'\t\tDeploying the model: {dply_model}')
 
         job_script_input = comm.gather(job_script_input, root=0)
         if rank == 0:

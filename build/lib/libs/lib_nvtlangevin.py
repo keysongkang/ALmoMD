@@ -69,10 +69,10 @@ def NVTLangevin(
         # Full step in positions
         position = struc.get_positions()
         
-        # Step: x^n -> x^(n+1) - this applies constraints if any.
+        # Step: x^n -> x^(n+1) - this applies consMODELts if any.
         struc.set_positions(position + timestep * velocity + rnd_pos)
 
-        # recalc velocities after RATTLE constraints are applied
+        # recalc velocities after RATTLE consMODELts are applied
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
         forces = get_forces(struc, nstep, nmodel, calculator, comm, size, rank)
         

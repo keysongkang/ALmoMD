@@ -55,3 +55,115 @@ def termination(temperature, pressure, crtria_cnvg, NumAtoms):
                 signal = 0
         
     return signal
+
+
+def get_testerror(temperature, pressure, index, nstep, nmodel):
+    """Function [get_testerror]
+    Check the test error using data-test.npz.
+
+    Parameters:
+
+    temperature: float
+        The desired temperature in units of Kelvin (K)
+    pressure: float
+        The desired pressure in units of eV/Angstrom**3
+    index: int
+        The index of AL interactive step
+    nstep: int
+        The number of subsampling sets
+    nmodel: int
+        The number of ensemble model sets with different initialization
+    """
+    from ase import Atoms
+    from mpi4py import MPI
+    from nequip.ase import nequip_calculator
+    from libs.lib_util     import mpi_print
+    from libs.lib_criteria import uncert_strconvter
+    from sklearn.metrics import mean_absolute_error
+
+    # Extract MPI infos
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+
+    # Read testing data
+    npz_test = f'./MODEL/data-test.npz' # Path
+    data_test = np.load(npz_test)         # Load
+    NumAtom = len(data_test['z'][0])      # Get the number of atoms in the simulation cell
+
+    # Set the path to folders storing the training data for NequIP
+    workpath = f'./MODEL/{temperature}K-{pressure}bar_{index}'
+
+    # Initialization of a termination signal
+    signal = 0
+
+    # Load the trained models as calculators
+    calc_MLIP = []
+    for index_nmodel in range(nmodel):
+        for index_nstep in range(nstep):
+            if (index_nmodel * nstep + index_nstep) % size == rank:
+                dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
+                if os.path.exists(f'{workpath}/{dply_model}'):
+                    mpi_print(f'\t\tFound the deployed model: {dply_model}', rank=0)
+                    calc_MLIP.append(
+                        nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
+                    )
+                else:
+                    # If there is no model, turn on the termination signal
+                    mpi_print(f'\t\tCannot find the model: {dply_model}', rank=0)
+                    signal = 1
+                    signal = comm.bcast(signal, root=rank)
+
+    # Check the termination signal
+    if signal == 1:
+        mpi_print('[Termi]\tSome training processes are not finished.', rank)
+        sys.exit()
+
+    # Go through all configurations in the testing data
+    prd_E_list = []
+    prd_F_list = []
+    for id_R, id_z, id_CELL, id_PBC in zip(
+        data_test['R'], data_test['z'], data_test['CELL'], data_test['PBC']
+        ):
+        # Create the corresponding ASE atoms
+        struc = Atoms(id_z, positions=id_R, cell=id_CELL, pbc=id_PBC)
+        # Prepare the empty lists for predicted energy and force
+        prd_E = []
+        prd_F = []
+        zndex = 0
+
+        # Go through all trained models
+        for index_nmodel in range(nmodel):
+            for index_nstep in range(nstep):
+                if (index_nmodel * nstep + index_nstep) % size == rank:
+                    struc.calc = calc_MLIP[zndex]
+                    # Predicted energy is shifted E_gs back, but the E_gs defualt is zero
+                    prd_E.append(struc.get_potential_energy())
+                    prd_F.append(struc.get_forces())
+                    zndex += 1
+
+        # Get average and standard deviation (Uncertainty) of predicted energies from various models
+        prd_E = comm.allgather(prd_E)
+        prd_E_list.append(np.average([jtem for item in prd_E if len(item) != 0 for jtem in item], axis=0))
+
+        # Get average of predicted forces from various models
+        prd_F = comm.allgather(prd_F)
+        prd_F_list.append(np.average([jtem for item in prd_F if len(item) != 0 for jtem in item], axis=0))
+
+    E_real = np.array(data_test['E']).flatten()
+    E_pred = np.array(prd_E_list).flatten()
+    F_real = np.array(data_test['F']).flatten()
+    F_pred = np.array(prd_F_list).flatten()
+
+    # Get the energy and force statistics
+    E_MAE = mean_absolute_error(E_real, E_pred)
+    F_MAE = mean_absolute_error(F_real, F_pred)
+
+    if rank == 0:
+        outputfile = open(f'result.txt', 'a')
+        outputfile.write(
+            f'{temperature}      \t{index}             \t' +
+            uncert_strconvter(E_MAE) + '\t' +
+            uncert_strconvter(F_MAE) + '\t'
+            )
+        outputfile.close()

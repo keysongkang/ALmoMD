@@ -12,7 +12,7 @@ from mpi4py import MPI
 from decimal import Decimal
 from ase.data   import atomic_numbers
 
-from libs.lib_util    import mpi_print, single_print, read_aims
+from libs.lib_util    import check_mkdir, mpi_print, single_print, read_aims
 from libs.lib_md       import runMD
 from libs.lib_criteria import eval_uncert, uncert_strconvter, get_criteria, get_criteria_prob
 
@@ -102,7 +102,7 @@ def MLMD_initial(
             )
         else: # When it has the pervious step,
             # Name of the pervious uncertainty file
-            uncert_file = f'uncertainty-{temperature}K-{pressure}bar_{index-1}.txt'
+            uncert_file = f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index-1}.txt'
 
             # Check the existence of the file
             if os.path.exists(uncert_file):
@@ -111,7 +111,8 @@ def MLMD_initial(
                 
                 # Open the uncertainty file for current step
                 if rank == 0:
-                    uncert_file_next = f'uncertainty-{temperature}K-{pressure}bar_{index}.txt'
+                    check_mkdir('UNCERT')
+                    uncert_file_next = f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt'
                     trajfile = open(uncert_file_next, 'w')
                     trajfile.write(
                         'Temp.[K]\tUncertRel_E\tUncertAbs_E\tUncertRel_F\tUncertAbs_F\t'
@@ -120,7 +121,7 @@ def MLMD_initial(
                     trajfile.close()
             else: # If there is no privous uncertainty file
                 # Read the trajectory from previous trajectory file
-                traj_init     = f'traj-{temperature}K-{pressure}bar_{index}.traj'
+                traj_init     = f'TRAJ/traj-{temperature}K-{pressure}bar_{index}.traj'
                 traj_previous = Trajectory(traj_init, properties=\
                                            ['forces', 'velocities', 'temperature'])
                 # Resume the MD calculation from last configuration in the trajectory file
@@ -130,7 +131,7 @@ def MLMD_initial(
         if rank == 0:
             # Read the trajectory from previous file
             traj_previous = Trajectory(
-                f'temp-{temperature}K-{pressure}bar_{index}.traj',
+                f'TEMPORARY/temp-{temperature}K-{pressure}bar_{index}.traj',
                 properties=['forces', 'velocities', 'temperature']
                 )
             struc_step = traj_previous[-1]; del traj_previous;
@@ -140,7 +141,8 @@ def MLMD_initial(
     # Initiate the MD run starting from kndex until reaching steps_init
     for jndex in range(kndex, steps_init):
         # MD information for temporary steps
-        trajectory   = f'temp-{temperature}K-{pressure}bar_{index}.traj'
+        check_mkdir('TEMPORARY')
+        trajectory   = f'TEMPORARY/temp-{temperature}K-{pressure}bar_{index}.traj'
 
         # Implement MD calculation for only one loginterval step
         runMD(
@@ -167,7 +169,7 @@ def MLMD_initial(
 
         # Record the all uncertainty and total energy information at the current step
         if rank == 0:
-            trajfile = open(f'uncertainty-{temperature}K-{pressure}bar_{index}.txt', 'a')
+            trajfile = open(f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt', 'a')
             trajfile.write(
                 '{:.5e}'.format(Decimal(str(struc_step.get_temperature()))) + '\t' +
                 uncert_strconvter(UncertRel_E) + '\t' +
@@ -181,7 +183,7 @@ def MLMD_initial(
             trajfile.close()
     
     mpi_print(
-        f'The initial MLMD of the iteration {index}'
+        f'[MLMD_init]\tThe initial MLMD of the iteration {index}'
         + f'at {temperature}K and {pressure}bar is done', rank
     )
     
@@ -264,8 +266,10 @@ def MLMD_main(
     = get_criteria(temperature, pressure, index, steps_init)
     
     # Open a trajectory file to store the sampled configurations
+    if rank == 0:
+        check_mkdir('TRAJ')
     write_traj = TrajectoryWriter(
-        filename=f'traj-{temperature}K-{pressure}bar_{index+1}.traj',
+        filename=f'TRAJ/traj-{temperature}K-{pressure}bar_{index+1}.traj',
         mode='a'
         )
 
@@ -274,7 +278,7 @@ def MLMD_main(
         if rank == 0:
             # Read the trajectory from previous file
             traj_temp = Trajectory(
-                f'temp-{temperature}K-{pressure}bar_{index}.traj',
+                f'TEMPORARY/temp-{temperature}K-{pressure}bar_{index}.traj',
                 properties='energy, forces'
                 )
             struc_step = traj_temp[-1]; del traj_temp;
@@ -287,7 +291,7 @@ def MLMD_main(
         accept = '--         '
 
         # MD information for temporary steps
-        trajectory   = f'temp-{temperature}K-{pressure}bar_{index}.traj'
+        trajectory   = f'TEMPORARY/temp-{temperature}K-{pressure}bar_{index}.traj'
         
         # Implement the MD calculation for only one loginterval step
         runMD(
@@ -334,7 +338,7 @@ def MLMD_main(
                 accept = 'Vetoed'
 
             # Record the MD results at the current step
-            trajfile = open(f'uncertainty-{temperature}K-{pressure}bar_{index}.txt', 'a')
+            trajfile = open(f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt', 'a')
             trajfile.write(
                 '{:.5e}'.format(Decimal(str(struc_step.get_temperature()))) + '\t' +
                 uncert_strconvter(UncertRel_E) + '\t' +
@@ -349,7 +353,7 @@ def MLMD_main(
             trajfile.close()
         MD_index = comm.bcast(MD_index, root=0)
 
-    mpi_print(f'The main MLMD of the iteration {index} at {temperature}K and {pressure}bar is done', rank)
+    mpi_print(f'[MLMD_main]\tThe main MLMD of the iteration {index} at {temperature}K and {pressure}bar is done', rank)
 
 
 
@@ -381,7 +385,7 @@ def traj_fromRealE(temperature, pressure, E_ref, index):
     ##!! since we need to store all force information.
     # Read the uncertainty file
     uncertainty_data = pd.read_csv(
-        f'uncertainty-{temperature}K-{pressure}bar_{index-1}.txt',
+        f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index-1}.txt',
         index_col=False, delimiter='\t'
         )
 
@@ -395,7 +399,7 @@ def traj_fromRealE(temperature, pressure, E_ref, index):
     max_index = 0
     for jndex in range(len(RealError_data)):
         atoms, atoms_potE, atoms_forces = read_aims(
-            f'calc/{temperature}K-{pressure}bar_1/{jndex}/aims/calculations/aims.out'
+            f'CALC/{temperature}K-{pressure}bar_1/{jndex}/aims/calculations/aims.out'
             )
         RealError = np.absolute(
             np.array(RealError_data['Epot_average'])[jndex] + E_ref - atoms_potE
@@ -406,7 +410,7 @@ def traj_fromRealE(temperature, pressure, E_ref, index):
     
     # Open the sampled trajectory file
     traj = Trajectory(
-        f'traj-{temperature}K-{pressure}bar_{index}.traj',
+        f'TRAJ/traj-{temperature}K-{pressure}bar_{index}.traj',
         properties=['forces', 'velocities', 'temperature']
         )
     # Load the corresponding configuration
@@ -495,7 +499,7 @@ def MLMD_random(
             )
         else: # When it has the pervious step,
             # Read the trajectory from previous trajectory file
-            traj_init     = f'traj-{temperature}K-{pressure}bar_{index}.traj'
+            traj_init     = f'TRAJ/traj-{temperature}K-{pressure}bar_{index}.traj'
             traj_previous = Trajectory(traj_init, properties=\
                                        ['forces', 'velocities', 'temperature'])
             # Resume the MD calculation from last configuration in the trajectory file
@@ -505,7 +509,7 @@ def MLMD_random(
         if rank == 0:
             # Read the trajectory from previous file
             traj_previous = Trajectory(
-                f'temp-{temperature}K-{pressure}bar_{index}.traj',
+                f'TEMPORARY/temp-{temperature}K-{pressure}bar_{index}.traj',
                 properties=['forces', 'velocities', 'temperature']
                 )
             struc_step    = traj_previous[-1]; del traj_previous;
@@ -513,8 +517,10 @@ def MLMD_random(
         struc_step = comm.bcast(struc_step, root=0)
     
     # Implement MD calculation as long as steps_random
-    logfile      = f'traj-{temperature}K-{pressure}bar_{index+1}.log'
-    trajectory   = f'traj-{temperature}K-{pressure}bar_{index+1}.traj'
+    if rank == 0:
+        check_mkdir('TRAJ')
+    logfile      = f'TRAJ-{temperature}K-{pressure}bar_{index+1}.log'
+    trajectory   = f'TRAJ-{temperature}K-{pressure}bar_{index+1}.traj'
     runMD(
         struc=struc_step, ensemble=ensemble, temperature=temperature,
         pressure=pressure, timestep=timestep, friction=friction,
@@ -534,7 +540,7 @@ def MLMD_random(
         criteriafile.close()
     
     mpi_print(
-        f'The initial MLMD of the iteration {index}'
+        f'[MLMD_rand] The MLMD with the random sampling of the iteration {index}'
         + f'at {temperature}K and {pressure}bar is done', rank
     )
     

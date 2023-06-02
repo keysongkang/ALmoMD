@@ -27,14 +27,14 @@ def run_DFT(temperature, pressure, index, numstep, num_calc):
 
     # Read MD trajectory file of sampled configurations
     traj_DFT = Trajectory(
-        f'traj-{temperature}K-{pressure}bar_{index+1}.traj',
+        f'TRAJ/traj-{temperature}K-{pressure}bar_{index+1}.traj',
         properties='energy, forces'
         )
     
     # Set the path to folders implementing DFT calculations
-    calcpath = f'calc/{temperature}K-{pressure}bar_{index+1}'
+    calcpath = f'CALC/{temperature}K-{pressure}bar_{index+1}'
     # Create these folders
-    check_mkdir(f'calc')
+    check_mkdir(f'CALC')
     check_mkdir(calcpath)
 
     # Get the current path
@@ -46,7 +46,7 @@ def run_DFT(temperature, pressure, index, numstep, num_calc):
     calcpath_cwd = os.getcwd()
 
     # Get the template of the job script
-    with open('../../template/job-vibes.slurm', 'r') as job_script_DFT_initial:
+    with open('../../DFT_INPUTS/job-vibes.slurm', 'r') as job_script_DFT_initial:
         job_script_DFT_default = job_script_DFT_initial.read()
     # Prepare the command line for FHI-vibes
     vibes_command = 'vibes run singlepoint aims.in &> log.aims'
@@ -76,7 +76,7 @@ def run_DFT(temperature, pressure, index, numstep, num_calc):
             else:
                 # Get FHI-aims inputs from the template folder
                 aims_write('geometry.in', jtem)
-                subprocess.run(['cp', '../../../template/aims.in', '.'])
+                subprocess.run(['cp', '../../../DFT_INPUTS/aims.in', '.'])
                 # Collect the current calculation path
                 execute_cwd.append(os.getcwd())
                 # Move back to 'calc' folder

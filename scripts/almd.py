@@ -919,7 +919,8 @@ class almd:
         rank = comm.Get_rank()
 
         # Print the head
-        output_init('cnvg', self.version, MPI=True)
+        mpi_print(f'[cnvg]\t' + datetime.now().strftime("Date/Time: %Y %m %d %H:%M"), rank)
+        mpi_print(f'[cnvg]\tALmoMD Version: {self.version}', rank)
         mpi_print(f'[cnvg]\tGet the convergence of {self.nmodel}x{self.nstep} matrix', rank)
         comm.Barrier()
 

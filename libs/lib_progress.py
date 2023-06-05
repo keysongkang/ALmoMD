@@ -7,7 +7,7 @@ import pandas as pd
 from libs.lib_util        import check_mkdir, mpi_print, single_print
 from libs.lib_criteria    import get_result, get_criteria
 from libs.lib_train       import get_train_job
-from libs.lib_termination import termination, get_testerror
+from libs.lib_termination import get_testerror
 
 
 def check_progress(
@@ -149,10 +149,6 @@ def check_progress(
                             # Get the test errors using data-test.npz
                             index += 1
                             get_testerror(temperature, pressure, index, nstep, nmodel)
-                            # Termination check
-                            # signal = termination(temperature, pressure, crtria_cnvg, NumAtoms)
-                            # if signal == 1:
-                            #     mpi_print(f'{temperature}K is converged.', rank)
                         else:
                             index += 1
                             break

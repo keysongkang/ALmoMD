@@ -105,10 +105,9 @@ class almd:
         # ntrain: int
         #     The number of added training data for each iterative step
         self.ntrain = 5
-        # crtria: float
+        # crtria_cnvg: float
         #     Convergence criteria
-        self.crtria = 0.0000001
-        self.crtria_cnvg = 0.0000001 ##!! This is needed to be removed.
+        self.crtria_cnvg = 0.0000001
         # num_calc: int
         #     The number of job scripts for DFT calculations
         self.num_calc = 20
@@ -299,6 +298,13 @@ class almd:
         mpi_print(f'[cont]\tALmoMD Version: {self.version}', rank)
         mpi_print(f'[cont]\tContinue from the previous step (Mode: {self.calc_type})', rank)
         comm.Barrier()
+
+        mpi_print(f'[cont]\tConvergence check', rank)
+        # Termination check
+        signal = termination(self.temperature, self.pressure, self.crtria_cnvg, self.al_type)
+        if signal == 1:
+            mpi_print(f'[cont]\t!!!!Have a nice day. Terminate the code.', rank)
+            sys.exit()
 
         ## Prepare the ground state structure
         # Read the ground state structure with the primitive cell

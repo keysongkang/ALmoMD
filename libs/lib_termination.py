@@ -4,7 +4,7 @@ import pandas as pd
 from libs.lib_util        import single_print
 
 
-def termination(temperature, pressure, crtria_cnvg, NumAtoms):
+def termination(temperature, pressure, crtria_cnvg, al_type):
     """Function [termination]
     Activate the termination signal upon satisfying the criteria
 
@@ -18,8 +18,6 @@ def termination(temperature, pressure, crtria_cnvg, NumAtoms):
         Convergence criteria
     crtria_cnvg: float
         Convergence criteria ##!! We need to replace crtria_cnvg to crtria
-    NumAtoms: int
-        The number of atoms in the simulation cell
 
     Returns:
 
@@ -36,7 +34,14 @@ def termination(temperature, pressure, crtria_cnvg, NumAtoms):
             'result.txt', index_col=False, delimiter='\t'
             )
         # Read the Uncertainty column
-        result_uncert = result_data.loc[:,'UncertAbs_All']
+        if al_type == 'energy':
+            result_uncert = result_data.loc[:,'TestError_E']
+        elif al_type == 'force':
+            result_uncert = result_data.loc[:,'TestError_F']
+        elif al_type == 'force_max':
+            result_uncert = result_data.loc[:,'UncerAbs_F_all']
+        else:
+            single_print('[term]\tYou need to assign al_teyp')
 
         # Verify three consecutive results against the convergence criteria
         if len(result_uncert) > 2:
@@ -44,10 +49,11 @@ def termination(temperature, pressure, crtria_cnvg, NumAtoms):
             result_min = min(result_uncert[-3:])
 
             # Currently criteria is written by eV/atom
-            if np.absolute(result_max - result_min) < crtria_cnvg * NumAtoms and \
+            if np.absolute(result_max - result_min) < crtria_cnvg and \
             result_max != result_min:
                 single_print(
-                    f'Converged result at temperature {temperature}K\n:'
+                    f'[term]\t!!The predicted results of trained model are'
+                    +f' converged within the selected criteria:'
                     +f'{np.absolute(result_max-result_min)}'
                     )
                 signal = 1

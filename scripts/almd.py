@@ -980,7 +980,7 @@ class almd:
 
                     R2_F_total.append({f'{index_nmodel}_{index_nstep}': r2_score(np.array(data_test['F']).flatten(), np.array(prd_F).flatten())})
                     MAE_F_total.append({f'{index_nmodel}_{index_nstep}': mean_absolute_error(np.array(data_test['F']).flatten(), np.array(prd_F).flatten())})
-                    prd_f_total.append({f'{index_nmodel}_{index_nstep}': np.average(np.array(prd_F).flatten())})
+                    prd_F_total.append({f'{index_nmodel}_{index_nstep}': np.average(np.array(prd_F).flatten())})
                     mpi_print(f'\t\tCollect the prediction: [{index_nmodel},{index_nstep}]', rank=0)
 
         R2_E_total = comm.allgather(R2_E_total)

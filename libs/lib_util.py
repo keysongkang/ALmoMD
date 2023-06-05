@@ -273,7 +273,7 @@ def read_input_file(file_path):
                 'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'temperature', 'taut',
                 'pressure', 'taup', 'steps_ther', 'steps_init', 'steps_random',
                 'timestep', 'cutoff_ther', 'lmax', 'nfeatures', 'random_index',
-                'wndex', 'steps', 'loginterval', 'num_calc'
+                'wndex', 'steps', 'loginterval', 'num_calc', 'test_index'
                 ]:
                     value = int(value)
                 else:

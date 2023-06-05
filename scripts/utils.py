@@ -310,6 +310,8 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
         The number of job scripts to be submitted
     """
     import subprocess
+    from ase.io.aims import read_aims
+    from ase.io.aims import write_aims
 
     # Print the head
     output_init('harmo_run', version)
@@ -364,7 +366,9 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
             else:
                 # Copy a configuration from the harmonic sampling
                 harmonic_file = f'geometry.in.supercell.{index_temp}K.{index_calc_list[idx]}'
-                subprocess.run(['cp', f'./../../HARMONIC/{harmonic_file}', 'geometry.in'])
+                # Need to convert harmonic_file in scaled positions for DeepH
+                harmonic_atom = read_aims(f'./../../HARMONIC/{harmonic_file}')
+                write_aims('geometry.in', harmonic_atom, scaled=True)
                 # Get FHI-aims inputs from the template folder
                 subprocess.run(['cp', './../../DFT_INPUTS/control.in', '.'])
                 # Collect the current calculation path
@@ -384,7 +388,10 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
             else:
                 # Copy a configuration from the harmonic sampling
                 harmonic_file = f'geometry.in.supercell.{index_temp}K.{index_calc_list[idx]}'
-                subprocess.run(['cp', f'./../../HARMONIC/{harmonic_file}', 'geometry.in'])
+                # Need to convert harmonic_file in scaled positions for DeepH
+                harmonic_atom = read_aims(f'./../../HARMONIC/{harmonic_file}')
+                write_aims('geometry.in', harmonic_atom, scaled=True)
+                # subprocess.run(['cp', f'./../../HARMONIC/{harmonic_file}', 'geometry.in'])
                 # Get FHI-aims inputs from the template folder
                 subprocess.run(['cp', './../../DFT_INPUTS/aims.in', '.'])
                 # Collect the current calculation path
@@ -634,7 +641,7 @@ def harmonic2son(temperature, num_sample):
 
     single_print(f'[harmo2son]\t!! Finish converting')
 
-def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
+def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
     """Frunction [traj_run]
     Initiate FHI-aims or FHI-vibes for configurations
     from a trajectory file
@@ -642,14 +649,18 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
     Parameters:
 
     traj_path: str
-        Path to the trajectory file
+        Path to the trajectory file (ASE Trajectory)
     thermal_cutoff: int
         Thermalization cutoff
     num_traj: int
         The number of configurations to be calculated by DFT
     DFT_calc: str
         The name of the DFT calculator
+    num_calc: int
+        The number of job scripts to be submitted
     """
+    from libs.lib_dft import aims_write
+    import subprocess
 
     # Print the head
     output_init('traj_run', version)
@@ -696,7 +707,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc):
     # Collect the calculations and deploy all inputs for FHI-vibes or FHI-aims
     for jndex, jtem in enumerate(selected_traj_index):
         # Get configurations until the number of target subsampling data
-        if jndex < numstep:
+        if jndex < num_traj:
             # Create a folder for each structral configuration
             check_mkdir(f'{jndex}')
             # Move to that folder

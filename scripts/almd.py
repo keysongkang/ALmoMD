@@ -103,7 +103,7 @@ class almd:
         #     The number of job scripts for DFT calculations
         self.num_calc = 20
 
-        ##[Molecular dynamics]
+        ##[Molecular dynamics setting]
         # ensemble: str
         #     Type of MD ensembles; 'NVTLangevin'
         self.ensemble = 'NVTLangevin'
@@ -345,8 +345,8 @@ class almd:
 
         mpi_print(f'[cont]\tCurrent iteration index: {self.index}', rank)
         # Get the total number of traning and validating data at current step
-        self.total_ntrain = self.ntrain * self.index + self.ntrain_init
-        self.total_nval = self.nval * self.index + self.nval_init
+        total_ntrain = self.ntrain * self.index + self.ntrain_init
+        total_nval = self.nval * self.index + self.nval_init
         comm.Barrier()
 
 
@@ -362,7 +362,7 @@ class almd:
         mpi_print(f'[cont]\tFind the trained models: {workpath}', rank)
         # Get calculators from previously trained MLIP and its total energy of ground state structure
         E_ref, calc_MLIP = get_train_job(
-            struc_relaxed, self.total_ntrain, self.total_nval, self.rmax, self.lmax,
+            struc_relaxed, total_ntrain, total_nval, self.rmax, self.lmax,
             self.nfeatures, workpath, self.nstep, self.nmodel
         )
         comm.Barrier()
@@ -420,6 +420,7 @@ class almd:
         """Function [run_dft_gen]
         Extract DFT results, generate the training data, and execute NequIP.
         """
+        from datetime import datetime
 
         # Extract MPI infos
         comm = MPI.COMM_WORLD
@@ -485,8 +486,8 @@ class almd:
 
         mpi_print(f'[gen]\tCurrent iteration index: {self.index}', rank)
         # Get the total number of traning and validating data at current step
-        self.total_ntrain = self.ntrain * self.index + self.ntrain_init
-        self.total_nval = self.nval * self.index + self.nval_init
+        total_ntrain = self.ntrain * self.index + self.ntrain_init
+        total_nval = self.nval * self.index + self.nval_init
 
 
         ### Get DFT results and generate training data
@@ -508,11 +509,11 @@ class almd:
 
         # Training process: Run NequIP
         execute_train_job(
-            self.total_ntrain, self.total_nval, self.rmax, self.lmax, self.nfeatures,
+            total_ntrain, total_nval, self.rmax, self.lmax, self.nfeatures,
             workpath, self.nstep, self.nmodel
         )
-        mpi_print(f'[gen]\tSubmit the NequIP training processes', rank)
         comm.Barrier()
+        mpi_print(f'[gen]\tSubmit the NequIP training processes', rank)
 
         # Submit a job-dependence to execute run_dft_cont after the NequIP training
         if rank == 0:
@@ -630,7 +631,7 @@ class almd:
         comm.Barrier()
 
         # Set the path to folders storing the training data for NequIP
-        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{self.wndex}'
+        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{self.test_index}'
         # Initialization of a termination signal
         signal = 0
 
@@ -660,7 +661,7 @@ class almd:
 
         # Open the file to store the results
         if rank == 0:
-            outputfile = open(f'result-test_{self.wndex}.txt', 'w')
+            outputfile = open(f'result-test_{self.test_index}_energy.txt', 'w')
             outputfile.write('index   \tUncertAbs\tRealErrorAbs\tRealE\tPredictE\n')
             outputfile.close()
 
@@ -684,8 +685,7 @@ class almd:
                 for index_nstep in range(self.nstep):
                     if (index_nmodel * self.nstep + index_nstep) % size == rank:
                         struc.calc = calc_MLIP[zndex]
-                        # Predicted energy is shifted E_gs back, but the E_gs defualt is zero
-                        prd_E.append(struc.get_potential_energy() + self.E_gs)
+                        prd_E.append(struc.get_potential_energy())
                         prd_F.append(struc.get_forces())
                         zndex += 1
 
@@ -703,7 +703,7 @@ class almd:
 
             # Save all energy information
             if rank == 0:
-                trajfile = open(f'result-test_{self.wndex}_energy.txt', 'a')
+                trajfile = open(f'result-test_{self.test_index}_energy.txt', 'a')
                 trajfile.write(
                     str(config_idx) + '          \t' +
                     '{:.5e}'.format(Decimal(str(prd_E_std))) + '\t' +       # Standard deviation (Uncertainty)
@@ -715,7 +715,7 @@ class almd:
 
             # Save all force information
             if rank == 0:
-                trajfile = open(f'result-test_{self.wndex}_force.txt', 'a')
+                trajfile = open(f'result-test_{self.test_index}_force.txt', 'a')
                 for kndex in range(len(prd_F_avg)):
                     for lndex in range(3):
                         trajfile.write(
@@ -730,7 +730,7 @@ class almd:
         mpi_print(f'[test]\tPlot the results ...', rank)
         ## Plot the energy and force prediction results
         # Read the energy data
-        data = pd.read_csv(f'result-test_{self.wndex}_energy.txt', sep="\t")
+        data = pd.read_csv(f'result-test_{self.test_index}_energy.txt', sep="\t")
 
         # Font style and font size
         plt.rcParams['font.sans-serif'] = "Helvetica"
@@ -756,7 +756,7 @@ class almd:
         MAE_E = mean_absolute_error(data['RealE'], data['PredictE'])
 
         # Read the force data
-        data = pd.read_csv(f'result-test_{self.wndex}_force.txt', sep="\t", header=None)
+        data = pd.read_csv(f'result-test_{self.test_index}_force.txt', sep="\t", header=None)
 
         # Prepare subplots
         fig, ax1 = plt.subplots(figsize=(6.5, 6), dpi=80)
@@ -889,3 +889,184 @@ class almd:
             )
 
         mpi_print(f'[runMD]\t!! Finish MD calculations', rank)
+
+
+
+    def run_dft_cnvg(self):
+        """Function [run_dft_cnvg]
+        Implement the convergence test with trained models
+        """
+
+        # Extract MPI infos
+        comm = MPI.COMM_WORLD
+        size = comm.Get_size()
+        rank = comm.Get_rank()
+
+        # Print the head
+        output_init('cnvg', self.version, MPI=True)
+        mpi_print(f'[cnvg]\tGet the convergence of {self.nmodel}x{self.nstep} matrix', rank)
+        comm.Barrier()
+
+        # Specify the path to the test data
+        npz_test = f'./MODEL/data-test.npz'
+        data_test = np.load(npz_test)
+        NumAtom = len(data_test['z'][0])
+        mpi_print(f'[cnvg]\tLoad testing data: {npz_test}', rank)
+        comm.Barrier()
+
+        # Specify the working path and initialize the signal variable
+        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_0'
+        signal = 0
+
+        mpi_print(f'[cnvg]\tFind the trained models: {workpath}', rank)
+        # Load the trained models as calculators
+        calc_MLIP = []
+        for index_nmodel in range(self.nmodel):
+            for index_nstep in range(self.nstep):
+                if (index_nmodel * self.nstep + index_nstep) % size == rank:
+                    dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
+                    if os.path.exists(f'{workpath}/{dply_model}'):
+                        mpi_print(f'\t\tFound the deployed model: {dply_model}', rank=0)
+                        calc_MLIP.append(
+                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
+                        )
+                    else:
+                        mpi_print(f'\t\tCannot find the model: {dply_model}', rank=0)
+                        signal = 1
+                        signal = comm.bcast(signal, root=rank)
+
+        if signal == 1:
+            mpi_print('[cnvg]\tNot enough trained models', rank)
+            sys.exit()
+        comm.Barrier()
+
+        mpi_print(f'[cnvg]\tGo through all trained models for the testing data', rank)
+        zndex = 0
+        
+        prd_E_total = []
+        R2_E_total = []
+        MAE_E_total = []
+        
+        prd_F_total = []
+        R2_F_total = []
+        MAE_F_total = []
+
+        for index_nmodel in range(self.nmodel):
+            for index_nstep in range(self.nstep):
+                if (index_nmodel * self.nstep + index_nstep) % size == rank:
+                    prd_E = []
+                    prd_F = []
+                    for idx, (id_R, id_z, id_CELL, id_PBC) in enumerate(zip(
+                        data_test['R'], data_test['z'],
+                        data_test['CELL'], data_test['PBC']
+                    )):
+                        struc = Atoms(
+                            id_z,
+                            positions=id_R,
+                            cell=id_CELL,
+                            pbc=id_PBC
+                        )
+                        struc.calc = calc_MLIP[zndex]
+                        prd_E.append(struc.get_potential_energy())
+                        prd_F.append(struc.get_forces())
+                        mpi_print(f'\t\t\tTesting data:{idx}', rank)
+                    zndex += 1
+                    data_E = np.ndarray.tolist(data_test['E'])
+                    data_F = np.ndarray.tolist(data_test['F'])
+
+                    R2_E_total.append({f'{index_nmodel}_{index_nstep}': r2_score(data_test['E'], prd_E)})
+                    MAE_E_total.append({f'{index_nmodel}_{index_nstep}': mean_absolute_error(data_test['E'], prd_E)})
+                    prd_E_total.append({f'{index_nmodel}_{index_nstep}': np.average(np.array(prd_E))})
+
+                    R2_F_total.append({f'{index_nmodel}_{index_nstep}': r2_score(np.array(data_test['F']).flatten(), np.array(prd_F).flatten())})
+                    MAE_F_total.append({f'{index_nmodel}_{index_nstep}': mean_absolute_error(np.array(data_test['F']).flatten(), np.array(prd_F).flatten())})
+                    prd_f_total.append({f'{index_nmodel}_{index_nstep}': np.average(np.array(prd_F).flatten())})
+                    mpi_print(f'\t\tCollect the prediction: [{index_nmodel},{index_nstep}]', rank=0)
+
+        R2_E_total = comm.allgather(R2_E_total)
+        MAE_E_total = comm.allgather(MAE_E_total)
+        prd_E_total = comm.allgather(prd_E_total)
+
+        R2_F_total = comm.allgather(R2_F_total)
+        MAE_F_total = comm.allgather(MAE_F_total)
+        prd_F_total = comm.allgather(prd_F_total)
+
+        
+        R2_E_matrix = np.empty([self.nmodel, self.nstep])
+        MAE_E_matrix = np.empty([self.nmodel, self.nstep])
+        prd_E_matrix = np.empty([self.nmodel, self.nstep])
+
+        R2_F_matrix = np.empty([self.nmodel, self.nstep])
+        MAE_F_matrix = np.empty([self.nmodel, self.nstep])
+        prd_F_matrix = np.empty([self.nmodel, self.nstep])
+
+        mpi_print(f'[cnvg]\tBuild the matrices', rank)
+        for index_nmodel in range(self.nmodel):
+            for index_nstep in range(self.nstep):
+                for item in R2_E_total:
+                    if item != []:
+                        for dict_item in item:
+                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
+                                R2_E_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
+                                
+                for item in MAE_E_total:
+                    if item != []:
+                        for dict_item in item:
+                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
+                                MAE_E_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
+                                
+                for item in prd_E_total:
+                    if item != []:
+                        for dict_item in item:
+                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
+                                prd_E_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
+
+                for item in R2_F_total:
+                    if item != []:
+                        for dict_item in item:
+                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
+                                R2_F_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
+                                
+                for item in MAE_F_total:
+                    if item != []:
+                        for dict_item in item:
+                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
+                                MAE_F_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
+                                
+                for item in prd_F_total:
+                    if item != []:
+                        for dict_item in item:
+                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
+                                prd_F_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
+
+
+        np.savez('E_matrix_R2', E=R2_E_matrix)
+        np.savez('E_matrix_MAE', E=MAE_E_matrix)
+        np.savez('E_matrix_prd', E=prd_E_matrix)
+
+        np.savez('F_matrix_R2', E=RF_E_matrix)
+        np.savez('F_matrix_MAE', E=MAE_F_matrix)
+        np.savez('F_matrix_prd', E=prd_F_matrix)
+        mpi_print(f'[cnvg]\tSave matrices: E_matrix and F_matrix', rank)
+
+        prd_Eavg_matrix = np.empty([nmodel, nstep])
+        prd_Estd_matrix = np.empty([nmodel, nstep])
+        prd_Favg_matrix = np.empty([nmodel, nstep])
+        prd_Fstd_matrix = np.empty([nmodel, nstep])
+
+        mpi_print(f'[cnvg]\tGet average with different ranges', rank)
+        for index_nmodel in range(nmodel):
+            for index_nstep in range(nstep):
+                prd_Eavg_matrix[index_nmodel, index_nstep] = np.average(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
+                prd_Estd_matrix[index_nmodel, index_nstep] = np.std(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
+
+                prd_Favg_matrix[index_nmodel, index_nstep] = np.average(prd_F_matrix[:(index_nmodel+1),:(index_nstep+1)])
+                prd_Fstd_matrix[index_nmodel, index_nstep] = np.std(prd_F_matrix[:(index_nmodel+1),:(index_nstep+1)])
+
+        np.savez('E_converge_avg', E=prd_Eavg_matrix)
+        np.savez('E_converge_std', E=prd_Estd_matrix)
+        np.savez('F_converge_avg', E=prd_Favg_matrix)
+        np.savez('F_converge_std', E=prd_Fstd_matrix)
+
+        mpi_print(f'[cnvg]\tSave convergence results: E_converge and F_converge', rank)
+

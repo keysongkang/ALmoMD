@@ -23,6 +23,8 @@ def run_DFT(temperature, pressure, index, numstep, num_calc):
         The index of AL interactive step
     numstep: int
         The number of all sampled configurations
+    num_calc: int
+        The number of job scripts to be submitted
     """
 
     # Read MD trajectory file of sampled configurations

@@ -1,5 +1,5 @@
 import argparse
-from scripts.utils import aims2son, split_son, harmonic_run, harmonic2son
+from scripts.utils import aims2son, split_son, harmonic_run, harmonic2son, traj_run
 
 
 def init_command(args):
@@ -55,6 +55,13 @@ def runmd_command(args):
     run_almd = almd()
     run_almd.run_dft_runmd()
 
+def cnvg_command(args):
+    """
+    Implement the logic for "almomd cnvg" command
+    """
+    from scripts.almd import almd
+    run_almd = almd()
+    run_almd.run_dft_cnvg()
 
 def aims2son_command(args):
     """
@@ -174,7 +181,7 @@ def traj_run_command(args):
             '(e.g. almomd utils traj_run md.traj 300 500 aims)'
             )
     else:
-        harmonic_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc)
+        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc)
 
 
 def main():
@@ -228,6 +235,13 @@ def main():
         help='Initiate MD calculation using trained models'
         )
     runmd_parser.set_defaults(func=runmd_command)
+
+    # Subparser for "cnvg" command
+    cnvg_parser = subparsers.add_parser(
+        'cnvg',
+        help='Check the convergence of uncertainty'
+        )
+    cnvg_parser.set_defaults(func=cnvg_command)
 
     # Subparser for "utils" command
     utils_parser = subparsers.add_parser(
@@ -326,6 +340,10 @@ def main():
     traj_run_parser.add_argument(
         'DFT_calc', nargs='?', type=str,
         help='The name of the DFT calculator'
+        )
+    traj_run_parser.add_argument(
+        'num_calc', nargs='?', type=int,
+        help='The number of job scripts to be submitted'
         )
     traj_run_parser.set_defaults(func=traj_run_command)
 

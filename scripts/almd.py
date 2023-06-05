@@ -935,11 +935,13 @@ class almd:
                         signal = 1
                         signal = comm.bcast(signal, root=rank)
 
+        # Terminate the code when there is no tained model
         if signal == 1:
             mpi_print('[cnvg]\tNot enough trained models', rank)
             sys.exit()
         comm.Barrier()
 
+        # Predict matrices of energy and forces and their R2 and MAE 
         mpi_print(f'[cnvg]\tGo through all trained models for the testing data', rank)
         zndex = 0
         
@@ -1000,6 +1002,8 @@ class almd:
         MAE_F_matrix = np.empty([self.nmodel, self.nstep])
         prd_F_matrix = np.empty([self.nmodel, self.nstep])
 
+        # Due to the nasty MPI operation with trained model due to the memory
+        # Here, need to reconstruct the matrices in ordered way
         mpi_print(f'[cnvg]\tBuild the matrices', rank)
         for index_nmodel in range(self.nmodel):
             for index_nstep in range(self.nstep):
@@ -1044,7 +1048,7 @@ class almd:
         np.savez('E_matrix_MAE', E=MAE_E_matrix)
         np.savez('E_matrix_prd', E=prd_E_matrix)
 
-        np.savez('F_matrix_R2', E=RF_E_matrix)
+        np.savez('F_matrix_R2', E=R2_F_matrix)
         np.savez('F_matrix_MAE', E=MAE_F_matrix)
         np.savez('F_matrix_prd', E=prd_F_matrix)
         mpi_print(f'[cnvg]\tSave matrices: E_matrix and F_matrix', rank)
@@ -1054,6 +1058,7 @@ class almd:
         prd_Favg_matrix = np.empty([nmodel, nstep])
         prd_Fstd_matrix = np.empty([nmodel, nstep])
 
+        # Here, get the convergence-testing results averaging over different number of matrix elements
         mpi_print(f'[cnvg]\tGet average with different ranges', rank)
         for index_nmodel in range(nmodel):
             for index_nstep in range(nstep):

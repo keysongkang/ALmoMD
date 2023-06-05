@@ -525,13 +525,13 @@ def get_criteria_prob(
     # Calculate the probability based on energy, force, or both energy and force
     if al_type == 'energy':
         criteria_Uncert_E = get_criteria_uncert(
-            uncert_type,
+            uncert_type, uncert_shift, uncert_grad,
             UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
             UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std
             )
     elif al_type == 'force':
         criteria_Uncert_F = get_criteria_uncert(
-            uncert_type,
+            uncert_type, uncert_shift, uncert_grad,
             UncertAbs_F, criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
             UncertRel_F, criteria_UncertRel_F_avg, criteria_UncertRel_F_std
             )
@@ -541,7 +541,7 @@ def get_criteria_prob(
         criteria_Uncert_F = 1 if 0.05 < UncertAbs_F < 0.20 else 0
     elif al_type == 'EandFmax' or al_type == 'EorFmax': ##!! Need to be fixed.
         criteria_Uncert_E = get_criteria_uncert(
-            uncert_type,
+            uncert_type, uncert_shift, uncert_grad,
             UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
             UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std
             )

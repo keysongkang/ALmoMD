@@ -336,7 +336,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria, self.NumAtoms
+                self.index, self.crtria_cnvg, self.NumAtoms
             )
             kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)
@@ -474,7 +474,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria, self.NumAtoms
+                self.index, self.crtria_cnvg, self.NumAtoms
             )
             kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)

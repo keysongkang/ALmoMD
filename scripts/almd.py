@@ -72,6 +72,16 @@ class almd:
         # uncert_type: str
         #     Type of uncertainty; 'absolute', 'relative'
         self.uncert_type = 'absolute'
+        # uncert_shift: float
+        #     Shifting of erf function
+        #     (Value is relative to standard deviation)
+        #     The default is set to a probability of 0.2 at the average
+        self.uncert_shift = 0.2661
+        # uncert_grad: float
+        #     Gradient of erf function
+        #     (Value is relative to standard deviation)
+        #     The default is set to a probability of 0.2 at the average
+        self.uncert_grad = 1.0
         # output_format: str
         #     Type of FHI-vibes output to be read
         self.output_format = 'trajectory.son'
@@ -383,7 +393,7 @@ class almd:
                 MD_index, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
                 self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.ntotal, self.nstep,
                 self.nmodel, calc_MLIP, E_ref, self.steps_init, self.NumAtoms, self.kB, struc_step,
-                self.al_type, self.uncert_type
+                self.al_type, self.uncert_type, self.uncert_shift, self.uncert_grad
             )
         # For random sampling,
         elif self.calc_type == 'random':

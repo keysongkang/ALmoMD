@@ -195,7 +195,7 @@ def MLMD_main(
     MD_index, index, ensemble, temperature, pressure, timestep, friction,
     compressibility, taut, taup, mask, loginterval, ntotal, nstep, nmodel,
     calc_MLIP, E_ref, steps_init, NumAtoms, kB,
-    struc_step, al_type, uncert_type
+    struc_step, al_type, uncert_type, uncert_shift, uncert_grad
 ):
     """Function [MLMD_main]
     Initiate the Molecular Dynamics with trained model
@@ -249,8 +249,14 @@ def MLMD_main(
         to get averaged uncertainties and energies
     al_type: str
         Type of active learning: 'energy', 'force', 'force_max'
-    Uncert_type: str
+    uncert_type: str
         Type of uncertainty; 'absolute', 'relative'
+    uncert_shift: float
+        Shifting of erf function
+        (Value is relative to standard deviation)
+    uncert_grad: float
+        Gradient of erf function
+        (Value is relative to standard deviation)
     """
 
     # Extract MPI infos
@@ -319,7 +325,8 @@ def MLMD_main(
         
         # Get a criteria probability from uncertainty and energy informations
         criteria = get_criteria_prob(
-            al_type, uncert_type, kB, NumAtoms, temperature,
+            al_type, uncert_type, 
+            kB, NumAtoms, temperature, uncert_shift, uncert_grad,
             Epot_step, criteria_Epot_step_avg, criteria_Epot_step_std,
             UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
             UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std,

@@ -442,7 +442,8 @@ def uncert_strconvter(value):
     
     
 def get_criteria_prob(
-    al_type, uncert_type, kB, NumAtoms, temperature, 
+    al_type, uncert_type, uncert_shift, uncert_grad,
+    kB, NumAtoms, temperature, 
     Epot_step, criteria_Epot_step_avg, criteria_Epot_step_std,
     UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
     UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std,
@@ -463,6 +464,12 @@ def get_criteria_prob(
         Type of active learning; 'energy', 'force', 'force_max'
     uncert_type: str
         Type of uncertainty; 'absolute', 'relative'
+    uncert_shift: float
+        Shifting of erf function
+        (Value is relative to standard deviation)
+    uncert_grad: float
+        Gradient of erf function
+        (Value is relative to standard deviation)
     kB: float
         Boltzmann constant in units of eV/K
     NumAtoms: int
@@ -571,7 +578,7 @@ def get_criteria_prob(
 
 
 def get_criteria_uncert(
-    uncert_type,
+    uncert_type, uncert_shift, uncert_grad,
     UncertAbs, criteria_UncertAbs_avg, criteria_UncertAbs_std,
     UncertRel, criteria_UncertRel_avg, criteria_UncertRel_std
 ):
@@ -585,7 +592,12 @@ def get_criteria_uncert(
     
     uncert_type: str
         Type of uncertainty; 'absolute', 'relative'
-
+    uncert_shift: float
+        Shifting of erf function
+        (Value is relative to standard deviation)
+    uncert_grad: float
+        Gradient of erf function
+        (Value is relative to standard deviation)
     UncertAbs: float or str
         Absolute uncertainty at current step
     criteria_UncertAbs_avg: float
@@ -610,8 +622,8 @@ def get_criteria_uncert(
             1 + special.erf(
                 (
                     (UncertRel - criteria_UncertRel_avg) -
-                    0.2661 * criteria_UncertRel_std
-                ) / (criteria_UncertRel_std * np.sqrt(2 * 0.1))
+                    uncert_shift * criteria_UncertRel_std
+                ) / (uncert_grad * criteria_UncertRel_std * np.sqrt(2 * 0.1))
             )
         )
     elif uncert_type == 'absolute':
@@ -619,8 +631,8 @@ def get_criteria_uncert(
             1 + special.erf(
                 (
                     (UncertAbs - criteria_UncertAbs_avg) -
-                    0.2661 * criteria_UncertAbs_std
-                ) / (criteria_UncertAbs_std * np.sqrt(2 * 0.1))
+                    uncert_shift * criteria_UncertAbs_std
+                ) / (uncert_grad * criteria_UncertAbs_std * np.sqrt(2 * 0.1))
             )
         )
 

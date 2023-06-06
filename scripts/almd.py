@@ -146,10 +146,6 @@ class almd:
         # steps: int
         #     A target simulation timesteps
         self.steps = 500
-        # MD_input: str
-        #     A file name of the input file for initial structure
-        #     'geometry.in', 'geometry.in.next_step', 'trajectory.son' work
-        self.MD_input = 'trajectory.son'
         # supercell_init: 2D array of floats
         #     Tensor shape of supercell for runMD calculations
         #     compared to primitive cell.
@@ -821,16 +817,18 @@ class almd:
         # Initialization of a termination signal
         signal = 0
 
-        mpi_print(f'[runMD]\tGet the initial configuration from {self.MD_input}', rank)
-        if self.MD_input == 'start.in':
+        mpi_print(f'[runMD]\tCheck the initial configuration', rank)
+        if os.path.exists('start.in'):
+            mpi_print(f'[runMD]\tFound the start.in file. MD starts from this.', rank)
             # Read the ground state structure with the primitive cell
-            struc_init = atoms_read(self.MD_input, format='aims')
+            struc_init = atoms_read('start.in', format='aims')
             # Make it supercell
             struc = make_supercell(struc_init, self.supercell_init)
             MaxwellBoltzmannDistribution(struc, temperature_K=self.temperature, force_temp=True)
-        elif self.MD_input == 'trajectory.son':
+        else:
+            mpi_print(f'[runMD]\tMD starts from the last entry of the trajectory.son file', rank)
             # Read all structural configurations in SON file
-            metadata, data = son.load(self.MD_input)
+            metadata, data = son.load('trajectory.son')
             atom_numbers = [
             atomic_numbers[items[1]]
             for items in data[-1]['atoms']['symbols']
@@ -844,9 +842,6 @@ class almd:
                 )
             struc_son.set_velocities(data[-1]['atoms']['velocities'])
             struc = make_supercell(struc_son, self.supercell_init)
-        else:
-            mpi_print(f'[runMD]\tYou need to assign MD_input appropriately.', rank)
-            signal = 1
         comm.Barrier()
 
         ## Prepare the ground state structure
@@ -912,6 +907,7 @@ class almd:
         """Function [run_dft_cnvg]
         Implement the convergence test with trained models
         """
+        from datetime import datetime
 
         # Extract MPI infos
         comm = MPI.COMM_WORLD
@@ -1070,15 +1066,15 @@ class almd:
         np.savez('F_matrix_prd', E=prd_F_matrix)
         mpi_print(f'[cnvg]\tSave matrices: E_matrix and F_matrix', rank)
 
-        prd_Eavg_matrix = np.empty([nmodel, nstep])
-        prd_Estd_matrix = np.empty([nmodel, nstep])
-        prd_Favg_matrix = np.empty([nmodel, nstep])
-        prd_Fstd_matrix = np.empty([nmodel, nstep])
+        prd_Eavg_matrix = np.empty([self.nmodel, self.nstep])
+        prd_Estd_matrix = np.empty([self.nmodel, self.nstep])
+        prd_Favg_matrix = np.empty([self.nmodel, self.nstep])
+        prd_Fstd_matrix = np.empty([self.nmodel, self.nstep])
 
         # Here, get the convergence-testing results averaging over different number of matrix elements
         mpi_print(f'[cnvg]\tGet average with different ranges', rank)
-        for index_nmodel in range(nmodel):
-            for index_nstep in range(nstep):
+        for index_nmodel in range(self.nmodel):
+            for index_nstep in range(self.nstep):
                 prd_Eavg_matrix[index_nmodel, index_nstep] = np.average(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
                 prd_Estd_matrix[index_nmodel, index_nstep] = np.std(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
 

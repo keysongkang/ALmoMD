@@ -88,18 +88,25 @@ def MLMD_initial(
     if kndex == 0:
         # Even when it is very first iterative step,
         if index == 0:
-            # Read the trajectory file from 'trajectory_train.son'
-            metadata, traj = son.load('trajectory_train.son')
-            # Take the last configuration from 'trajectory_train.son'
-            traj_ther = traj[-1]
-            # Convert 'trajectory.son' format to ASE atoms
-            struc_step = Atoms(
-                [atomic_numbers[item[1]] for item in traj[-1]['atoms']['symbols'] for index in range(item[0])],
-                positions = traj[-1]['atoms']['positions'],
-                cell = traj[-1]['atoms']['cell'],
-                pbc = traj[-1]['atoms']['pbc'],
-                velocities = traj[-1]['atoms']['velocities']
-            )
+            if os.path.exists('start.in'):
+                # Read the ground state structure with the primitive cell
+                struc_init = atoms_read(self.MD_input, format='aims')
+                # Make it supercell
+                struc_step = make_supercell(struc_init, self.supercell_init)
+                MaxwellBoltzmannDistribution(struc, temperature_K=self.temperature, force_temp=True)
+            else:
+                # Read the trajectory file from 'trajectory_train.son'
+                metadata, traj = son.load('trajectory_train.son')
+                # Take the last configuration from 'trajectory_train.son'
+                traj_ther = traj[-1]
+                # Convert 'trajectory.son' format to ASE atoms
+                struc_step = Atoms(
+                    [atomic_numbers[item[1]] for item in traj[-1]['atoms']['symbols'] for index in range(item[0])],
+                    positions = traj[-1]['atoms']['positions'],
+                    cell = traj[-1]['atoms']['cell'],
+                    pbc = traj[-1]['atoms']['pbc'],
+                    velocities = traj[-1]['atoms']['velocities']
+                )
         else: # When it has the pervious step,
             # Name of the pervious uncertainty file
             uncert_file = f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index-1}.txt'

@@ -111,6 +111,9 @@ class almd:
         # num_calc: int
         #     The number of job scripts for DFT calculations
         self.num_calc = 20
+        # random_index: int
+        #     The number of iteration for DFT random sampling
+        self.random_index = 1
 
         ##[Molecular dynamics setting]
         # ensemble: str
@@ -881,7 +884,7 @@ class almd:
         # Get averaged energy from trained models
         Epot_step_avg =\
         np.average(np.array([i for items in Epot_step for i in items]), axis=0)
-        mpi_print(f'[runMD]\tGet the potential energy of the reference structure: {self.Epot_step_avg}', rank)
+        mpi_print(f'[runMD]\tGet the potential energy of the reference structure: {Epot_step_avg}', rank)
 
         # if the number of trained model is not enough, terminate it
         if signal == 1:
@@ -986,8 +989,11 @@ class almd:
                         prd_F.append(struc.get_forces())
                         mpi_print(f'\t\t\tTesting data:{idx}', rank)
                     zndex += 1
-                    data_E = np.ndarray.tolist(data_test['E'])
-                    data_F = np.ndarray.tolist(data_test['F'])
+
+                    prd_F = np.array(prd_F)
+                    prd_F_avg = np.average(prd_F, axis=0)
+                    prd_F_norm = np.linalg.norm(prd_F - prd_F_avg, axis=1)
+                    prd_F_norm_std = np.sqrt(np.average(prd_F_norm ** 2, axis=0))
 
                     R2_E_total.append({f'{index_nmodel}_{index_nstep}': r2_score(data_test['E'], prd_E)})
                     MAE_E_total.append({f'{index_nmodel}_{index_nstep}': mean_absolute_error(data_test['E'], prd_E)})
@@ -995,7 +1001,7 @@ class almd:
 
                     R2_F_total.append({f'{index_nmodel}_{index_nstep}': r2_score(np.array(data_test['F']).flatten(), np.array(prd_F).flatten())})
                     MAE_F_total.append({f'{index_nmodel}_{index_nstep}': mean_absolute_error(np.array(data_test['F']).flatten(), np.array(prd_F).flatten())})
-                    prd_F_total.append({f'{index_nmodel}_{index_nstep}': np.average(np.array(prd_F).flatten())})
+                    prd_F_total.append({f'{index_nmodel}_{index_nstep}': np.average(prd_F_norm_std)})
                     mpi_print(f'\t\tCollect the prediction: [{index_nmodel},{index_nstep}]', rank=0)
 
         R2_E_total = comm.allgather(R2_E_total)
@@ -1066,25 +1072,25 @@ class almd:
         np.savez('F_matrix_prd', E=prd_F_matrix)
         mpi_print(f'[cnvg]\tSave matrices: E_matrix and F_matrix', rank)
 
-        prd_Eavg_matrix = np.empty([self.nmodel, self.nstep])
-        prd_Estd_matrix = np.empty([self.nmodel, self.nstep])
-        prd_Favg_matrix = np.empty([self.nmodel, self.nstep])
-        prd_Fstd_matrix = np.empty([self.nmodel, self.nstep])
+        # prd_Eavg_matrix = np.empty([self.nmodel, self.nstep])
+        # prd_Estd_matrix = np.empty([self.nmodel, self.nstep])
+        # prd_Favg_matrix = np.empty([self.nmodel, self.nstep])
+        # prd_Fstd_matrix = np.empty([self.nmodel, self.nstep])
 
-        # Here, get the convergence-testing results averaging over different number of matrix elements
-        mpi_print(f'[cnvg]\tGet average with different ranges', rank)
-        for index_nmodel in range(self.nmodel):
-            for index_nstep in range(self.nstep):
-                prd_Eavg_matrix[index_nmodel, index_nstep] = np.average(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
-                prd_Estd_matrix[index_nmodel, index_nstep] = np.std(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
+        # # Here, get the convergence-testing results averaging over different number of matrix elements
+        # mpi_print(f'[cnvg]\tGet average with different ranges', rank)
+        # for index_nmodel in range(self.nmodel):
+        #     for index_nstep in range(self.nstep):
+        #         prd_Eavg_matrix[index_nmodel, index_nstep] = np.average(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
+        #         prd_Estd_matrix[index_nmodel, index_nstep] = np.std(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
 
-                prd_Favg_matrix[index_nmodel, index_nstep] = np.average(prd_F_matrix[:(index_nmodel+1),:(index_nstep+1)])
-                prd_Fstd_matrix[index_nmodel, index_nstep] = np.std(prd_F_matrix[:(index_nmodel+1),:(index_nstep+1)])
+        #         prd_Favg_matrix[index_nmodel, index_nstep] = np.average(prd_F_matrix[:(index_nmodel+1),:(index_nstep+1)])
+        #         prd_Fstd_matrix[index_nmodel, index_nstep] = np.std(prd_F_matrix[:(index_nmodel+1),:(index_nstep+1)])
 
-        np.savez('E_converge_avg', E=prd_Eavg_matrix)
-        np.savez('E_converge_std', E=prd_Estd_matrix)
-        np.savez('F_converge_avg', E=prd_Favg_matrix)
-        np.savez('F_converge_std', E=prd_Fstd_matrix)
+        # np.savez('E_converge_avg', E=prd_Eavg_matrix)
+        # np.savez('E_converge_std', E=prd_Estd_matrix)
+        # np.savez('F_converge_avg', E=prd_Favg_matrix)
+        # np.savez('F_converge_std', E=prd_Fstd_matrix)
 
-        mpi_print(f'[cnvg]\tSave convergence results: E_converge and F_converge', rank)
+        # mpi_print(f'[cnvg]\tSave convergence results: E_converge and F_converge', rank)
 

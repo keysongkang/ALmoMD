@@ -12,7 +12,7 @@ from libs.lib_termination import get_testerror
 
 def check_progress(
     temperature, pressure, ntotal, ntrain, nval,
-    nstep, nmodel, steps_init, index, crtria, NumAtoms
+    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type
 ):
     """Function [check_progress]
     Check the progress of previous calculations.
@@ -45,6 +45,8 @@ def check_progress(
         Convergence criteria
     NumAtoms: int
         The number of atoms in the simulation cell
+    calc_type: str
+        Type of sampling; 'active' (active learning), 'random'
 
     Returns:
 
@@ -56,6 +58,8 @@ def check_progress(
         The index of AL interactive step
     signal: int
         The termination signal
+    calc_type: str
+        Type of sampling; 'active' (active learning), 'random'
     """
 
     from mpi4py import MPI
@@ -85,7 +89,7 @@ def check_progress(
                 )
                 outputfile.close()
             # Get the test errors using data-test.npz
-            get_testerror(temperature, pressure, index, nstep, nmodel)
+            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
         else: # When there is a 'result.txt',
             # Check the contents in 'result.txt' before recording
             if os.path.exists('result.txt'):
@@ -98,7 +102,7 @@ def check_progress(
             # Print the test errors only for first calculation
             if get_criteria_index == 0:
                 # Get the test errors using data-test.npz
-                get_testerror(temperature, pressure, index, nstep, nmodel)
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
     
     # Go through the while loop until a breaking command
     while True:
@@ -148,7 +152,7 @@ def check_progress(
                         if all(gen_check) == True:
                             # Get the test errors using data-test.npz
                             index += 1
-                            get_testerror(temperature, pressure, index, nstep, nmodel)
+                            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
                         else:
                             index += 1
                             break
@@ -177,6 +181,121 @@ def check_progress(
             break
             
     return kndex, MD_index, index, signal
+
+
+
+def check_progress_rand(
+    temperature, pressure, ntotal, ntrain, nval,
+    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type
+):
+    """Function [check_progress_rand]
+    Check the progress of previous calculations.
+    Prepare the recording files if necessary.
+
+    Parameters:
+
+    temperature: float
+        The desired temperature in units of Kelvin (K)
+    pressure: float
+        The desired pressure in units of eV/Angstrom**3
+
+    ntotal: int
+        Total number of added training and valdiation data for all subsamplings for each iteractive step
+    ntrain: int
+        The number of added training data for each iterative step
+    nval: int
+        The number of added validating data for each iterative step
+
+    nstep: int
+        The number of subsampling sets
+    nmodel: int
+        The number of ensemble model sets with different initialization
+    steps_init: int
+        Initialize MD steps to get averaged uncertainties and energies
+    index: int
+        The index of AL interactive step
+
+    crtria: float
+        Convergence criteria
+    NumAtoms: int
+        The number of atoms in the simulation cell
+    calc_type: str
+        Type of sampling; 'active' (active learning), 'random'
+
+    Returns:
+
+    kndex: int
+        The index for MLMD_init
+    MD_index: int
+        The index for MLMD_main
+    index: int
+        The index of AL interactive step
+    signal: int
+        The termination signal
+    calc_type: str
+        Type of sampling; 'active' (active learning), 'random'
+    """
+
+    from mpi4py import MPI
+
+    # Extract MPI infos
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    # Initialization
+    kndex = 0
+    signal = 0
+    
+    if index == 0: # When calculation is just initiated
+        # When there is no 'result.txt'
+        if not os.path.exists('result.txt'):
+            if rank == 0:
+                # Open a recording 'result.txt' file
+                outputfile = open('result.txt', 'w')
+                outputfile.write(
+                    'Temperature[K]\tIteration\t'
+                    + 'TestError_E\tTestError_F\n'
+                )
+                outputfile.close()
+            # Get the test errors using data-test.npz
+            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+        else: # When there is a 'result.txt',
+            # Check the contents in 'result.txt' before recording
+            if os.path.exists('result.txt'):
+                result_data = \
+                pd.read_csv('result.txt', index_col=False, delimiter='\t')
+                index = len(result_data.loc[:,'TestError_F']);
+            else:
+                index = -1
+
+            # Print the test errors only for first calculation
+            if index == 0:
+                # Get the test errors using data-test.npz
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+    
+    # Go through the while loop until a breaking command
+    while True:
+        # Check the FHI-vibes calculations
+        aims_check = ['Have a nice day.' in open(f'CALC/{temperature}K-{pressure}bar_{index+1}/{jndex}/aims/calculations/aims.out').read()\
+                       if os.path.exists(f'CALC/{temperature}K-{pressure}bar_{index+1}/{jndex}/aims/calculations/aims.out') else False for jndex in range(nstep*(ntrain+nval))];
+        
+        if all(aims_check) == True: # If all FHI-vibes calcs are finished,
+            gen_check = [
+            os.path.exists(f'MODEL/{temperature}K-{pressure}bar_{index+1}/deployed-model_{index_nmodel}_{index_nstep}.pth')
+            for index_nmodel in range(nmodel) for index_nstep in range(nstep)
+            ]
+
+            if all(gen_check) == True:
+                # Get the test errors using data-test.npz
+                index += 1
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+            else:
+                index += 1
+                break
+        else:
+            break
+    return kndex, index, signal
+
 
 
 def check_index(index):

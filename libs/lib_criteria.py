@@ -90,7 +90,7 @@ def eval_uncert(
             '----          ',
             np.ndarray.max(F_step_norm_std),
             np.ndarray.max(
-                np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std) if avg > 0.05])
+                np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std) if avg > 0.0001])
             ),
             Epot_step_avg
         )
@@ -109,7 +109,7 @@ def eval_uncert(
             Epot_step_std / Epot_step_avg,
             np.ndarray.max(F_step_norm_std),
             np.ndarray.max(
-                np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std) if avg > 0.05])
+                np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std) if avg > 0.0001])
             ),
             Epot_step_avg
         )
@@ -229,9 +229,9 @@ def eval_uncert_F(
     # Get the average and standard deviation of the norm of predicted forces
     F_step_filtered = np.array([i for items in F_step for i in items])
     F_step_avg = np.average(F_step_filtered, axis=0)
-    F_step_norm = np.linalg.norm(F_step_filtered - F_step_avg, axis=1)
+    F_step_norm = np.array([[np.linalg.norm(Fcomp) for Fcomp in Ftems] for Ftems in F_step_filtered - F_step_avg])
     F_step_norm_std = np.sqrt(np.average(F_step_norm ** 2, axis=0))
-    F_step_norm_avg = np.linalg.norm(F_step_avg, axis=0)
+    F_step_norm_avg = np.linalg.norm(F_step_avg, axis=1)
     
     return F_step_norm_avg, F_step_norm_std
 
@@ -399,6 +399,7 @@ def get_result(temperature, pressure, index, steps_init):
                     uncert_strconvter(criteria_UncertAbs_F_avg_all) + '\n'
                 )
 
+
     
 def uncert_average(itemlist):
     """Function [uncert_average]
@@ -529,16 +530,16 @@ def get_criteria_prob(
             UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
             UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std
             )
-    elif al_type == 'force':
+    elif al_type == 'force' or al_type == 'force_max':
         criteria_Uncert_F = get_criteria_uncert(
             uncert_type, uncert_shift, uncert_grad,
             UncertAbs_F, criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
             UncertRel_F, criteria_UncertRel_F_avg, criteria_UncertRel_F_std
             )
-    elif al_type == 'force_max':
-        # Follow the crietria proposed
-        # in Y. Zhang et al. Comput. Phys. Commun. 253. 107206 (2020)
-        criteria_Uncert_F = 1 if 0.05 < UncertAbs_F < 0.20 else 0
+    # elif al_type == 'force_max':
+    #     # Follow the crietria proposed
+    #     # in Y. Zhang et al. Comput. Phys. Commun. 253. 107206 (2020)
+    #     criteria_Uncert_F = 1 if 0.05 < UncertAbs_F < 0.20 else 0
     elif al_type == 'EandFmax' or al_type == 'EorFmax': ##!! Need to be fixed.
         criteria_Uncert_E = get_criteria_uncert(
             uncert_type, uncert_shift, uncert_grad,

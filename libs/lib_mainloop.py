@@ -332,8 +332,8 @@ def MLMD_main(
         
         # Get a criteria probability from uncertainty and energy informations
         criteria = get_criteria_prob(
-            al_type, uncert_type, 
-            kB, NumAtoms, temperature, uncert_shift, uncert_grad,
+            al_type, uncert_type, uncert_shift, uncert_grad,
+            kB, NumAtoms, temperature,
             Epot_step, criteria_Epot_step_avg, criteria_Epot_step_std,
             UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
             UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std,
@@ -436,8 +436,8 @@ def traj_fromRealE(temperature, pressure, E_ref, index):
     
 def MLMD_random(
     kndex, index, ensemble, temperature, pressure, timestep, friction,
-    compressibility, taut, taup, mask, loginterval, steps_random, nstep,
-    nmodel, calculator, E_ref
+    compressibility, taut, taup, mask, loginterval, steps_random, al_type,
+    nstep, nmodel, calculator, E_ref
 ):
     """Function [MLMD_random]
     Initiate the Molecular Dynamics with trained model
@@ -533,8 +533,8 @@ def MLMD_random(
     # Implement MD calculation as long as steps_random
     if rank == 0:
         check_mkdir('TRAJ')
-    logfile      = f'TRAJ-{temperature}K-{pressure}bar_{index+1}.log'
-    trajectory   = f'TRAJ-{temperature}K-{pressure}bar_{index+1}.traj'
+    logfile      = f'TRAJ/traj-{temperature}K-{pressure}bar_{index+1}.log'
+    trajectory   = f'TRAJ/traj-{temperature}K-{pressure}bar_{index+1}.traj'
     runMD(
         struc=struc_step, ensemble=ensemble, temperature=temperature,
         pressure=pressure, timestep=timestep, friction=friction,
@@ -544,14 +544,6 @@ def MLMD_random(
         logfile=logfile, trajectory=trajectory, calculator=calculator,
         signal_uncert=False, signal_append=False
     )
-    
-    # Recond the index of the iterative steps
-    if rank == 0:
-        criteriafile = open('result.txt', 'a')
-        criteriafile.write(
-            f'{temperature}          \t{index}          \n'
-        )
-        criteriafile.close()
     
     mpi_print(
         f'[MLMD_rand] The MLMD with the random sampling of the iteration {index}'

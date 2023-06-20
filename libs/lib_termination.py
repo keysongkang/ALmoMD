@@ -63,7 +63,7 @@ def termination(temperature, pressure, crtria_cnvg, al_type):
     return signal
 
 
-def get_testerror(temperature, pressure, index, nstep, nmodel):
+def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type):
     """Function [get_testerror]
     Check the test error using data-test.npz.
 
@@ -79,6 +79,8 @@ def get_testerror(temperature, pressure, index, nstep, nmodel):
         The number of subsampling sets
     nmodel: int
         The number of ensemble model sets with different initialization
+    calc_type: str
+        Type of sampling; 'active' (active learning), 'random'
     """
     from ase import Atoms
     from mpi4py import MPI
@@ -165,11 +167,23 @@ def get_testerror(temperature, pressure, index, nstep, nmodel):
     E_MAE = mean_absolute_error(E_real, E_pred)
     F_MAE = mean_absolute_error(F_real, F_pred)
 
-    if rank == 0:
-        outputfile = open(f'result.txt', 'a')
-        outputfile.write(
-            f'{temperature}      \t{index}             \t' +
-            uncert_strconvter(E_MAE) + '\t' +
-            uncert_strconvter(F_MAE) + '\t'
-            )
-        outputfile.close()
+    if calc_type == 'active':
+        if rank == 0:
+            outputfile = open(f'result.txt', 'a')
+            outputfile.write(
+                f'{temperature}      \t{index}             \t' +
+                uncert_strconvter(E_MAE) + '\t' +
+                uncert_strconvter(F_MAE) + '\t'
+                )
+            outputfile.close()
+    elif calc_type == 'random':
+        if rank == 0:
+            outputfile = open(f'result.txt', 'a')
+            outputfile.write(
+                f'{temperature}      \t{index}             \t' +
+                uncert_strconvter(E_MAE) + '\t' +
+                uncert_strconvter(F_MAE) + '\n'
+                )
+            outputfile.close()
+    else:
+        mpi_print('You need to assign a clac_type', rank)

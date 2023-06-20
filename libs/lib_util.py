@@ -267,7 +267,7 @@ def read_input_file(file_path):
                 # Perform type conversions for specific variables
                 if name in ['supercell', 'supercell_init', 'mask']:
                     value = eval(value)
-                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs']:
+                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad']:
                     value = float(value)
                 elif name in [
                 'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'temperature', 'taut',

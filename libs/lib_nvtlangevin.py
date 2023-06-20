@@ -90,9 +90,15 @@ def NVTLangevin(
                 file_log = open(logfile, 'w')
                 file_log.write(
                     'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
-                    + 'Temperature[K]\tUncertRel_E\tUncertAbs_E\t'
-                    + 'UncertRel_F\tUncertAbs_F\n'
-                )
+                    + 'Temperature[K]'
+                    )
+                if signal_uncert:
+                    file_log.write(
+                        '\tUncertRel_E\tUncertAbs_E\t'
+                        + 'UncertRel_F\tUncertAbs_F\n'
+                        )
+                else:
+                    file_log.write('\n')
                 file_log.close()
         
             # Get MD information at the current step

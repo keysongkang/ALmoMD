@@ -16,7 +16,7 @@ from libs.lib_util import check_mkdir, job_dependency, read_input_file, mpi_prin
 from libs.lib_npz import generate_npz_DFT_init, generate_npz_DFT, generate_npz_DFT_rand_init, generate_npz_DFT_rand
 from libs.lib_train import get_train_job, execute_train_job
 from libs.lib_dft import run_DFT
-from libs.lib_progress    import check_progress, check_index
+from libs.lib_progress    import check_progress, check_progress_rand, check_index
 from libs.lib_mainloop    import MLMD_initial, MLMD_main, MLMD_random
 from libs.lib_criteria    import get_result, get_criteria
 from libs.lib_termination import termination
@@ -324,6 +324,7 @@ class almd:
         self.index = comm.bcast(self.index, root=0)
         comm.Barrier()
 
+        mpi_print(f'[cont]\tProgress check and get validation errors', rank)
         ## For active learning sampling,
         if self.calc_type == 'active':
             # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
@@ -335,22 +336,28 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type
             )
             kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
-            self.temperature = comm.bcast(self.temperature, root=0)
             signal = comm.bcast(signal, root=0)
         ## For random sampling,
         elif self.calc_type == 'random':
-            # Here, just resume the MLMD for a specific index if a previous one exists
-            kndex = 0
-            MD_index = 0
-            signal = 0   ##!! Termination check should be added here
-            if rank == 0:
-                self.index = check_index(self.index)
+            # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
+            # to resume the MLMD calculation if a previous one exists.
+            kndex, signal = None, None
+
+            # Open the uncertainty output file
+            kndex, self.index, signal = check_progress_rand(
+                self.temperature, self.pressure,
+                self.ntotal, self.ntrain, self.nval,
+                self.nstep, self.nmodel, self.steps_init,
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type
+            )
+            kndex = comm.bcast(kndex, root=0)
             self.index = comm.bcast(self.index, root=0)
+            signal = comm.bcast(signal, root=0)
         comm.Barrier()
 
         # If we get the signal from check_progress, the script will be terminated.
@@ -405,20 +412,21 @@ class almd:
             # Run MLMD calculation with random sampling
             struc_step = MLMD_random(
                 kndex, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
-                self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.steps_random,
-                self.nstep, self.nmodel, calc_MLIP, E_ref
+                self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.steps_random*self.loginterval,
+                self.al_type, self.nstep, self.nmodel, calc_MLIP, E_ref
             )
         else:
             raise ValueError("[cont]\tInvalid calc_type. Supported values are 'active' and 'random'.")
         comm.Barrier()
 
-        mpi_print(f'[cont]\tRecord the results: result.txt', rank)
-        # Record uncertainty results at the current step
-        get_result(self.temperature, self.pressure, self.index, self.steps_init)
+        if self.calc_type == 'active':
+            mpi_print(f'[cont]\tRecord the results: result.txt', rank)
+            # Record uncertainty results at the current step
+            get_result(self.temperature, self.pressure, self.index, self.steps_init)
         comm.Barrier()
 
         mpi_print(f'[cont]\tSubmit the DFT calculations for sampled configurations', rank)
-        # Submit job-scripts for DFT calculations with sampled configurations and job-dependence for run_dft_gen
+        # Submit job-scripts for DFT calculationsions with sampled configurations and job-dependence for run_dft_gen
         if rank == 0:
             run_DFT(self.temperature, self.pressure, self.index, (self.ntrain + self.nval) * self.nstep, self.num_calc)
         comm.Barrier()
@@ -428,7 +436,7 @@ class almd:
             job_dependency('gen', self.num_calc)
         comm.Barrier()
 
-        mpi_print(f'[cont]\t!! Finish the MD investigation: Iteration {index}', rank)
+        mpi_print(f'[cont]\t!! Finish the MD investigation: Iteration {self.index}', rank)
 
 
     def run_dft_gen(self):
@@ -473,7 +481,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type
             )
             kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)
@@ -482,14 +490,20 @@ class almd:
             signal = comm.bcast(signal, root=0)
         ## For random sampling,
         elif self.calc_type == 'random':
-            # Here, just resume the MLMD for a specific index if a previous one exists
-            kndex = 0
-            MD_index = 0
-            signal = 0
-            total_index = None
-            if rank == 0:
-                self.index = check_index(self.index)
+            # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
+            # to resume the MLMD calculation if a previous one exists.
+            kndex, signal = None, None
+
+            # Open the uncertainty output file
+            kndex, self.index, signal = check_progress_rand(
+                self.temperature, self.pressure,
+                self.ntotal, self.ntrain, self.nval,
+                self.nstep, self.nmodel, self.steps_init,
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type
+            )
+            kndex = comm.bcast(kndex, root=0)
             self.index = comm.bcast(self.index, root=0)
+            signal = comm.bcast(signal, root=0)
         else:
             single_print('You need to assign calc_type.')
 
@@ -535,7 +549,7 @@ class almd:
             job_dependency('cont', self.nmodel)
         comm.Barrier()
 
-        mpi_print(f'[gen]\t!! Finish the training data generation: Iteration {index}', rank)
+        mpi_print(f'[gen]\t!! Finish the training data generation: Iteration {self.index}', rank)
 
 
 
@@ -645,157 +659,158 @@ class almd:
         mpi_print(f'[test]\tRead the testing data: data-test.npz', rank)
         comm.Barrier()
 
-        # Set the path to folders storing the training data for NequIP
-        workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{self.test_index}'
-        # Initialization of a termination signal
-        signal = 0
+        for test_idx in range(self.test_index):
+            # Set the path to folders storing the training data for NequIP
+            workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{test_idx}'
+            # Initialization of a termination signal
+            signal = 0
 
-        mpi_print(f'[test]\tFind the trained models: {workpath}', rank)
-        # Load the trained models as calculators
-        calc_MLIP = []
-        for index_nmodel in range(self.nmodel):
-            for index_nstep in range(self.nstep):
-                if (index_nmodel * self.nstep + index_nstep) % size == rank:
-                    dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-                    if os.path.exists(f'{workpath}/{dply_model}'):
-                        mpi_print(f'\t\tFound the deployed model: {dply_model}', rank)
-                        calc_MLIP.append(
-                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
-                        )
-                    else:
-                        # If there is no model, turn on the termination signal
-                        mpi_print(f'\t\tCannot find the model: {dply_model}', rank)
-                        signal = 1
-                        signal = comm.bcast(signal, root=rank)
-
-        # Check the termination signal
-        if signal == 1:
-            mpi_print('[test]\tSome training processes are not finished.', rank)
-            sys.exit()
-        comm.Barrier()
-
-        # Open the file to store the results
-        if rank == 0:
-            outputfile = open(f'result-test_{self.test_index}_energy.txt', 'w')
-            outputfile.write('index   \tUncertAbs\tRealErrorAbs\tRealE\tPredictE\n')
-            outputfile.close()
-
-        comm.Barrier()
-        mpi_print(f'[test]\tGo through all configurations in the testing data ...', rank)
-        # Go through all configurations in the testing data
-        config_idx = 1
-        for id_E, id_F, id_R, id_z, id_CELL, id_PBC in zip(
-            data_test['E'], data_test['F'], data_test['R'],
-            data_test['z'], data_test['CELL'], data_test['PBC']
-            ):
-            # Create the corresponding ASE atoms
-            struc = Atoms(id_z, positions=id_R, cell=id_CELL, pbc=id_PBC)
-            # Prepare the empty lists for predicted energy and force
-            prd_E = []
-            prd_F = []
-            zndex = 0
-
-            # Go through all trained models
+            mpi_print(f'[test]\tFind the trained models: {workpath}', rank)
+            # Load the trained models as calculators
+            calc_MLIP = []
             for index_nmodel in range(self.nmodel):
                 for index_nstep in range(self.nstep):
                     if (index_nmodel * self.nstep + index_nstep) % size == rank:
-                        struc.calc = calc_MLIP[zndex]
-                        prd_E.append(struc.get_potential_energy())
-                        prd_F.append(struc.get_forces())
-                        zndex += 1
+                        dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
+                        if os.path.exists(f'{workpath}/{dply_model}'):
+                            mpi_print(f'\t\tFound the deployed model: {dply_model}', rank)
+                            calc_MLIP.append(
+                                nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
+                            )
+                        else:
+                            # If there is no model, turn on the termination signal
+                            mpi_print(f'\t\tCannot find the model: {dply_model}', rank)
+                            signal = 1
+                            signal = comm.bcast(signal, root=rank)
 
-            # Get average and standard deviation (Uncertainty) of predicted energies from various models
-            prd_E = comm.allgather(prd_E)
-            prd_E_avg = np.average([jtem for item in prd_E if len(item) != 0 for jtem in item], axis=0)
-            prd_E_std = np.std([jtem for item in prd_E if len(item) != 0 for jtem in item], axis=0)
+            # Check the termination signal
+            if signal == 1:
+                mpi_print('[test]\tSome training processes are not finished.', rank)
+                sys.exit()
+            comm.Barrier()
 
-            # Get the real error
-            realerror_E = np.absolute(prd_E_avg - id_E)
-
-            # Get average of predicted forces from various models
-            prd_F = comm.allgather(prd_F)
-            prd_F_avg = np.average([jtem for item in prd_F if len(item) != 0 for jtem in item], axis=0)
-
-            # Save all energy information
+            # Open the file to store the results
             if rank == 0:
-                trajfile = open(f'result-test_{self.test_index}_energy.txt', 'a')
-                trajfile.write(
-                    str(config_idx) + '          \t' +
-                    '{:.5e}'.format(Decimal(str(prd_E_std))) + '\t' +       # Standard deviation (Uncertainty)
-                    '{:.5e}'.format(Decimal(str(realerror_E))) + '\t' +     # Real error
-                    '{:.10e}'.format(Decimal(str(id_E))) + '\t' +           # Real energy
-                    '{:.10e}'.format(Decimal(str(prd_E_avg))) + '\n'        # Predicted energy
-                )
-                trajfile.close()
-
-            # Save all force information
-            if rank == 0:
-                trajfile = open(f'result-test_{self.test_index}_force.txt', 'a')
-                for kndex in range(len(prd_F_avg)):
-                    for lndex in range(3):
-                        trajfile.write(
-                            '{:.10e}'.format(Decimal(str(id_F[kndex][lndex]))) + '\t' +     # Real force
-                            '{:.10e}'.format(Decimal(str(prd_F_avg[kndex][lndex]))) + '\n'  # Predicted force
-                        )
-                trajfile.close()
+                outputfile = open(f'result-test_{test_idx}_energy.txt', 'w')
+                outputfile.write('index   \tUncertAbs\tRealErrorAbs\tRealE\tPredictE\n')
+                outputfile.close()
 
             comm.Barrier()
-            config_idx += 1
+            mpi_print(f'[test]\tGo through all configurations in the testing data ...', rank)
+            # Go through all configurations in the testing data
+            config_idx = 1
+            for id_E, id_F, id_R, id_z, id_CELL, id_PBC in zip(
+                data_test['E'], data_test['F'], data_test['R'],
+                data_test['z'], data_test['CELL'], data_test['PBC']
+                ):
+                # Create the corresponding ASE atoms
+                struc = Atoms(id_z, positions=id_R, cell=id_CELL, pbc=id_PBC)
+                # Prepare the empty lists for predicted energy and force
+                prd_E = []
+                prd_F = []
+                zndex = 0
 
-        mpi_print(f'[test]\tPlot the results ...', rank)
-        ## Plot the energy and force prediction results
-        # Read the energy data
-        data = pd.read_csv(f'result-test_{self.test_index}_energy.txt', sep="\t")
+                # Go through all trained models
+                for index_nmodel in range(self.nmodel):
+                    for index_nstep in range(self.nstep):
+                        if (index_nmodel * self.nstep + index_nstep) % size == rank:
+                            struc.calc = calc_MLIP[zndex]
+                            prd_E.append(struc.get_potential_energy())
+                            prd_F.append(struc.get_forces())
+                            zndex += 1
 
-        # Font style and font size
-        plt.rcParams['font.sans-serif'] = "Helvetica"
-        plt.rcParams['font.size'] = "23"
+                # Get average and standard deviation (Uncertainty) of predicted energies from various models
+                prd_E = comm.allgather(prd_E)
+                prd_E_avg = np.average([jtem for item in prd_E if len(item) != 0 for jtem in item], axis=0)
+                prd_E_std = np.std([jtem for item in prd_E if len(item) != 0 for jtem in item], axis=0)
 
-        # Prepare subplots
-        fig, ax1 = plt.subplots(figsize=(6.5, 6), dpi=80)
+                # Get the real error
+                realerror_E = np.absolute(prd_E_avg - id_E)
 
-        # Plot data
-        ax1.plot(data['RealE'], data['PredictE'], color="orange", linestyle='None', marker='o')
-        ax1.plot([0, 1], [0, 1], transform=ax1.transAxes)
+                # Get average of predicted forces from various models
+                prd_F = comm.allgather(prd_F)
+                prd_F_avg = np.average([jtem for item in prd_F if len(item) != 0 for jtem in item], axis=0)
 
-        # Axis information
-        ax1.set_xlabel('Real E')
-        ax1.set_ylabel('Predicted E')
-        ax1.tick_params(direction='in')
-        plt.tight_layout()
-        plt.show()
-        fig.savefig('figure_energy.png') # Save the figure
+                # Save all energy information
+                if rank == 0:
+                    trajfile = open(f'result-test_{test_idx}_energy.txt', 'a')
+                    trajfile.write(
+                        str(config_idx) + '          \t' +
+                        '{:.5e}'.format(Decimal(str(prd_E_std))) + '\t' +       # Standard deviation (Uncertainty)
+                        '{:.5e}'.format(Decimal(str(realerror_E))) + '\t' +     # Real error
+                        '{:.10e}'.format(Decimal(str(id_E))) + '\t' +           # Real energy
+                        '{:.10e}'.format(Decimal(str(prd_E_avg))) + '\n'        # Predicted energy
+                    )
+                    trajfile.close()
 
-        # Get the energy statistics
-        R2_E = r2_score(data['RealE'], data['PredictE'])
-        MAE_E = mean_absolute_error(data['RealE'], data['PredictE'])
+                # Save all force information
+                if rank == 0:
+                    trajfile = open(f'result-test_{test_idx}_force.txt', 'a')
+                    for kndex in range(len(prd_F_avg)):
+                        for lndex in range(3):
+                            trajfile.write(
+                                '{:.10e}'.format(Decimal(str(id_F[kndex][lndex]))) + '\t' +     # Real force
+                                '{:.10e}'.format(Decimal(str(prd_F_avg[kndex][lndex]))) + '\n'  # Predicted force
+                            )
+                    trajfile.close()
 
-        # Read the force data
-        data = pd.read_csv(f'result-test_{self.test_index}_force.txt', sep="\t", header=None)
+                comm.Barrier()
+                config_idx += 1
 
-        # Prepare subplots
-        fig, ax1 = plt.subplots(figsize=(6.5, 6), dpi=80)
+            mpi_print(f'[test]\tPlot the results ...', rank)
+            ## Plot the energy and force prediction results
+            # Read the energy data
+            data = pd.read_csv(f'result-test_{test_idx}_energy.txt', sep="\t")
 
-        # Plot data
-        ax1.plot(data[0], data[1], color="orange", linestyle='None', marker='o')
-        ax1.plot([0, 1], [0, 1], transform=ax1.transAxes)
+            # Font style and font size
+            plt.rcParams['font.sans-serif'] = "Helvetica"
+            plt.rcParams['font.size'] = "23"
 
-        # Axis information
-        ax1.set_xlabel('Real F')
-        ax1.set_ylabel('Predicted F')
-        ax1.tick_params(direction='in')
-        plt.tight_layout()
-        plt.show()
-        fig.savefig('figure_force.png') # Save the figure
+            # Prepare subplots
+            fig, ax1 = plt.subplots(figsize=(6.5, 6), dpi=80)
 
-        # Get the force statistics
-        R2_F = r2_score(data[0], data[1])
-        MAE_F = mean_absolute_error(data[0], data[1])
+            # Plot data
+            ax1.plot(data['RealE'], data['PredictE'], color="orange", linestyle='None', marker='o')
+            ax1.plot([0, 1], [0, 1], transform=ax1.transAxes)
 
-        # Print out the statistic results
-        mpi_print(f'[test]\t[[Statistic results]]', rank)
-        mpi_print(f'[test]\tEnergy_R2\tEnergy_MAE\tForces_R2\tForces_MAE', rank)
-        mpi_print(f'[test]\t{R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}', rank)
+            # Axis information
+            ax1.set_xlabel('Real E')
+            ax1.set_ylabel('Predicted E')
+            ax1.tick_params(direction='in')
+            plt.tight_layout()
+            plt.show()
+            fig.savefig('figure_energy.png') # Save the figure
+
+            # Get the energy statistics
+            R2_E = r2_score(data['RealE'], data['PredictE'])
+            MAE_E = mean_absolute_error(data['RealE'], data['PredictE'])
+
+            # Read the force data
+            data = pd.read_csv(f'result-test_{test_idx}_force.txt', sep="\t", header=None)
+
+            # Prepare subplots
+            fig, ax1 = plt.subplots(figsize=(6.5, 6), dpi=80)
+
+            # Plot data
+            ax1.plot(data[0], data[1], color="orange", linestyle='None', marker='o')
+            ax1.plot([0, 1], [0, 1], transform=ax1.transAxes)
+
+            # Axis information
+            ax1.set_xlabel('Real F')
+            ax1.set_ylabel('Predicted F')
+            ax1.tick_params(direction='in')
+            plt.tight_layout()
+            plt.show()
+            fig.savefig('figure_force.png') # Save the figure
+
+            # Get the force statistics
+            R2_F = r2_score(data[0], data[1])
+            MAE_F = mean_absolute_error(data[0], data[1])
+
+            # Print out the statistic results
+            mpi_print(f'[test]\t[[Statistic results]]', rank)
+            mpi_print(f'[test]\tEnergy_R2\tEnergy_MAE\tForces_R2\tForces_MAE', rank)
+            mpi_print(f'[test]\t{R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}', rank)
 
         mpi_print(f'[test]\t!! Finish the testing process', rank)
 

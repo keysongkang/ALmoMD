@@ -11,7 +11,7 @@ import son
 
 
 def generate_npz_DFT_init(
-    traj, ntrain, nval, nstep, E_gs, workpath
+    traj, ntrain, nval, nstep, E_gs, workpath, harmonic_F
 ):
     """Function [generate_npz_DFT_init]
     Generate the initial training data sets from trajectory
@@ -57,8 +57,20 @@ def generate_npz_DFT_init(
             if step < (ntrain+nval) * (index_nstep + 1):
                 # Energy is shifted by the reference energy
                 # to avoid the unsual weighting with forces in NequIP
-                E_train[index_nstep].append(traj[i]['calculator']['energy'] - E_gs);
-                F_train[index_nstep].append(traj[i]['calculator']['forces']);
+
+                if harmonic_F:
+                    from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+                    displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
+                    F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+                    F_step = np.array(traj[i]['calculator']['forces']) - F_ha
+                    E_ha = get_E_ha(displacements, F_ha)
+                    E_step = np.array(traj[i]['calculator']['energy']) - E_gs - E_ha
+                else:
+                    F_step = np.array(traj[i]['calculator']['forces'])
+                    E_step = np.array(traj[i]['calculator']['energy']) - E_gs
+
+                E_train[index_nstep].append(E_step)
+                F_train[index_nstep].append(F_step);
                 R_train[index_nstep].append(traj[i]['atoms']['positions']);
                 z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for jdx in range(item[0])]);
                 CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
@@ -91,7 +103,7 @@ def generate_npz_DFT_init(
     
 def generate_npz_DFT(
     ntrain, nval, nstep, E_gs, index,
-    temperature, output_format, pressure, workpath
+    temperature, output_format, pressure, workpath, harmonic_F
 ):
     """Function [generate_npz_DFT]
     Generate training data sets
@@ -161,8 +173,20 @@ def generate_npz_DFT(
                             )
                         # Energy is shifted by the reference energy
                         # to avoid the unsual weighting with forces in NequIP
-                        E_train[index_nstep].append(atoms_potE - E_gs);
-                        F_train[index_nstep].append(atoms_forces);
+
+                        if harmonic_F:
+                            from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+                            displacements = get_displacements(atoms.get_positions(), 'geometry.in.supercell')
+                            F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+                            F_step = np.array(atoms_forces) - F_ha
+                            E_ha = get_E_ha(displacements, F_ha)
+                            E_step = atoms_potE - E_gs - E_ha
+                        else:
+                            F_step = np.array(atoms_forces)
+                            E_step = atoms_potE - E_gs
+
+                        E_train[index_nstep].append(E_step);
+                        F_train[index_nstep].append(F_step);
                         R_train[index_nstep].append(atoms.get_positions());
                         z_train[index_nstep].append(atoms.numbers);
                         CELL_train[index_nstep].append(atoms.get_cell());
@@ -179,8 +203,20 @@ def generate_npz_DFT(
                                 atom_numbers.append(atomic_numbers[items[1]])
                         # Energy is shifted by the reference energy
                         # to avoid the unsual weighting with forces in NequIP
-                        E_train[index_nstep].append(data[0]['calculator']['energy'] - E_gs);
-                        F_train[index_nstep].append(data[0]['calculator']['forces']);
+
+                        if harmonic_F:
+                            from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+                            displacements = get_displacements(data[0]['atoms']['positions'], 'geometry.in.supercell')
+                            F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+                            F_step = np.array(data[0]['calculator']['forces']) - F_ha
+                            E_ha = get_E_ha(displacements, F_ha)
+                            E_step = np.array(data[0]['calculator']['energy']) - E_gs - E_ha
+                        else:
+                            F_step = np.array(data[0]['calculator']['forces'])
+                            E_step = np.array(data[0]['calculator']['energy']) - E_gs
+
+                        E_train[index_nstep].append(E_step);
+                        F_train[index_nstep].append(F_step);
                         R_train[index_nstep].append(data[0]['atoms']['positions']);
                         z_train[index_nstep].append(np.array(atom_numbers));
                         CELL_train[index_nstep].append(data[0]['atoms']['cell']);
@@ -238,7 +274,7 @@ def generate_npz_DFT(
         
         
 def generate_npz_DFT_rand_init(
-    traj, ntrain, nval, nstep, E_gs, workpath
+    traj, ntrain, nval, nstep, E_gs, workpath, harmonic_F
 ):
     """Function [generate_npz_DFT_rand_init]
     Generate the initial training data sets from trajectory.
@@ -292,8 +328,21 @@ def generate_npz_DFT_rand_init(
             if step < (ntrain+nval) * (index_nstep + 1):
                 # Energy is shifted by the reference energy
                 # to avoid the unsual weighting with forces in NequIP
-                E_train[index_nstep].append(traj[i]['calculator']['energy'] - E_gs);
-                F_train[index_nstep].append(traj[i]['calculator']['forces']);
+
+                if harmonic_F:
+                    from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+                    displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
+                    F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+                    F_step = np.array(traj[i]['calculator']['forces']) - F_ha
+                    E_ha = get_E_ha(displacements, F_ha)
+                    E_step = np.array(traj[i]['calculator']['energy']) - E_gs - E_ha
+                    
+                else:
+                    F_step = np.array(traj[i]['calculator']['forces'])
+                    E_step = np.array(traj[i]['calculator']['energy']) - E_gs
+
+                E_train[index_nstep].append(E_step);
+                F_train[index_nstep].append(F_step);
                 R_train[index_nstep].append(traj[i]['atoms']['positions']);
                 z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for idx in range(item[0])]);
                 CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
@@ -329,7 +378,7 @@ def generate_npz_DFT_rand_init(
 
 def generate_npz_DFT_rand(
     traj, ntrain, nval, nstep, E_gs, index,
-    temperature, pressure, workpath, traj_idx
+    temperature, pressure, workpath, traj_idx, harmonic_F
 ):
     """Function [generate_npz_DFT_rand]
     Generate training data sets
@@ -402,15 +451,27 @@ def generate_npz_DFT_rand(
             # Collect these new data for each subsampling
             for index_nstep in range(nstep):
                 if step < (ntrain+nval) * (index_nstep + 1):
-                    E_train[index_nstep].append(traj[i]['calculator']['energy'] - E_gs);
-                    F_train[index_nstep].append(traj[i]['calculator']['forces']);
+                    if harmonic_F:
+                        from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+                        displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
+                        F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+                        F_step = np.array(traj[i]['calculator']['forces']) - F_ha
+                        E_ha = get_E_ha(displacements, F_ha)
+                        E_step = np.array(traj[i]['calculator']['energy']) - E_gs - E_ha
+                        
+                    else:
+                        F_step = np.array(traj[i]['calculator']['forces'])
+                        E_step = np.array(traj[i]['calculator']['energy']) - E_gs
+
+                    E_train[index_nstep].append(E_step);
+                    F_train[index_nstep].append(F_step);
                     R_train[index_nstep].append(traj[i]['atoms']['positions']);
                     z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for idx in range(item[0])]);
                     CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
                     PBC_train[index_nstep].append(traj[i]['atoms']['pbc'])
                     traj_idx.append(i)
                     break
-                 
+
         # Merge new data with previous data
         # Split the sampled data into individual files for each subsampling set   
         for index_nstep in range(nstep):

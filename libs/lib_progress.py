@@ -4,7 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from libs.lib_util        import check_mkdir, mpi_print, single_print
+from libs.lib_util        import check_mkdir, mpi_print, single_print, generate_msg
 from libs.lib_criteria    import get_result, get_criteria
 from libs.lib_train       import get_train_job
 from libs.lib_termination import get_testerror
@@ -12,7 +12,7 @@ from libs.lib_termination import get_testerror
 
 def check_progress(
     temperature, pressure, ntotal, ntrain, nval,
-    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type
+    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type, al_type, harmonic_F
 ):
     """Function [check_progress]
     Check the progress of previous calculations.
@@ -50,8 +50,6 @@ def check_progress(
 
     Returns:
 
-    kndex: int
-        The index for MLMD_init
     MD_index: int
         The index for MLMD_main
     index: int
@@ -69,7 +67,6 @@ def check_progress(
     rank = comm.Get_rank()
 
     # Initialization
-    kndex = 0
     MD_index = 0
     signal = 0
     
@@ -79,30 +76,29 @@ def check_progress(
             if rank == 0:
                 # Open a recording 'result.txt' file
                 outputfile = open('result.txt', 'w')
-                outputfile.write(
-                    'Temperature[K]\tIteration\t'
-                    + 'TestError_E\tTestError_F\t'
-                    + 'UncerRel_E_ini\tUncerAbs_E_ini\t'
-                    + 'UncerRel_F_ini\tUncerAbs_F_ini\t'
-                    + 'UncerRel_E_all\tUncerAbs_E_all\t'
-                    + 'UncerRel_F_all\tUncerAbs_F_all\n'
-                )
+
+                result_msg = generate_msg(al_type)
+
+                outputfile.write(result_msg + '\n')
                 outputfile.close()
             # Get the test errors using data-test.npz
-            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
         else: # When there is a 'result.txt',
             # Check the contents in 'result.txt' before recording
             if os.path.exists('result.txt'):
+
+                result_msg = generate_msg(al_type)
+
                 result_data = \
                 pd.read_csv('result.txt', index_col=False, delimiter='\t')
-                get_criteria_index = len(result_data.loc[:,'UncerAbs_F_all']);
+                get_criteria_index = len(result_data.loc[:,result_msg[-14:]]);
             else:
                 get_criteria_index = -1
 
             # Print the test errors only for first calculation
             if get_criteria_index == 0:
                 # Get the test errors using data-test.npz
-                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
     
     # Go through the while loop until a breaking command
     while True:
@@ -119,8 +115,9 @@ def check_progress(
                     check_mkdir('UNCERT')
                     trajfile = open(uncert_file, 'w')
                     trajfile.write(
-                        'Temperature[K]\tUncertRel_E\tUncertAbs_E\tUncertRel_F\tUncertAbs_F'
-                        +'\tEpot_average\tCounting\tProbability\tAcceptance\n'
+                        'Temperature[K]\tUncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'
+                        +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'
+                        +'\tCounting\tProbability\tAcceptance\n'
                     )
                     trajfile.close()
                 break
@@ -129,15 +126,20 @@ def check_progress(
                 uncert_check = np.array(uncert_data.loc[:,'Counting'])[-1]
                 del uncert_data
 
-                if uncert_check[:7] == 'initial': # If it has 'initial'
-                    kndex = int(uncert_check[8:]) # Get the index of MLMD_init
-                    break
-                # If it reaches total number of sampling
-                elif uncert_check.replace(' ', '') == str(ntotal):
-                    # Record uncertainty results at the current step
-                    junk = get_criteria(temperature, pressure, index, steps_init)
-                    del junk
-                    get_result(temperature, pressure, index, steps_init)
+                # If it reaches total number of the sampling data
+                if uncert_check == ntotal:
+
+                    if os.path.exists('result.txt'):
+                        result_msg = generate_msg(al_type)
+
+                        result_data = \
+                        pd.read_csv('result.txt', index_col=False, delimiter='\t')
+                        get_criteria_index = result_data.loc[:,result_msg[-14:]].isnull().values.any();
+
+                    # Print the test errors
+                    if get_criteria_index:
+                        # Get the test errors using data-test.npz
+                        get_result(temperature, pressure, index, steps_init, al_type)
                     
                     # Check the FHI-vibes calculations
                     aims_check = ['Have a nice day.' in open(f'CALC/{temperature}K-{pressure}bar_{index+1}/{jndex}/aims/calculations/aims.out').read()\
@@ -152,7 +154,7 @@ def check_progress(
                         if all(gen_check) == True:
                             # Get the test errors using data-test.npz
                             index += 1
-                            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+                            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
                         else:
                             index += 1
                             break
@@ -162,11 +164,6 @@ def check_progress(
                         signal = 1
                         break
                 else: # Otherwise, get the index of MLMD_main
-                    # Record uncertainty results at the current step
-                    junk = get_criteria(temperature, pressure, index, steps_init)
-                    del junk
-
-                    kndex = steps_init
                     MD_index = int(uncert_check)
                     break
         else: # If there is no uncertainty file, create it
@@ -174,19 +171,20 @@ def check_progress(
                 check_mkdir('UNCERT')
                 trajfile = open(uncert_file, 'w')
                 trajfile.write(
-                    'Temperature[K]\tUncertRel_E\tUncertAbs_E\tUncertRel_F\tUncertAbs_F'
-                    +'\tEpot_average\tCounting\tProbability\tAcceptance\n'
+                    'Temperature[K]\tUncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'
+                    +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'
+                    +'\tCounting\tProbability\tAcceptance\n'
                 )
                 trajfile.close()
             break
             
-    return kndex, MD_index, index, signal
+    return MD_index, index, signal
 
 
 
 def check_progress_rand(
     temperature, pressure, ntotal, ntrain, nval,
-    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type
+    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type, al_type, harmonic_F
 ):
     """Function [check_progress_rand]
     Check the progress of previous calculations.
@@ -224,8 +222,6 @@ def check_progress_rand(
 
     Returns:
 
-    kndex: int
-        The index for MLMD_init
     MD_index: int
         The index for MLMD_main
     index: int
@@ -243,7 +239,7 @@ def check_progress_rand(
     rank = comm.Get_rank()
 
     # Initialization
-    kndex = 0
+    MD_index = 0
     signal = 0
     
     if index == 0: # When calculation is just initiated
@@ -254,24 +250,24 @@ def check_progress_rand(
                 outputfile = open('result.txt', 'w')
                 outputfile.write(
                     'Temperature[K]\tIteration\t'
-                    + 'TestError_E\tTestError_F\n'
+                    + 'TestError_E\tTestError_F\tTestError_S\n'
                 )
                 outputfile.close()
             # Get the test errors using data-test.npz
-            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
         else: # When there is a 'result.txt',
             # Check the contents in 'result.txt' before recording
             if os.path.exists('result.txt'):
                 result_data = \
                 pd.read_csv('result.txt', index_col=False, delimiter='\t')
-                index = len(result_data.loc[:,'TestError_F']);
+                index = len(result_data.loc[:,'TestError_S']);
             else:
                 index = -1
 
             # Print the test errors only for first calculation
             if index == 0:
                 # Get the test errors using data-test.npz
-                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
     
     # Go through the while loop until a breaking command
     while True:
@@ -288,13 +284,13 @@ def check_progress_rand(
             if all(gen_check) == True:
                 # Get the test errors using data-test.npz
                 index += 1
-                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type)
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
             else:
                 index += 1
                 break
         else:
             break
-    return kndex, index, signal
+    return MD_index, index, signal
 
 
 

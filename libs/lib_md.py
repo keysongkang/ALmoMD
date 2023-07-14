@@ -11,7 +11,7 @@ def runMD(
     struc, ensemble, temperature, pressure, timestep, friction,
     compressibility, taut, taup, mask, loginterval, steps,
     nstep, nmodel, E_ref, al_type, logfile, trajectory,
-    calculator, signal_uncert, signal_append
+    calculator, harmonic_F, anharmonic_F, signal_uncert, signal_append
 ):
     """Function [runMD]
     Initiate the Molecular Dynamics simulation using various ensembles
@@ -73,6 +73,8 @@ def runMD(
             E_ref = E_ref,
             al_type = al_type,
             trajectory = trajectory,
+            harmonic_F = harmonic_F,
+            anharmonic_F = anharmonic_F,
             logfile = logfile,
             signal_uncert = signal_uncert,
             signal_append = signal_append

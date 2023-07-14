@@ -72,10 +72,12 @@ class almd:
         # uncert_type: str
         #     Type of uncertainty; 'absolute', 'relative'
         self.uncert_type = 'absolute'
-        # uncert_shift: float
+        # uncert_shift: boolean
         #     Shifting of erf function
-        #     (Value is relative to standard deviation)
-        #     The default is set to a probability of 0.2 at the average
+        self.harmonic_F = False
+        self.anharmonic_F = False
+        # uncert_type: str
+        #     Use the harmonic force constants
         self.uncert_shift = 0.2661
         # uncert_grad: float
         #     Gradient of erf function
@@ -258,7 +260,7 @@ class almd:
         if rank == 0:
             generate_npz_DFT_init(
                 traj, self.ntrain_init, self.nval_init,
-                self.nstep, self.E_gs, workpath
+                self.nstep, self.E_gs, workpath, self.harmonic_F
             )
         del traj  # Remove it to reduce the memory usage
         mpi_print(f'[init]\tGenerate the training data (# of data: {total_ntrain+total_nval})', rank)
@@ -307,12 +309,10 @@ class almd:
 
         ## Prepare the ground state structure
         # Read the ground state structure with the primitive cell
-        struc_init = atoms_read('geometry.in.next_step', format='aims')
-        # Make it supercell
-        struc_relaxed = make_supercell(struc_init, self.supercell)
+        struc_init = atoms_read('geometry.in.supercell', format='aims')
         # Get the number of atoms in the simulation cell
-        self.NumAtoms = len(struc_relaxed)
-        mpi_print(f'[cont]\tRead the reference structure: geometry.in.next_step', rank)
+        self.NumAtoms = len(struc_init)
+        mpi_print(f'[cont]\tRead the reference structure: geometry.in.supercell', rank)
         comm.Barrier()
 
         ### Initizlization step
@@ -327,35 +327,34 @@ class almd:
         mpi_print(f'[cont]\tProgress check and get validation errors', rank)
         ## For active learning sampling,
         if self.calc_type == 'active':
-            # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
+            # Retrieve the calculation index (MD_index: MLMD_main, signal: termination)
             # to resume the MLMD calculation if a previous one exists.
-            kndex, MD_index, signal = None, None, None
+            MD_index, signal = None, None
 
             # Open the uncertainty output file
-            kndex, MD_index, self.index, signal = check_progress(
+            MD_index, self.index, signal = check_progress(
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F
             )
-            kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
             signal = comm.bcast(signal, root=0)
         ## For random sampling,
         elif self.calc_type == 'random':
-            # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
+            # Retrieve the calculation index (MD_index: MLMD_random, signal: termination)
             # to resume the MLMD calculation if a previous one exists.
-            kndex, signal = None, None
+            MD_index, signal = None, None
 
             # Open the uncertainty output file
-            kndex, self.index, signal = check_progress_rand(
+            MD_index, self.index, signal = check_progress_rand(
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F
             )
-            kndex = comm.bcast(kndex, root=0)
+            MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
             signal = comm.bcast(signal, root=0)
         comm.Barrier()
@@ -384,7 +383,7 @@ class almd:
         mpi_print(f'[cont]\tFind the trained models: {workpath}', rank)
         # Get calculators from previously trained MLIP and its total energy of ground state structure
         E_ref, calc_MLIP = get_train_job(
-            struc_relaxed, total_ntrain, total_nval, self.rmax, self.lmax,
+            struc_init, total_ntrain, total_nval, self.rmax, self.lmax,
             self.nfeatures, workpath, self.nstep, self.nmodel
         )
         comm.Barrier()
@@ -393,27 +392,20 @@ class almd:
         ### MLMD steps
         # For active learning sampling,
         if self.calc_type == 'active':
-            # Run MLMD calculation to extract avaerged uncertainty and potential energy
-            ##!! struc_step might be able to be removed.
-            struc_step = MLMD_initial(
-                kndex, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
-                self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.steps_init, self.nstep,
-                self.nmodel, calc_MLIP, E_ref, self.al_type
-            )
             # Run MLMD calculation with active learning sampling
             MLMD_main(
                 MD_index, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
                 self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.ntotal, self.nstep,
-                self.nmodel, calc_MLIP, E_ref, self.steps_init, self.NumAtoms, self.kB, struc_step,
-                self.al_type, self.uncert_type, self.uncert_shift, self.uncert_grad
+                self.nmodel, calc_MLIP, E_ref, self.steps_init, self.NumAtoms, self.kB, struc_init,
+                self.al_type, self.uncert_type, self.uncert_shift, self.uncert_grad, self.harmonic_F, self.anharmonic_F
             )
         # For random sampling,
         elif self.calc_type == 'random':
             # Run MLMD calculation with random sampling
-            struc_step = MLMD_random(
-                kndex, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
+            MLMD_random(
+                MD_index, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
                 self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.steps_random*self.loginterval,
-                self.al_type, self.nstep, self.nmodel, calc_MLIP, E_ref
+                self.al_type, self.nstep, self.nmodel, calc_MLIP, E_ref, self.harmonic_F, self.anharmonic_F
             )
         else:
             raise ValueError("[cont]\tInvalid calc_type. Supported values are 'active' and 'random'.")
@@ -422,7 +414,7 @@ class almd:
         if self.calc_type == 'active':
             mpi_print(f'[cont]\tRecord the results: result.txt', rank)
             # Record uncertainty results at the current step
-            get_result(self.temperature, self.pressure, self.index, self.steps_init)
+            get_result(self.temperature, self.pressure, self.index, self.steps_init, self.al_type)
         comm.Barrier()
 
         mpi_print(f'[cont]\tSubmit the DFT calculations for sampled configurations', rank)
@@ -456,12 +448,10 @@ class almd:
 
         ## Prepare the ground state structure
         # Read the ground state structure with the primitive cell
-        struc_init = atoms_read('geometry.in.next_step', format='aims')
-        # Make it supercell
-        struc_relaxed = make_supercell(struc_init, self.supercell)
+        struc_init = atoms_read('geometry.in.supercell', format='aims')
         # Get the number of atoms in unitcell
-        self.NumAtoms = len(struc_relaxed)
-        mpi_print(f'[cont]\tRead the reference structure: geometry.in.next_step', rank)
+        self.NumAtoms = len(struc_init)
+        mpi_print(f'[cont]\tRead the reference structure: geometry.in.supercell', rank)
         comm.Barrier()
 
         ### Initizlization step
@@ -473,35 +463,34 @@ class almd:
 
         ## For active learning sampling,
         if self.calc_type == 'active':
-            # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
+            # Retrieve the calculation index (MD_index: MLMD_main, signal: termination)
             # to resume the MLMD calculation if a previous one exists.
-            kndex, MD_index, signal = None, None, None
+            MD_index, signal = None, None
             # Open the uncertainty output file
-            kndex, MD_index, self.index, signal = check_progress(
+            MD_index, self.index, signal = check_progress(
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F
             )
-            kndex = comm.bcast(kndex, root=0)
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
             self.temperature = comm.bcast(self.temperature, root=0)
             signal = comm.bcast(signal, root=0)
         ## For random sampling,
         elif self.calc_type == 'random':
-            # Retrieve the calculation index (kndex: MLMD_initial, MD_index: MLMD_main, signal: termination)
+            # Retrieve the calculation index (MD_index: MLMD_random, signal: termination)
             # to resume the MLMD calculation if a previous one exists.
-            kndex, signal = None, None
+            MD_index, signal = None, None
 
             # Open the uncertainty output file
-            kndex, self.index, signal = check_progress_rand(
+            MD_index, self.index, signal = check_progress_rand(
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F
             )
-            kndex = comm.bcast(kndex, root=0)
+            MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
             signal = comm.bcast(signal, root=0)
         else:
@@ -532,7 +521,7 @@ class almd:
         if rank == 0:
             generate_npz_DFT(
                 self.ntrain, self.nval, self.nstep, self.E_gs, self.index, self.temperature,
-                self.output_format, self.pressure, workpath
+                self.output_format, self.pressure, workpath, self.harmonic_F
             )
         comm.Barrier()
 
@@ -589,7 +578,7 @@ class almd:
             # Generate first set of training data in npz files from trajectory file
             traj_idx = generate_npz_DFT_rand_init(
                 traj, self.ntrain_init, self.nval_init,
-                self.nstep, self.E_gs, workpath
+                self.nstep, self.E_gs, workpath, self.harmonic_F
             )
         mpi_print(f'[rand]\tGenerate the training data from trajectory_train.son (# of data: {total_ntrain+total_nval})', rank)
         comm.Barrier()
@@ -621,7 +610,7 @@ class almd:
                 # Generate first set of training data in npz files from trajectory file
                 traj_idx = generate_npz_DFT_rand(
                     traj, self.ntrain, self.nval, self.nstep, self.E_gs, index, self.temperature,
-                    self.pressure, workpath, traj_idx
+                    self.pressure, workpath, traj_idx, self.harmonic_F
                 )
             comm.Barrier()
             mpi_print(f'[rand]\tGenerate the training data from trajectory_train.son (# of data: {total_ntrain+total_nval})', rank)
@@ -729,7 +718,14 @@ class almd:
 
                 # Get average of predicted forces from various models
                 prd_F = comm.allgather(prd_F)
-                prd_F_avg = np.average([jtem for item in prd_F if len(item) != 0 for jtem in item], axis=0)
+                prd_F_filtered = [jtem for item in prd_F if len(item) != 0 for jtem in item]
+
+                if self.harmonic_F:
+                    from libs.lib_util import get_fc_ha
+                    F_ha = get_fc_ha(struc.get_positions(), 'geometry.in.supercell', 'FORCE_CONSTANTS_remapped')
+                    F_step_filtered = F_step_filtered + F_ha
+
+                prd_F_avg = np.average(prd_F_filtered, axis=0)
 
                 # Save all energy information
                 if rank == 0:
@@ -864,11 +860,9 @@ class almd:
 
         ## Prepare the ground state structure
         # Read the ground state structure with the primitive cell
-        struc_init = atoms_read('geometry.in.next_step', format='aims')
-        # Make it supercell
-        struc_super = make_supercell(struc_init, self.supercell)
+        struc_init = atoms_read('geometry.in.supercell', format='aims')
         # Get the number of atoms in the simulation cell
-        self.NumAtoms = len(struc_super)
+        self.NumAtoms = len(struc_init)
         mpi_print(f'[runMD]\tRead the reference structure: geometry.in.next_step', rank)
         comm.Barrier()
 
@@ -887,8 +881,8 @@ class almd:
                                 f'{self.modelpath}/{dply_model}'
                                 )
                         )
-                        struc_super.calc = calc_MLIP[-1]
-                        Epot_step.append(struc_super.get_potential_energy() - self.E_gs)
+                        struc_init.calc = calc_MLIP[-1]
+                        Epot_step.append(struc_init.get_potential_energy() - self.E_gs)
                     else:
                         # If there is no model, turn on the termination signal
                         single_print(f'\t\tCannot find the model: {dply_model}')
@@ -914,7 +908,7 @@ class almd:
             self.mask, self.loginterval, self.steps,
             self.nstep, self.nmodel, Epot_step_avg, self.al_type,
             self.logfile, self.trajectory, calc_MLIP,
-            signal_uncert=True, signal_append=True
+            self.harmonic_F, self.anharmonic_F, signal_uncert=True, signal_append=True
             )
 
         mpi_print(f'[runMD]\t!! Finish MD calculations', rank)
@@ -926,6 +920,7 @@ class almd:
         Implement the convergence test with trained models
         """
         from datetime import datetime
+        from libs.lib_util     import eval_sigma
 
         # Extract MPI infos
         comm = MPI.COMM_WORLD
@@ -974,138 +969,78 @@ class almd:
 
         # Predict matrices of energy and forces and their R2 and MAE 
         mpi_print(f'[cnvg]\tGo through all trained models for the testing data', rank)
-        zndex = 0
-        
+
         prd_E_total = []
-        R2_E_total = []
-        MAE_E_total = []
-        
         prd_F_total = []
-        R2_F_total = []
-        MAE_F_total = []
+        prd_S_total = []
 
-        for index_nmodel in range(self.nmodel):
-            for index_nstep in range(self.nstep):
-                if (index_nmodel * self.nstep + index_nstep) % size == rank:
-                    prd_E = []
-                    prd_F = []
-                    for idx, (id_R, id_z, id_CELL, id_PBC) in enumerate(zip(
-                        data_test['R'], data_test['z'],
-                        data_test['CELL'], data_test['PBC']
-                    )):
-                        struc = Atoms(
-                            id_z,
-                            positions=id_R,
-                            cell=id_CELL,
-                            pbc=id_PBC
-                        )
+        for idx, (id_R, id_z, id_CELL, id_PBC) in enumerate(zip(
+            data_test['R'], data_test['z'],
+            data_test['CELL'], data_test['PBC']
+        )):
+            mpi_print(f'\t\t\tTesting data:{idx}', rank)
+
+            struc = Atoms(
+                id_z,
+                positions=id_R,
+                cell=id_CELL,
+                pbc=id_PBC
+            )
+
+            prd_E = []
+            prd_F = []
+            prd_S = []
+            zndex = 0
+            for index_nmodel in range(self.nmodel):
+                for index_nstep in range(self.nstep):
+                    if (index_nmodel * self.nstep + index_nstep) % size == rank:
                         struc.calc = calc_MLIP[zndex]
-                        prd_E.append(struc.get_potential_energy())
-                        prd_F.append(struc.get_forces())
-                        mpi_print(f'\t\t\tTesting data:{idx}', rank)
-                    zndex += 1
+                        prd_E.append({f'{index_nmodel}_{index_nstep}': struc.get_potential_energy()})
+                        prd_F.append({f'{index_nmodel}_{index_nstep}': struc.get_forces()})
+                        prd_S.append({f'{index_nmodel}_{index_nstep}': eval_sigma(struc.get_forces(), struc.get_positions(), al_type='sigma')})
+                        zndex += 1
 
-                    prd_F = np.array(prd_F)
-                    prd_F_avg = np.average(prd_F, axis=0)
-                    prd_F_norm = np.linalg.norm(prd_F - prd_F_avg, axis=1)
-                    prd_F_norm_std = np.sqrt(np.average(prd_F_norm ** 2, axis=0))
+            prd_E = comm.allgather(prd_E)
+            prd_F = comm.allgather(prd_F)
+            prd_S = comm.allgather(prd_S)
 
-                    R2_E_total.append({f'{index_nmodel}_{index_nstep}': r2_score(data_test['E'], prd_E)})
-                    MAE_E_total.append({f'{index_nmodel}_{index_nstep}': mean_absolute_error(data_test['E'], prd_E)})
-                    prd_E_total.append({f'{index_nmodel}_{index_nstep}': np.average(np.array(prd_E))})
+            prd_E_matrix = {}
+            prd_F_matrix = {}
+            prd_S_matrix = {}
 
-                    R2_F_total.append({f'{index_nmodel}_{index_nstep}': r2_score(np.array(data_test['F']).flatten(), np.array(prd_F).flatten())})
-                    MAE_F_total.append({f'{index_nmodel}_{index_nstep}': mean_absolute_error(np.array(data_test['F']).flatten(), np.array(prd_F).flatten())})
-                    prd_F_total.append({f'{index_nmodel}_{index_nstep}': np.average(prd_F_norm_std)})
-                    mpi_print(f'\t\tCollect the prediction: [{index_nmodel},{index_nstep}]', rank=0)
+            for item in prd_E:
+                if item != []:
+                    for dict_item in item:
+                        prd_E_matrix.update(dict_item)
+            del prd_E
+                            
+            for item in prd_F:
+                if item != []:
+                    for dict_item in item:
+                        prd_F_matrix.update(dict_item)
+            del prd_F
 
-        R2_E_total = comm.allgather(R2_E_total)
-        MAE_E_total = comm.allgather(MAE_E_total)
-        prd_E_total = comm.allgather(prd_E_total)
+            for item in prd_S:
+                if item != []:
+                    for dict_item in item:
+                        prd_S_matrix.update(dict_item)
+            del prd_S
 
-        R2_F_total = comm.allgather(R2_F_total)
-        MAE_F_total = comm.allgather(MAE_F_total)
-        prd_F_total = comm.allgather(prd_F_total)
+            prd_E_total.append(prd_E_matrix)
+            prd_F_total.append(prd_F_matrix)
+            prd_S_total.append(prd_S_matrix)
 
-        
-        R2_E_matrix = np.empty([self.nmodel, self.nstep])
-        MAE_E_matrix = np.empty([self.nmodel, self.nstep])
-        prd_E_matrix = np.empty([self.nmodel, self.nstep])
+            # if rank == 0:
+            #     check_mkdir(f'E_matrix_prd')
+            #     np.savez(f'E_matrix_prd/E_matrix_prd_{idx}', E = [prd_E_matrix])
+            #     check_mkdir(f'F_matrix_prd')
+            #     np.savez(f'F_matrix_prd/F_matrix_prd_{idx}', F = [prd_F_matrix])
+            #     check_mkdir(f'S_matrix_prd')
+            #     np.savez(f'S_matrix_prd/S_matrix_prd_{idx}', S = [prd_S_matrix])
 
-        R2_F_matrix = np.empty([self.nmodel, self.nstep])
-        MAE_F_matrix = np.empty([self.nmodel, self.nstep])
-        prd_F_matrix = np.empty([self.nmodel, self.nstep])
+        if rank == 0:
+            np.savez(f'E_matrix_prd', E = prd_E_total)
+            np.savez(f'F_matrix_prd', F = prd_F_total)
+            np.savez(f'S_matrix_prd', S = prd_S_total)
 
-        # Due to the nasty MPI operation with trained model due to the memory
-        # Here, need to reconstruct the matrices in ordered way
-        mpi_print(f'[cnvg]\tBuild the matrices', rank)
-        for index_nmodel in range(self.nmodel):
-            for index_nstep in range(self.nstep):
-                for item in R2_E_total:
-                    if item != []:
-                        for dict_item in item:
-                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
-                                R2_E_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
-                                
-                for item in MAE_E_total:
-                    if item != []:
-                        for dict_item in item:
-                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
-                                MAE_E_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
-                                
-                for item in prd_E_total:
-                    if item != []:
-                        for dict_item in item:
-                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
-                                prd_E_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
-
-                for item in R2_F_total:
-                    if item != []:
-                        for dict_item in item:
-                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
-                                R2_F_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
-                                
-                for item in MAE_F_total:
-                    if item != []:
-                        for dict_item in item:
-                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
-                                MAE_F_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
-                                
-                for item in prd_F_total:
-                    if item != []:
-                        for dict_item in item:
-                            if f'{index_nmodel}_{index_nstep}' in dict_item.keys():
-                                prd_F_matrix[index_nmodel, index_nstep] = dict_item[f'{index_nmodel}_{index_nstep}']
-
-
-        np.savez('E_matrix_R2', E=R2_E_matrix)
-        np.savez('E_matrix_MAE', E=MAE_E_matrix)
-        np.savez('E_matrix_prd', E=prd_E_matrix)
-
-        np.savez('F_matrix_R2', E=R2_F_matrix)
-        np.savez('F_matrix_MAE', E=MAE_F_matrix)
-        np.savez('F_matrix_prd', E=prd_F_matrix)
-        mpi_print(f'[cnvg]\tSave matrices: E_matrix and F_matrix', rank)
-
-        # prd_Eavg_matrix = np.empty([self.nmodel, self.nstep])
-        # prd_Estd_matrix = np.empty([self.nmodel, self.nstep])
-        # prd_Favg_matrix = np.empty([self.nmodel, self.nstep])
-        # prd_Fstd_matrix = np.empty([self.nmodel, self.nstep])
-
-        # # Here, get the convergence-testing results averaging over different number of matrix elements
-        # mpi_print(f'[cnvg]\tGet average with different ranges', rank)
-        # for index_nmodel in range(self.nmodel):
-        #     for index_nstep in range(self.nstep):
-        #         prd_Eavg_matrix[index_nmodel, index_nstep] = np.average(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
-        #         prd_Estd_matrix[index_nmodel, index_nstep] = np.std(prd_E_matrix[:(index_nmodel+1),:(index_nstep+1)])
-
-        #         prd_Favg_matrix[index_nmodel, index_nstep] = np.average(prd_F_matrix[:(index_nmodel+1),:(index_nstep+1)])
-        #         prd_Fstd_matrix[index_nmodel, index_nstep] = np.std(prd_F_matrix[:(index_nmodel+1),:(index_nstep+1)])
-
-        # np.savez('E_converge_avg', E=prd_Eavg_matrix)
-        # np.savez('E_converge_std', E=prd_Estd_matrix)
-        # np.savez('F_converge_avg', E=prd_Favg_matrix)
-        # np.savez('F_converge_std', E=prd_Fstd_matrix)
-
-        # mpi_print(f'[cnvg]\tSave convergence results: E_converge and F_converge', rank)
-
+        mpi_print(f'[cnvg]\tSave matrices: E_matrix, F_matrix, S_matrix', rank)

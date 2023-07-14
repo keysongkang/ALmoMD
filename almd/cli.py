@@ -1,5 +1,5 @@
 import argparse
-from scripts.utils import aims2son, split_son, harmonic_run, harmonic2son, traj_run
+from scripts.utils import aims2son, split_son, harmonic_run, harmonic2son, traj_run, cnvg_post, convert_npz
 
 
 def init_command(args):
@@ -95,11 +95,12 @@ def split_son_command(args):
         Value of E_gs
     """
     if not hasattr(args, 'num_split') or args.num_split is None or \
-            not hasattr(args, 'E_gs') or args.E_gs is None:
-        print('Please provide the number of test data or a reference energy. '
-              '(e.g. almomd utils split 600 -120.30)')
+            not hasattr(args, 'E_gs') or args.E_gs is None or \
+            not hasattr(args, 'harmonic_F') or args.harmonic_F is None:
+        print('Please provide the number of test data, a reference energy, or an usage of the harmoic force constant.'
+              '(e.g. almomd utils split 600 -120.30 False)')
     else:
-        split_son(args.num_split, args.E_gs)
+        split_son(args.num_split, args.E_gs, args.harmonic_F)
 
 
 def harmonic_run_command(args):
@@ -144,13 +145,15 @@ def harmonic2son_command(args):
         The number of harmonic samples
     """
     if not hasattr(args, 'temperature') or args.temperature is None or \
-            not hasattr(args, 'num_sample') or args.num_sample is None:
+            not hasattr(args, 'num_sample') or args.num_sample is None or \
+            not hasattr(args, 'output_format') or args.output_format is None:
         print(
-            'Please provide the temperature and the number of harmoic samples'
-            '(e.g. almomd utils harmonic2son 300 10)'
+            'Please provide the temperature, the number of harmoic samples, '
+            'and the format of the output'
+            '(e.g. almomd utils harmonic2son 300 10 vibes)'
             )
     else:
-        harmonic2son(args.temperature, args.num_sample)
+        harmonic2son(args.temperature, args.num_sample, args.output_format)
 
 
 def traj_run_command(args):
@@ -173,15 +176,44 @@ def traj_run_command(args):
     if not hasattr(args, 'traj_path') or args.traj_path is None or \
             not hasattr(args, 'thermal_cutoff') or args.thermal_cutoff is None or \
             not hasattr(args, 'num_traj') or args.num_traj is None or \
-            not hasattr(args, 'DFT_calc') or args.DFT_calc is None:
+            not hasattr(args, 'DFT_calc') or args.DFT_calc is None or \
+            not hasattr(args, 'harmonic_F') or args.harmonic_F is None:
         print(
             'Please provide the path to the trajectory file, '
             'thermalization cutoff, the number of configurations '
-            'to be calculated by DFT and the DFT calclulator'
-            '(e.g. almomd utils traj_run md.traj 300 500 aims)'
+            'to be calculated by DFT and the DFT calclulator, '
+            'and the usage of the harmonic constants'
+            '(e.g. almomd utils traj_run md.traj 300 500 aims --harmonic_F)'
             )
     else:
-        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc)
+        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc, harmonic_F)
+
+
+def cnvg_post_command(args):
+    """
+    Implement the logic for "almomd cnvg" command
+    """
+    if not hasattr(args, 'nmodel') or args.nmodel is None or \
+            not hasattr(args, 'nstep') or args.nstep is None:
+        print(
+            'Please provide the number of the model ensemble and subsampling'
+            '(e.g. almomd utils cnvg_post 20 20)'
+            )
+    else:
+        cnvg_post(args.nmodel, args.nstep)
+
+
+def convert_npz_command(args):
+    """
+    Implement the logic for "almomd cnvg" command
+    """
+    if not hasattr(args, 'name') or args.name is None:
+        print(
+            'Please provide the name of the npz file'
+            '(e.g. almomd utils data-test.npz --harmonic_F)'
+            )
+    else:
+        convert_npz(args.name, args.harmonic_F)
 
 
 def main():
@@ -277,6 +309,11 @@ def main():
         'E_gs', nargs='?', type=float,
         help='Reference total energy in units of eV/Unitcell'
         )
+    split_parser.add_argument(
+        '--harmonic_F',
+        action='store_true',
+        help='Use the harmonic force constant'
+        )
     split_parser.set_defaults(func=split_son_command)
 
     # Subparser for "utils harmonic_run" subcommand
@@ -317,6 +354,10 @@ def main():
         'num_sample', nargs='?', type=int,
         help='The number of harmonic samples'
         )
+    harmonic2son_parser.add_argument(
+        'output_format', nargs='?', type=str,
+        help='The format of the output'
+        )
     harmonic2son_parser.set_defaults(func=harmonic2son_command)
 
     # Subparser for "utils harmonic_run" subcommand
@@ -345,7 +386,42 @@ def main():
         'num_calc', nargs='?', type=int,
         help='The number of job scripts to be submitted'
         )
+    traj_run_parser.add_argument(
+        'harmonic_F', nargs='?', type=bool,
+        help='The usage of the harmonic force constants'
+        )
     traj_run_parser.set_defaults(func=traj_run_command)
+
+    # Subparser for "utils cnvg_post" subcommand
+    cnvg_post_parser = utils_subparsers.add_parser(
+        'cnvg_post',
+        help='Plot the convergence of the uncertainties'
+        )
+    cnvg_post_parser.add_argument(
+        'nmodel', nargs='?', type=int,
+        help='The number of the model ensemble'
+        )
+    cnvg_post_parser.add_argument(
+        'nstep', nargs='?', type=int,
+        help='The number of the subsampling'
+        )
+    cnvg_post_parser.set_defaults(func=traj_run_command)
+
+    # Subparser for "utils covert_npz" subcommand
+    convert_npz_parser = utils_subparsers.add_parser(
+        'convert_npz',
+        help='Include/exclude harmonic terms to/from npz file'
+        )
+    convert_npz_parser.add_argument(
+        'name', nargs='?', type=str,
+        help='The name of the npz file'
+        )
+    convert_npz_parser.add_argument(
+        '--harmonic_F',
+        action='store_true',
+        help='Exclude harmonic terms'
+        )
+    convert_npz_parser.set_defaults(func=traj_run_command)
 
     args = parser.parse_args()
 

@@ -232,6 +232,105 @@ def read_aims(file_name):
     return atom, total_E, np.array(forces)
 
 
+def eval_sigma(struc_step_forces, struc_step_positions, al_type):
+    """Function [read_input_file]
+    Read 'input.in' and assign variables.
+
+    Parameters:
+
+    file_path: str
+        File path of the file
+
+    Returns:
+
+    variables: dictionary
+        A dictionary containing all new variables
+    """
+
+    from vibes.anharmonicity_score import get_sigma
+
+    displacements = get_displacements(struc_step_positions, 'geometry.in.supercell')
+    fc_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+
+    # Get the force of the current step
+    fc_step = np.array(struc_step_forces)
+
+    if al_type == 'sigma_max':
+        force_a = []
+        for fc_step_atom, fc_ha_atom in zip(fc_step, fc_ha):
+            force_a.append(get_sigma(fc_step_atom, fc_ha_atom, silent=True))
+        return force_a
+    else:
+        return get_sigma(fc_step, fc_ha, silent=True)
+
+
+
+def get_displacements(struc_step_positions, struc='geometry.in.supercell'):
+
+    from ase.geometry import find_mic
+    from ase.io.aims import read_aims
+
+    # Read the ground state structure with the primitive cell
+    ref_struc_super = read_aims(struc)
+
+    # Get the structral information
+    ref_cell = np.asarray(ref_struc_super.get_cell())
+    ref_positions = np.array(ref_struc_super.get_positions())
+    shape = ref_positions.shape
+    step_positions = np.array(struc_step_positions)
+
+    # Get the displacements
+    displacements = step_positions - ref_positions
+    displacements = find_mic(displacements.reshape(-1, 3), ref_cell)[0]
+    displacements = displacements.reshape(*shape)
+
+    return displacements
+
+
+
+def get_fc_ha(displacements, fc_file='FORCE_CONSTANTS_remapped'):
+    # Get the harmonic force from the force constant of the phonon dispersion
+    fc = np.loadtxt(fc_file)
+    shape = displacements.shape
+    fc_ha = -fc @ displacements.flatten()
+
+    return fc_ha.reshape(shape)
+
+
+def get_E_ha(displacements, fc_ha):
+    return displacements.flatten() @ -fc_ha.flatten() / 2
+
+
+
+def generate_msg(al_type):
+    result_msg = 'Temperature[K]\tIteration\t'\
+                 + 'TestError_E\tTestError_F\tTestError_S\t'\
+                 + 'E_potent_avg_i\tE_potent_std_i'
+
+    if al_type == 'energy':
+        result_msg += '\tUn_Abs_E_avg_i\tUn_Abs_E_std_i'\
+                      + '\tUn_Rel_E_avg_i\tUn_Rel_E_std_i'
+
+    if al_type == 'force' or al_type == 'force_max':
+        result_msg += '\tUn_Abs_F_avg_i\tUn_Abs_F_std_i'\
+                      + '\tUn_Rel_F_avg_i\tUn_Rel_F_std_i'
+
+    if al_type == 'sigma' or al_type == 'sigma_max':
+        result_msg += '\tUn_Abs_S_avg_i\tUn_Abs_S_std_i'\
+                      + '\tUn_Rel_S_avg_i\tUn_Rel_S_std_i'
+
+    if al_type == 'energy':
+        result_msg += '\tUn_Abs_E_avg_a\tUn_Rel_E_avg_a'
+
+    if al_type == 'force' or al_type == 'force_max':
+        result_msg += '\tUn_Abs_F_avg_a\tUn_Rel_F_avg_a'
+
+    if al_type == 'sigma' or al_type == 'sigma_max':
+        result_msg += '\tUn_Abs_S_avg_a\tUn_Rel_S_avg_a'
+
+    return result_msg
+
+
 def read_input_file(file_path):
     """Function [read_input_file]
     Read 'input.in' and assign variables.
@@ -265,7 +364,7 @@ def read_input_file(file_path):
                 value = value.strip()
 
                 # Perform type conversions for specific variables
-                if name in ['supercell', 'supercell_init', 'mask']:
+                if name in ['supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F']:
                     value = eval(value)
                 elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad']:
                     value = float(value)

@@ -7,14 +7,14 @@ import numpy as np
 from mpi4py import MPI
 from decimal import Decimal
 
-from libs.lib_util    import single_print
+from libs.lib_util    import single_print, mpi_print
 from libs.lib_criteria import eval_uncert, uncert_strconvter
 
 
 def NVTLangevin(
     struc, timestep, temperature, friction, steps, loginterval,
-    nstep, nmodel, calculator, E_ref, al_type, trajectory, logfile=None,
-    signal_uncert=False, signal_append=True, fix_com=True,
+    nstep, nmodel, calculator, E_ref, al_type, trajectory, harmonic_F=False,
+    anharmonic_F=False, logfile=None, signal_uncert=False, signal_append=True, fix_com=True,
 ):
     """Function [NVTLangevin]
     Evalulate the absolute and relative uncertainties of
@@ -94,8 +94,9 @@ def NVTLangevin(
                     )
                 if signal_uncert:
                     file_log.write(
-                        '\tUncertRel_E\tUncertAbs_E\t'
-                        + 'UncertRel_F\tUncertAbs_F\n'
+                        '\tUncertAbs_E\tUncertRel_E\t'
+                        + 'UncertAbs_F\tUncertRel_F\t'
+                        + 'UncertAbs_S\tUncertRel_S\n'
                         )
                 else:
                     file_log.write('\n')
@@ -103,13 +104,14 @@ def NVTLangevin(
         
             # Get MD information at the current step
             info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-                struc, nstep, nmodel, calculator
+                struc, nstep, nmodel, calculator, harmonic_F
                 )
 
-            # Get absolute and relative uncertainties of energy and force
-            # and also total energy
-            UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, Etot_step =\
-            eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type)
+            if signal_uncert:
+                # Get absolute and relative uncertainties of energy and force
+                # and also total energy
+                UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, UncertAbs_S, UncertRel_S, Epot_step, S_step =\
+                eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
             # Log MD information at the current step in the log file
             if rank == 0:
@@ -124,17 +126,19 @@ def NVTLangevin(
                 if signal_uncert:
                     file_log.write(
                         '      \t' +
-                        uncert_strconvter(UncertRel_E) + '\t' +
                         uncert_strconvter(UncertAbs_E) + '\t' +
+                        uncert_strconvter(UncertRel_E) + '\t' +
+                        uncert_strconvter(UncertAbs_F) + '\t' +
                         uncert_strconvter(UncertRel_F) + '\t' +
-                        uncert_strconvter(UncertAbs_F) + '\n'
+                        uncert_strconvter(UncertAbs_S) + '\t' +
+                        uncert_strconvter(UncertRel_S) + '\n'
                         )
                 else:
                     file_log.write('\n')
                 file_log.close()
 
     # Get averaged force from trained models
-    forces = get_forces(struc, nstep, nmodel, calculator)
+    forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
 
     # Go trough steps until the requested number of steps
     # If appending, it starts from Langevin_idx. Otherwise, Langevin_idx = 0
@@ -153,7 +157,7 @@ def NVTLangevin(
         
         # Get averaged forces and velocities
         if forces is None:
-            forces = get_forces(struc, nstep, nmodel, calculator)
+            forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
         # Velocity is already calculated based on averaged forces
         # in the previous step
         velocity = struc.get_velocities()
@@ -187,7 +191,7 @@ def NVTLangevin(
 
         # recalc velocities after RATTLE constraints are applied
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
-        forces = get_forces(struc, nstep, nmodel, calculator)
+        forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
         
         # Update the velocities
         velocity += (c1 * forces / masses - c2 * velocity + rnd_vel)
@@ -199,13 +203,14 @@ def NVTLangevin(
         if idx % loginterval == 0:
             if isinstance(logfile, str):
                 info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-                    struc, nstep, nmodel, calculator
+                    struc, nstep, nmodel, calculator, harmonic_F
                     )
 
-                # Get absolute and relative uncertainties of energy and force
-                # and also total energy
-                UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, Etot_step =\
-                eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type)
+                if signal_uncert:
+                    # Get absolute and relative uncertainties of energy and force
+                    # and also total energy
+                    UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, UncertAbs_S, UncertRel_S, Epot_step, S_step =\
+                    eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
                 if rank == 0:
                     file_log = open(logfile, 'a')
@@ -220,10 +225,12 @@ def NVTLangevin(
                     if signal_uncert:
                         file_log.write(
                             '      \t' +
-                            uncert_strconvter(UncertRel_E) + '\t' +
                             uncert_strconvter(UncertAbs_E) + '\t' +
+                            uncert_strconvter(UncertRel_E) + '\t' +
+                            uncert_strconvter(UncertAbs_F) + '\t' +
                             uncert_strconvter(UncertRel_F) + '\t' +
-                            uncert_strconvter(UncertAbs_F) + '\n'
+                            uncert_strconvter(UncertAbs_S) + '\t' +
+                            uncert_strconvter(UncertRel_S) + '\n'
                             )
                     else:
                         file_log.write('\n')
@@ -233,7 +240,7 @@ def NVTLangevin(
 
                 
 def get_forces(
-    struc, nstep, nmodel, calculator
+    struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F
 ):
     """Function [get_forces]
     Evalulate the average of forces from all different trained models.
@@ -260,7 +267,6 @@ def get_forces(
     size = comm.Get_size()
     rank = comm.Get_rank()
 
-    # Get calculators from trained models and corresponding predicted forces
     if type(calculator) == list:
         forces = []
         zndex = 0
@@ -271,9 +277,16 @@ def get_forces(
                     forces.append(struc.get_forces(md=True))
                     zndex += 1
         forces = comm.allgather(forces)
-        # Get the average
-        force_avg =\
-        np.average([jtem for item in forces if len(item) != 0 for jtem in item],axis=0)
+        F_step_filtered = [jtem for item in forces if len(item) != 0 for jtem in item]
+
+        if harmonic_F and anharmonic_F:
+            from libs.lib_util import get_displacements, get_fc_ha
+            displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
+            F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+            F_step_filtered = F_step_filtered + F_ha
+
+        force_avg = np.average(F_step_filtered, axis=0)
+
     else:
         forces = None
         if rank == 0:
@@ -281,11 +294,13 @@ def get_forces(
             forces = struc.get_forces(md=True)
         force_avg = comm.bcast(forces, root=0)
 
+
+
     return force_avg
 
 
 def get_MDinfo_temp(
-    struc, nstep, nmodel, calculator
+    struc, nstep, nmodel, calculator, harmonic_F
 ):
     """Function [get_MDinfo_temp]
     Extract the average of total, potential, and kinetic energy of
@@ -343,8 +358,18 @@ def get_MDinfo_temp(
         # Get their average
         info_TE_avg =\
         np.average(np.array([i for items in info_TE for i in items]), axis=0)
-        info_PE_avg =\
-        np.average(np.array([i for items in info_PE for i in items]), axis=0)
+
+        if harmonic_F:
+            from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+            displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
+            F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+            E_ha = get_E_ha(displacements, fc_ha)
+            info_PE_avg =\
+            np.average(np.array([i for items in info_PE for i in items]), axis=0) + E_ha
+        else:
+            info_PE_avg =\
+            np.average(np.array([i for items in info_PE for i in items]), axis=0)
+
         info_KE_avg =\
         np.average(np.array([i for items in info_KE for i in items]), axis=0)
         info_T_avg =\
@@ -353,7 +378,16 @@ def get_MDinfo_temp(
         info_TE, info_PE, info_KE, info_T = None, None, None, None
         if rank == 0:
             struc.calc = calculator
-            info_PE = struc.get_potential_energy()
+
+            if harmonic_F:
+                from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+                displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
+                F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+                E_ha = get_E_ha(displacements, fc_ha)
+                info_PE = struc.get_potential_energy() + E_ha
+            else:
+                info_PE = struc.get_potential_energy()
+            
             info_KE = struc.get_kinetic_energy()
             info_TE = info_PE + info_KE
             info_T = struc.get_temperature()

@@ -12,7 +12,7 @@ from libs.lib_termination import get_testerror
 
 def check_progress(
     temperature, pressure, ntotal, ntrain, nval,
-    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type, al_type, harmonic_F
+    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type, al_type, harmonic_F, device
 ):
     """Function [check_progress]
     Check the progress of previous calculations.
@@ -82,7 +82,7 @@ def check_progress(
                 outputfile.write(result_msg + '\n')
                 outputfile.close()
             # Get the test errors using data-test.npz
-            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
+            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device)
         else: # When there is a 'result.txt',
             # Check the contents in 'result.txt' before recording
             if os.path.exists('result.txt'):
@@ -98,7 +98,7 @@ def check_progress(
             # Print the test errors only for first calculation
             if get_criteria_index == 0:
                 # Get the test errors using data-test.npz
-                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device)
     
     # Go through the while loop until a breaking command
     while True:
@@ -154,7 +154,7 @@ def check_progress(
                         if all(gen_check) == True:
                             # Get the test errors using data-test.npz
                             index += 1
-                            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
+                            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device)
                         else:
                             index += 1
                             break
@@ -184,7 +184,7 @@ def check_progress(
 
 def check_progress_rand(
     temperature, pressure, ntotal, ntrain, nval,
-    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type, al_type, harmonic_F
+    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type, al_type, harmonic_F, device
 ):
     """Function [check_progress_rand]
     Check the progress of previous calculations.
@@ -254,7 +254,7 @@ def check_progress_rand(
                 )
                 outputfile.close()
             # Get the test errors using data-test.npz
-            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
+            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device)
         else: # When there is a 'result.txt',
             # Check the contents in 'result.txt' before recording
             if os.path.exists('result.txt'):
@@ -267,7 +267,7 @@ def check_progress_rand(
             # Print the test errors only for first calculation
             if index == 0:
                 # Get the test errors using data-test.npz
-                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device)
     
     # Go through the while loop until a breaking command
     while True:
@@ -284,7 +284,7 @@ def check_progress_rand(
             if all(gen_check) == True:
                 # Get the test errors using data-test.npz
                 index += 1
-                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F)
+                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device)
             else:
                 index += 1
                 break

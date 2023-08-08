@@ -336,7 +336,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device
             )
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
@@ -352,7 +352,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device
             )
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
@@ -384,7 +384,7 @@ class almd:
         # Get calculators from previously trained MLIP and its total energy of ground state structure
         E_ref, calc_MLIP = get_train_job(
             struc_init, total_ntrain, total_nval, self.rmax, self.lmax,
-            self.nfeatures, workpath, self.nstep, self.nmodel
+            self.nfeatures, workpath, self.nstep, self.nmodel, self.device
         )
         comm.Barrier()
 
@@ -424,9 +424,9 @@ class almd:
         comm.Barrier()
 
         # Submit a job-dependence to execute run_dft_gen after the DFT calculations
-        if rank == 0:
-            job_dependency('gen', self.num_calc)
-        comm.Barrier()
+        # if rank == 0:
+        #     job_dependency('gen', self.num_calc)
+        # comm.Barrier()
 
         mpi_print(f'[cont]\t!! Finish the MD investigation: Iteration {self.index}', rank)
 
@@ -471,7 +471,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device
             )
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
@@ -488,7 +488,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device
             )
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
@@ -648,6 +648,8 @@ class almd:
         mpi_print(f'[test]\tRead the testing data: data-test.npz', rank)
         comm.Barrier()
 
+        mpi_print(f'\t\tDevice: {self.device}', rank)
+
         for test_idx in range(self.test_index):
             # Set the path to folders storing the training data for NequIP
             workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_{test_idx}'
@@ -664,7 +666,7 @@ class almd:
                         if os.path.exists(f'{workpath}/{dply_model}'):
                             mpi_print(f'\t\tFound the deployed model: {dply_model}', rank)
                             calc_MLIP.append(
-                                nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
+                                nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}', device=self.device)
                             )
                         else:
                             # If there is no model, turn on the termination signal
@@ -870,6 +872,9 @@ class almd:
         # Prepare empty lists for potential and total energies
         Epot_step = []
         calc_MLIP = []
+
+        mpi_print(f'\t\tDevice: {self.device}', rank)
+
         for index_nmodel in range(self.nmodel):
             for index_nstep in range(self.nstep):
                 if (index_nmodel * self.nstep + index_nstep) % size == rank:
@@ -878,7 +883,7 @@ class almd:
                         single_print(f'\t\tFound the deployed model: {dply_model}')
                         calc_MLIP.append(
                             nequip_calculator.NequIPCalculator.from_deployed_model(
-                                f'{self.modelpath}/{dply_model}'
+                                f'{self.modelpath}/{dply_model}', device=self.device
                                 )
                         )
                         struc_init.calc = calc_MLIP[-1]
@@ -944,6 +949,8 @@ class almd:
         workpath = f'./MODEL/{self.temperature}K-{self.pressure}bar_0'
         signal = 0
 
+        mpi_print(f'\t\tDevice: {self.device}', rank)
+
         mpi_print(f'[cnvg]\tFind the trained models: {workpath}', rank)
         # Load the trained models as calculators
         calc_MLIP = []
@@ -954,7 +961,7 @@ class almd:
                     if os.path.exists(f'{workpath}/{dply_model}'):
                         mpi_print(f'\t\tFound the deployed model: {dply_model}', rank=0)
                         calc_MLIP.append(
-                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
+                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}', device=self.device)
                         )
                     else:
                         mpi_print(f'\t\tCannot find the model: {dply_model}', rank=0)

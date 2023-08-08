@@ -9,10 +9,12 @@ from mpi4py import MPI
 
 from libs.lib_util        import mpi_print, single_print, rm_mkdir
 
+import torch
+torch.set_default_dtype(torch.float64)
 
 def get_train_job(
     struc_relaxed, ntrain, nval, rmax, lmax, nfeatures,
-    workpath, nstep, nmodel
+    workpath, nstep, nmodel, device
 ):
     """Function [get_train_job]
     Get calculators from previously trained MLIP and
@@ -58,7 +60,7 @@ def get_train_job(
     signal    = 0
     # Get a current path
     currentpath  = os.getcwd()
-    
+
     calc_MLIP = []
     for index_nmodel in range(nmodel):
         job_script_input = ''
@@ -72,7 +74,7 @@ def get_train_job(
                     mpi_print(f'\t\tFound the deployed model: {dply_model}', rank=0)
                     calc_MLIP.append(
                         nequip_calculator.NequIPCalculator.\
-                        from_deployed_model(f'{workpath}/{dply_model}')
+                        from_deployed_model(f'{workpath}/{dply_model}', device=device)
                     )
                 else: # If not, prepare the training job
                     rm_mkdir(f'{workpath}/train_{index_nmodel}_{index_nstep}')
@@ -104,7 +106,7 @@ def get_train_job(
                 # Submit the job scripts
                 subprocess.run(['sbatch', job_script])
                 os.chdir(currentpath)
-    
+
     # Temination check 
     if signal == 1:
         sys.exit()

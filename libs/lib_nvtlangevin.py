@@ -1,7 +1,9 @@
 from ase.io.trajectory import Trajectory
 from ase.io.trajectory import TrajectoryWriter
 import ase.units as units
+from ase.io.cif        import write_cif
 
+import time
 import os
 import numpy as np
 from mpi4py import MPI
@@ -10,6 +12,8 @@ from decimal import Decimal
 from libs.lib_util    import single_print, mpi_print
 from libs.lib_criteria import eval_uncert, uncert_strconvter
 
+import torch
+torch.set_default_dtype(torch.float64)
 
 def NVTLangevin(
     struc, timestep, temperature, friction, steps, loginterval,
@@ -61,6 +65,8 @@ def NVTLangevin(
         kept unperturbed.  Default: True.
     """
 
+    time_init = time.time()
+
     # Extract MPI infos
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
@@ -68,6 +74,7 @@ def NVTLangevin(
     # Initialization of index
     Langevin_idx = 0
 
+    # mpi_print(f'Step 1: {time.time()-time_init}', rank)
     if signal_append and os.path.exists(trajectory) and os.path.getsize(trajectory) != 0: # If appending and the file exists,
         # Read the previous trajectory
         traj_old = Trajectory(
@@ -137,24 +144,31 @@ def NVTLangevin(
                     file_log.write('\n')
                 file_log.close()
 
+    # mpi_print(f'Step 2: {time.time()-time_init}', rank)
+
     # Get averaged force from trained models
     forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
 
+    # mpi_print(f'Step 3: {time.time()-time_init}', rank)
     # Go trough steps until the requested number of steps
     # If appending, it starts from Langevin_idx. Otherwise, Langevin_idx = 0
     for idx in range(Langevin_idx, steps):
+
+        # mpi_print(f'Step 4: {time.time()-time_init}', rank)
         # Get essential properties
         natoms = len(struc)
         masses = get_masses(struc.get_masses(), natoms)
         sigma = np.sqrt(2 * temperature * friction / masses)
 
+        # mpi_print(f'Step 5: {time.time()-time_init}', rank)
         # Get Langevin coefficients
         c1 = timestep / 2. - timestep * timestep * friction / 8.
         c2 = timestep * friction / 2 - timestep * timestep * friction * friction / 8.
         c3 = np.sqrt(timestep) * sigma / 2. - timestep**1.5 * friction * sigma / 8.
         c5 = timestep**1.5 * sigma / (2 * np.sqrt(3))
         c4 = friction / 2. * c5
-        
+
+        # mpi_print(f'Step 6: {time.time()-time_init}', rank)
         # Get averaged forces and velocities
         if forces is None:
             forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
@@ -162,6 +176,7 @@ def NVTLangevin(
         # in the previous step
         velocity = struc.get_velocities()
         
+        # mpi_print(f'Step 7: {time.time()-time_init}', rank)
         # Sample the random numbers for the temperature fluctuation
         xi = np.empty(shape=(natoms, 3))
         eta = np.empty(shape=(natoms, 3))
@@ -171,6 +186,7 @@ def NVTLangevin(
         comm.Bcast(xi, root=0)
         comm.Bcast(eta, root=0)
         
+        # mpi_print(f'Step 8: {time.time()-time_init}', rank)
         # Get get changes of positions and velocities
         rnd_pos = c5 * eta
         rnd_vel = c3 * xi - c4 * eta
@@ -183,35 +199,46 @@ def NVTLangevin(
         # First halfstep in the velocity.
         velocity += (c1 * forces / masses - c2 * velocity + rnd_vel)
         
+        # mpi_print(f'Step 9: {time.time()-time_init}', rank)
         # Full step in positions
         position = struc.get_positions()
         
         # Step: x^n -> x^(n+1) - this applies constraints if any.
         struc.set_positions(position + timestep * velocity + rnd_pos)
 
+        # mpi_print(f'Step 10: {time.time()-time_init}', rank)
         # recalc velocities after RATTLE constraints are applied
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
+        comm.Barrier()
+        # mpi_print(f'Step 10-1: {time.time()-time_init}', rank)
         forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
+        comm.Barrier()
         
+        # mpi_print(f'Step 10-2: {time.time()-time_init}', rank)
         # Update the velocities
         velocity += (c1 * forces / masses - c2 * velocity + rnd_vel)
 
+        # mpi_print(f'Step 10-3: {time.time()-time_init}', rank)
         # Second part of RATTLE taken care of here
         struc.set_momenta(velocity * masses)
         
+        # mpi_print(f'Step 11: {time.time()-time_init}', rank)
         # Log MD information at regular intervals
         if idx % loginterval == 0:
             if isinstance(logfile, str):
+                # mpi_print(f'Step 12: {time.time()-time_init}', rank)
                 info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
                     struc, nstep, nmodel, calculator, harmonic_F
                     )
 
+                # mpi_print(f'Step 13: {time.time()-time_init}', rank)
                 if signal_uncert:
                     # Get absolute and relative uncertainties of energy and force
                     # and also total energy
                     UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, UncertAbs_S, UncertRel_S, Epot_step, S_step =\
                     eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
+                # mpi_print(f'Step 14: {time.time()-time_init}', rank)
                 if rank == 0:
                     file_log = open(logfile, 'a')
                     simtime = timestep*(idx+loginterval)/units.fs/1000
@@ -235,8 +262,10 @@ def NVTLangevin(
                     else:
                         file_log.write('\n')
                     file_log.close()
+                # mpi_print(f'Step 15: {time.time()-time_init}', rank)
             if rank == 0:
                 file_traj.write(atoms=struc)
+            # mpi_print(f'Step 16: {time.time()-time_init}', rank)
 
                 
 def get_forces(
@@ -262,29 +291,41 @@ def get_forces(
         Averaged forces across trained models
     """
 
+    # time_init = time.time()
+
     # Extract MPI infos
     comm = MPI.COMM_WORLD
     size = comm.Get_size()
     rank = comm.Get_rank()
 
+    # mpi_print(f'Step 10-a: {time.time()-time_init}', rank)
     if type(calculator) == list:
         forces = []
         zndex = 0
         for index_nmodel in range(nmodel):
             for index_nstep in range(nstep):
                 if (index_nmodel*nstep + index_nstep) % size == rank:
+                    # mpi_print(f'Step 10-a1 first {rank}: {time.time()-time_init}', rank)
                     struc.calc = calculator[zndex]
-                    forces.append(struc.get_forces(md=True))
+                    # mpi_print(f'Step 10-a1 second {rank}: {time.time()-time_init}', rank)
+                    temp_force = struc.get_forces()
+                    # mpi_print(f'Step 10-a1 third {rank}: {time.time()-time_init}', rank)
+                    forces.append(temp_force)
+                    # mpi_print(f'Step 10-a1 last {rank}: {time.time()-time_init}', rank)
                     zndex += 1
+        # mpi_print(f'Step 10-a2: {time.time()-time_init}', rank)
         forces = comm.allgather(forces)
+        # mpi_print(f'Step 10-a3: {time.time()-time_init}', rank)
         F_step_filtered = [jtem for item in forces if len(item) != 0 for jtem in item]
 
+        # mpi_print(f'Step 10-b: {time.time()-time_init}', rank)
         if harmonic_F and anharmonic_F:
             from libs.lib_util import get_displacements, get_fc_ha
             displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
             F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
             F_step_filtered = F_step_filtered + F_ha
 
+        # mpi_print(f'Step 10-c: {time.time()-time_init}', rank)
         force_avg = np.average(F_step_filtered, axis=0)
 
     else:
@@ -294,7 +335,7 @@ def get_forces(
             forces = struc.get_forces(md=True)
         force_avg = comm.bcast(forces, root=0)
 
-
+    # mpi_print(f'Step 10-d: {time.time()-time_init}', rank)
 
     return force_avg
 

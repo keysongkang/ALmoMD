@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from libs.lib_util        import single_print
 
+import torch
+torch.set_default_dtype(torch.float64)
 
 def termination(temperature, pressure, crtria_cnvg, al_type):
     """Function [termination]
@@ -67,7 +69,7 @@ def termination(temperature, pressure, crtria_cnvg, al_type):
     return signal
 
 
-def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F):
+def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device):
     """Function [get_testerror]
     Check the test error using data-test.npz.
 
@@ -116,6 +118,8 @@ def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_typ
     # Initialization of a termination signal
     signal = 0
 
+    mpi_print(f'\t\tDevice: {device}', rank)
+
     # Load the trained models as calculators
     calc_MLIP = []
     for index_nmodel in range(nmodel):
@@ -125,7 +129,7 @@ def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_typ
                 if os.path.exists(f'{workpath}/{dply_model}'):
                     mpi_print(f'\t\tFound the deployed model: {dply_model}', rank=0)
                     calc_MLIP.append(
-                        nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}')
+                        nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}', device=device)
                     )
                 else:
                     # If there is no model, turn on the termination signal
@@ -165,9 +169,9 @@ def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_typ
     prd_sigma_max_std = []
     real_E_list = []
     real_F_list = []
-    for id_R, id_z, id_CELL, id_PBC, id_E, id_F in zip(
+    for id_step, (id_R, id_z, id_CELL, id_PBC, id_E, id_F) in enumerate(zip(
         data_test['R'], data_test['z'], data_test['CELL'], data_test['PBC'], data_test['E'], data_test['F']
-        ):
+        )):
         # Create the corresponding ASE atoms
         struc = Atoms(id_z, positions=id_R, cell=id_CELL, pbc=id_PBC)
         # Prepare the empty lists for predicted energy and force
@@ -175,6 +179,8 @@ def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_typ
         prd_F = []
         prd_R = []
         zndex = 0
+        
+        mpi_print(f'[Termi]\tTesting: sample {id_step}', rank)
 
         # Go through all trained models
         for index_nmodel in range(nmodel):
@@ -196,15 +202,15 @@ def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_typ
         prd_F = comm.allgather(prd_F)
         prd_F = [jtem for item in prd_F if len(item) != 0 for jtem in item]
 
-        # if harmonic_F:
-        #     from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-        #     displacements = get_displacements(id_R, 'geometry.in.supercell')
-        #     F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-        #     prd_F = prd_F + F_ha
-        #     id_F = id_F + F_ha
-        #     E_ha = get_E_ha(displacements, F_ha)
-        #     prd_E = np.array(prd_E) + E_ha
-        #     id_E = id_E + E_ha
+        if harmonic_F:
+            from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+            displacements = get_displacements(id_R, 'geometry.in.supercell')
+            F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+            prd_F = prd_F + F_ha
+            # id_F = id_F - F_ha
+            E_ha = get_E_ha(displacements, F_ha)
+            prd_E = np.array(prd_E) + E_ha
+            # id_E = id_E - E_ha
 
         prd_E_avg.append(np.average(prd_E, axis=0))
         real_E_list.append(id_E)

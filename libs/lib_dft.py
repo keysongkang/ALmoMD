@@ -94,7 +94,8 @@ def run_DFT(temperature, pressure, index, numstep, num_calc):
                     writing_input.write('cd '+value_execute_cwd+'\n')
                     writing_input.write(vibes_command+'\n')
         # If the previous calculation is not finished, rerun it
-        subprocess.run(['sbatch', job_script])
+        # subprocess.run(['sbatch', job_script])
+        # os.system(f'sbatch {job_script}')
 
     # Move back to the original position
     os.chdir(mainpath_cwd)
@@ -143,13 +144,13 @@ def aims_write(filename, atoms):
             atoms.get_chemical_symbols()[kndex] +
             '\n'
         )
-        trajfile.write(
-            f'    velocity ' +
-            '{:.14f}'.format(Decimal(str(atoms.get_velocities()[kndex,0]*velo_unit_conv))) +
-            ' ' +
-            '{:.14f}'.format(Decimal(str(atoms.get_velocities()[kndex,1]*velo_unit_conv))) +
-            ' ' +
-            '{:.14f}'.format(Decimal(str(atoms.get_velocities()[kndex,2]*velo_unit_conv))) +
-            '\n'
-        )
+        # trajfile.write(
+        #     f'    velocity ' +
+        #     '{:.14f}'.format(Decimal(str(atoms.get_velocities()[kndex,0]*velo_unit_conv))) +
+        #     ' ' +
+        #     '{:.14f}'.format(Decimal(str(atoms.get_velocities()[kndex,1]*velo_unit_conv))) +
+        #     ' ' +
+        #     '{:.14f}'.format(Decimal(str(atoms.get_velocities()[kndex,2]*velo_unit_conv))) +
+        #     '\n'
+        # )
     trajfile.close()

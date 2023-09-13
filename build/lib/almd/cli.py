@@ -176,17 +176,18 @@ def traj_run_command(args):
     if not hasattr(args, 'traj_path') or args.traj_path is None or \
             not hasattr(args, 'thermal_cutoff') or args.thermal_cutoff is None or \
             not hasattr(args, 'num_traj') or args.num_traj is None or \
-            not hasattr(args, 'DFT_calc') or args.DFT_calc is None or \
-            not hasattr(args, 'harmonic_F') or args.harmonic_F is None:
+            not hasattr(args, 'DFT_calc') or args.DFT_calc is None:
+            # not hasattr(args, 'harmonic_F') or args.harmonic_F is None:
         print(
             'Please provide the path to the trajectory file, '
             'thermalization cutoff, the number of configurations '
             'to be calculated by DFT and the DFT calclulator, '
             'and the usage of the harmonic constants'
-            '(e.g. almomd utils traj_run md.traj 300 500 aims --harmonic_F)'
+            '(e.g. almomd utils traj_run md.traj 300 500 aims 50 --harmonic_F)'
             )
     else:
-        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc, harmonic_F)
+        # traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc, harmonic_F)
+        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc)
 
 
 def cnvg_post_command(args):
@@ -386,10 +387,10 @@ def main():
         'num_calc', nargs='?', type=int,
         help='The number of job scripts to be submitted'
         )
-    traj_run_parser.add_argument(
-        'harmonic_F', nargs='?', type=bool,
-        help='The usage of the harmonic force constants'
-        )
+    # traj_run_parser.add_argument(
+    #     'harmonic_F', nargs='?', type=bool,
+    #     help='The usage of the harmonic force constants'
+    #     )
     traj_run_parser.set_defaults(func=traj_run_command)
 
     # Subparser for "utils cnvg_post" subcommand

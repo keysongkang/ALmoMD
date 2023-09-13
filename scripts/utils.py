@@ -390,7 +390,7 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
         job_script_DFT_default = job_script_DFT_initial.read()
     # Prepare the command line for FHI-aims for DeepH or FHI-vibes
     if DFT_calc == 'aims':
-        DFT_command = 'srun /u/kkang/programs/FHIaims-DeepH/build/aims.220609.scalapack.mpi.x > aims.out 2>&1'
+        DFT_command = 'srun /u/kkang/programs/FHIaims-DeepH/build2/aims.220609.scalapack.mpi.x > aims.out 2>&1'
     elif DFT_calc == 'vibes':
         DFT_command = 'vibes run singlepoint aims.in &> log.aims'
 
@@ -764,7 +764,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
         job_script_DFT_default = job_script_DFT_initial.read()
     # Prepare the command line for FHI-aims for DeepH or FHI-vibes
     if DFT_calc == 'aims':
-        DFT_command = 'srun /u/kkang/programs/FHIaims-DeepH/build/aims.220609.scalapack.mpi.x > aims.out 2>&1'
+        DFT_command = 'srun /u/kkang/programs/FHIaims-DeepH/build2/aims.220609.scalapack.mpi.x > aims.out 2>&1'
     elif DFT_calc == 'vibes':
         DFT_command = 'vibes run singlepoint aims.in &> log.aims'
     # Prepare an empty list for the calculation paths

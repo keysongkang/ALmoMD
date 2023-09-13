@@ -184,7 +184,7 @@ def check_progress(
 
 def check_progress_rand(
     temperature, pressure, ntotal, ntrain, nval,
-    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type, al_type, harmonic_F, device
+    nstep, nmodel, steps_init, index, crtria, NumAtoms, calc_type, al_type, harmonic_F, device, calc_step='cont'
 ):
     """Function [check_progress_rand]
     Check the progress of previous calculations.
@@ -241,6 +241,9 @@ def check_progress_rand(
     # Initialization
     MD_index = 0
     signal = 0
+
+    if calc_step == 'gen':
+        index += 1
     
     if index == 0: # When calculation is just initiated
         # When there is no 'result.txt'
@@ -260,15 +263,15 @@ def check_progress_rand(
             if os.path.exists('result.txt'):
                 result_data = \
                 pd.read_csv('result.txt', index_col=False, delimiter='\t')
-                index = len(result_data.loc[:,'TestError_S']);
+                index = len(result_data.loc[:,'Iteration']);
             else:
                 index = -1
 
             # Print the test errors only for first calculation
-            if index == 0:
-                # Get the test errors using data-test.npz
-                get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device)
-    
+            # if index == 0:
+            # Get the test errors using data-test.npz
+            get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_type, harmonic_F, device)
+
     # Go through the while loop until a breaking command
     while True:
         # Check the FHI-vibes calculations

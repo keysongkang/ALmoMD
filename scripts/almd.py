@@ -352,7 +352,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device, 'cont'
             )
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
@@ -451,7 +451,7 @@ class almd:
         struc_init = atoms_read('geometry.in.supercell', format='aims')
         # Get the number of atoms in unitcell
         self.NumAtoms = len(struc_init)
-        mpi_print(f'[cont]\tRead the reference structure: geometry.in.supercell', rank)
+        mpi_print(f'[gen]\tRead the reference structure: geometry.in.supercell', rank)
         comm.Barrier()
 
         ### Initizlization step
@@ -488,7 +488,7 @@ class almd:
                 self.temperature, self.pressure,
                 self.ntotal, self.ntrain, self.nval,
                 self.nstep, self.nmodel, self.steps_init,
-                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device, 'gen'
             )
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)

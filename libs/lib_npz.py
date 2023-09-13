@@ -54,7 +54,7 @@ def generate_npz_DFT_init(
         tqdm(range(total_ntrain))
         ):
         for index_nstep in range(nstep):
-            if step < (ntrain+nval) * (index_nstep + 1):
+            if step < (ntrain+nval) * (index_nstep + 1) and step >= (ntrain+nval) * (index_nstep):
                 # Energy is shifted by the reference energy
                 # to avoid the unsual weighting with forces in NequIP
 
@@ -165,7 +165,7 @@ def generate_npz_DFT(
             ):
             # Collect these new data for each subsampling
             for index_nstep in range(nstep):
-                if step < (ntrain+nval) * (index_nstep + 1):
+                if step < (ntrain+nval) * (index_nstep + 1) and step >= (ntrain+nval) * (index_nstep):
                     if output_format == 'aims.out':
                         # Convert 'aims.out' format to ASE trajectory format
                         atoms, atoms_potE, atoms_forces = read_aims(
@@ -325,7 +325,7 @@ def generate_npz_DFT_rand_init(
         tqdm(range(total_ntrain))
         ):
         for index_nstep in range(nstep):
-            if step < (ntrain+nval) * (index_nstep + 1):
+            if step < (ntrain+nval) * (index_nstep + 1) and step >= (ntrain+nval) * (index_nstep):
                 # Energy is shifted by the reference energy
                 # to avoid the unsual weighting with forces in NequIP
 
@@ -450,7 +450,7 @@ def generate_npz_DFT_rand(
             ):
             # Collect these new data for each subsampling
             for index_nstep in range(nstep):
-                if step < (ntrain+nval) * (index_nstep + 1):
+                if step < (ntrain+nval) * (index_nstep + 1) and step >= (ntrain+nval) * (index_nstep):
                     if harmonic_F:
                         from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
                         displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')

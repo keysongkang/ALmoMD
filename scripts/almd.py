@@ -16,8 +16,8 @@ from libs.lib_util import check_mkdir, job_dependency, read_input_file, mpi_prin
 from libs.lib_npz import generate_npz_DFT_init, generate_npz_DFT, generate_npz_DFT_rand_init, generate_npz_DFT_rand
 from libs.lib_train import get_train_job, execute_train_job
 from libs.lib_dft import run_DFT
-from libs.lib_progress    import check_progress, check_progress_rand, check_index
-from libs.lib_mainloop    import MLMD_initial, MLMD_main, MLMD_random
+from libs.lib_progress    import check_progress, check_progress_period, check_progress_rand, check_index
+from libs.lib_mainloop    import MLMD_initial, MLMD_main, MLMD_main_period, MLMD_random
 from libs.lib_criteria    import get_result, get_criteria
 from libs.lib_termination import termination
 
@@ -107,6 +107,9 @@ class almd:
         # ntrain: int
         #     The number of added training data for each iterative step
         self.ntrain = 5
+        # nperiod: int
+        #     The number of steps for the active learning with a finite period
+        self.nperiod = 200
         # crtria_cnvg: float
         #     Convergence criteria
         self.crtria_cnvg = 0.0000001
@@ -341,6 +344,26 @@ class almd:
             MD_index = comm.bcast(MD_index, root=0)
             self.index = comm.bcast(self.index, root=0)
             signal = comm.bcast(signal, root=0)
+
+        ## For active learning sampling with a finite peirod,
+        elif self.calc_type == 'period':
+
+            # Retrieve the calculation index (MD_index: MLMD_main, signal: termination)
+            # to resume the MLMD calculation if a previous one exists.
+            MD_index, MD_step_indx, signal = None, None, None
+
+            # Open the uncertainty output file
+            MD_index, MD_step_index, self.index, signal = check_progress_period(
+                self.temperature, self.pressure,
+                self.ntotal, self.ntrain, self.nval,
+                self.nstep, self.nmodel, self.steps_init,
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device
+            )
+            MD_index = comm.bcast(MD_index, root=0)
+            MD_step_index = comm.bcast(MD_step_index, root=0)
+            self.index = comm.bcast(self.index, root=0)
+            signal = comm.bcast(signal, root=0)
+
         ## For random sampling,
         elif self.calc_type == 'random':
             # Retrieve the calculation index (MD_index: MLMD_random, signal: termination)
@@ -396,22 +419,32 @@ class almd:
             MLMD_main(
                 MD_index, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
                 self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.ntotal, self.nstep,
-                self.nmodel, calc_MLIP, E_ref, self.steps_init, self.NumAtoms, self.kB, struc_init,
+                self.nmodel, calc_MLIP, 0.0, self.E_gs, self.steps_init, self.NumAtoms, self.kB, struc_init,
                 self.al_type, self.uncert_type, self.uncert_shift, self.uncert_grad, self.harmonic_F, self.anharmonic_F
-            )
+            ) # E_ref -> self.E_gs
+
+        elif self.calc_type == 'period':
+            # Run MLMD calculation with active learning sampling for a finite period
+            MLMD_main_period(
+                MD_index, MD_step_index, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
+                self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.ntotal, self.nperiod, self.nstep,
+                self.nmodel, calc_MLIP, 0.0, self.E_gs, self.steps_init, self.NumAtoms, self.kB, struc_init,
+                self.al_type, self.uncert_type, self.uncert_shift, self.uncert_grad, self.harmonic_F, self.anharmonic_F
+            ) # E_ref -> self.E_gs
+
         # For random sampling,
         elif self.calc_type == 'random':
             # Run MLMD calculation with random sampling
             MLMD_random(
                 MD_index, self.index, self.ensemble, self.temperature, self.pressure, self.timestep, self.friction,
                 self.compressibility, self.taut, self.taup, self.mask, self.loginterval, self.steps_random*self.loginterval,
-                self.al_type, self.nstep, self.nmodel, calc_MLIP, E_ref, self.harmonic_F, self.anharmonic_F
-            )
+                self.al_type, self.nstep, self.nmodel, calc_MLIP, 0.0, self.harmonic_F, self.anharmonic_F
+            ) # E_ref -> self.E_gs
         else:
             raise ValueError("[cont]\tInvalid calc_type. Supported values are 'active' and 'random'.")
         comm.Barrier()
 
-        if self.calc_type == 'active':
+        if self.calc_type == 'active' or self.calc_type == 'period':
             mpi_print(f'[cont]\tRecord the results: result.txt', rank)
             # Record uncertainty results at the current step
             get_result(self.temperature, self.pressure, self.index, self.steps_init, self.al_type)
@@ -420,7 +453,7 @@ class almd:
         mpi_print(f'[cont]\tSubmit the DFT calculations for sampled configurations', rank)
         # Submit job-scripts for DFT calculationsions with sampled configurations and job-dependence for run_dft_gen
         if rank == 0:
-            run_DFT(self.temperature, self.pressure, self.index, (self.ntrain + self.nval) * self.nstep, self.num_calc)
+            run_DFT(self.temperature, self.pressure, self.index, self.ntotal, self.num_calc, self.uncert_type, self.al_type)
         comm.Barrier()
 
         # Submit a job-dependence to execute run_dft_gen after the DFT calculations
@@ -477,6 +510,27 @@ class almd:
             self.index = comm.bcast(self.index, root=0)
             self.temperature = comm.bcast(self.temperature, root=0)
             signal = comm.bcast(signal, root=0)
+
+
+        ## For active learning sampling with a finite peirod,
+        elif self.calc_type == 'period':
+
+            # Retrieve the calculation index (MD_index: MLMD_main, signal: termination)
+            # to resume the MLMD calculation if a previous one exists.
+            MD_index, MD_step_index, signal = None, None, None
+
+            # Open the uncertainty output file
+            MD_index, MD_step_index, self.index, signal = check_progress_period(
+                self.temperature, self.pressure,
+                self.ntotal, self.ntrain, self.nval,
+                self.nstep, self.nmodel, self.steps_init,
+                self.index, self.crtria_cnvg, self.NumAtoms, self.calc_type, self.al_type, self.harmonic_F, self.device
+            )
+            MD_index = comm.bcast(MD_index, root=0)
+            MD_step_index = comm.bcast(MD_step_index, root=0)
+            self.index = comm.bcast(self.index, root=0)
+            signal = comm.bcast(signal, root=0)
+
         ## For random sampling,
         elif self.calc_type == 'random':
             # Retrieve the calculation index (MD_index: MLMD_random, signal: termination)

@@ -9,9 +9,56 @@ from libs.lib_nvtlangevin import NVTLangevin
 
 def runMD(
     struc, ensemble, temperature, pressure, timestep, friction,
-    compressibility, taut, taup, mask, loginterval, steps, nstep, nmodel,
-    logfile, trajectory, calculator, comm, size, rank
+    compressibility, taut, taup, mask, loginterval, steps,
+    nstep, nmodel, E_ref, al_type, logfile, trajectory,
+    calculator, harmonic_F, anharmonic_F, signal_uncert, signal_append
 ):
+    """Function [runMD]
+    Initiate the Molecular Dynamics simulation using various ensembles
+
+    Parameters:
+
+    struc: ASE atoms
+        A structral configuration of a starting point
+    ensemble: str
+        Type of MD ensembles; 'NVTLangevin'
+    temperature: float
+        The desired temperature in units of Kelvin (K)
+    pressure: float
+        The desired pressure in units of eV/Angstrom**3
+    timestep: float
+        The step interval for printing MD steps
+
+    friction: float
+        Strength of the friction parameter in NVTLangevin ensemble
+    compressibility: float
+        compressibility in units of eV/Angstrom**3 in NPTBerendsen
+    taut: float
+        Time constant for Berendsen temperature coupling
+        in NVTBerendsen and NPT Berendsen
+    taup: float
+        Time constant for Berendsen pressure coupling in NPTBerendsen
+    mask: Three-element tuple
+        Dynamic elements of the computational box (x,y,z);
+        0 is false, 1 is true
+
+    loginterval: int
+        The step interval for printing MD steps
+    steps: int
+        The length of the Molecular Dynamics steps
+    nstep: int
+        The number of subsampling sets
+    nmodel: int
+        The number of ensemble model sets with different initialization
+
+    logfile: str
+        A name of MD logfile
+    trajectory: str
+        A name of MD trajectory file
+    calculator: ASE calculator
+        Calculators from trained models
+    """
+
     if ensemble == 'NVTLangevin':
         NVTLangevin(
             struc = struc,
@@ -20,65 +67,22 @@ def runMD(
             friction = friction,
             steps = steps,
             loginterval = loginterval,
-            logfile = logfile,
-            trajectory = trajectory,
             nstep = nstep,
             nmodel = nmodel,
             calculator = calculator,
-            comm = comm,
-            size = size,
-            rank = rank
+            E_ref = E_ref,
+            al_type = al_type,
+            trajectory = trajectory,
+            harmonic_F = harmonic_F,
+            anharmonic_F = anharmonic_F,
+            logfile = logfile,
+            signal_uncert = signal_uncert,
+            signal_append = signal_append
         )
     else:
+        from mpi4py import MPI
+        # Extract MPI infos
+        comm = MPI.COMM_WORLD
+        rank = comm.Get_rank()
+        
         mpi_print(f'The ensemble model is not determined.', rank)
-
-
-def check_runMD(
-    struc, ensemble, temperature, pressure, timestep, friction,
-    compressibility, taut, taup, mask, loginterval, steps, nstep,
-    nmodel, index, calculator, comm, size, rank
-):
-    trajectory = f'traj-{temperature}K-{pressure}bar_{index}.traj'
-    logfile    = f'traj-{temperature}K-{pressure}bar_{index}.log'
-    workpath   = f'./data/{temperature}K-{pressure}bar_{index}'
-    
-    mpi_print(f'Checking the MD_{index} outputs...\n', rank)
-    
-    if os.path.exists(trajectory):
-        mpi_print(f'Found the MD_{index} outputs: {trajectory}\n', rank)
-        MD_data = pd.read_csv(logfile, index_col=False, delim_whitespace=True)
-        MD_length = len(MD_data.loc[:,'Time[ps]']); del MD_data
-        
-        if MD_length != int(steps/loginterval)+1:
-            mpi_print(f'It seems this MD is terminated in middle.\n', rank)
-            if rank == 0:
-                os.system(f'rm {trajectory} {logfile}')
-            mpi_print(
-                f'Initiate a Molecular Dynamics calculation for'
-                + f'{trajectory}...\n', rank
-            )
-            runMD(
-                struc, ensemble, temperature, pressure, timestep, friction,\
-                compressibility, taut, taup, mask, loginterval, steps, nstep,\
-                nmodel, logfile, trajectory, calculator, comm, size, rank
-            )
-            mpi_print(
-                f'Finish the Molecular Dynamics calculation for'
-                + f'{trajectory}...\n', rank
-            )
-    else:
-        mpi_print(
-            f'Initiate a Molecular Dynamics calculation for'
-            + f'{trajectory}...\n', rank
-        )
-        runMD(
-            struc, ensemble, temperature, pressure, timestep, friction,\
-            compressibility, taut, taup, mask, loginterval, steps, nstep,\
-            nmodel, logfile, trajectory, calculator, comm, size, rank
-        )
-        mpi_print(
-            f'Finish the Molecular Dynamics calculation for'
-            + f'{trajectory}...\n', rank
-        )
-        
-    return trajectory

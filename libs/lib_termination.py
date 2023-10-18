@@ -316,7 +316,7 @@ def get_testerror(temperature, pressure, index, nstep, nmodel, calc_type, al_typ
         UncertRel_sigma_avg = '----          '
         UncertRel_sigma_std = '----          '
 
-    if calc_type == 'active':
+    if calc_type == 'active' or calc_type == 'period':
         if rank == 0:
             outputfile = open(f'result.txt', 'a')
 

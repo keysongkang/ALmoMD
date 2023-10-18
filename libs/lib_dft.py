@@ -3,12 +3,15 @@ from ase.io import write as atoms_write
 
 import os
 import subprocess
+import random
+import pandas as pd
+import numpy as np
 from decimal import Decimal
 
 from libs.lib_util   import check_mkdir
 
 
-def run_DFT(temperature, pressure, index, numstep, num_calc):
+def run_DFT(temperature, pressure, index, numstep, num_calc, uncert_type, al_type):
     """Function [get_criteria_uncert]
     Create a folder and run DFT calculations
     for sampled structral configurations
@@ -55,9 +58,26 @@ def run_DFT(temperature, pressure, index, numstep, num_calc):
     # Prepare an empty list for the calculation paths
     execute_cwd = []
 
+    if uncert_type == 'absolute':
+        uncert_piece = 'Abs'
+    elif uncert_type == 'relative':
+        uncert_piece = 'Rel'
+
+    if al_type == 'energy':
+        al_piece = 'E'
+    elif al_type == 'force' or 'force_max':
+        al_piece = 'F'
+    elif al_type == 'sigma' or 'sigma_max':
+        al_piece = 'S'
+
+    data = pd.read_csv(f'./../../UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt', sep='\t')
+    uncert_result = np.array(data[data['Acceptance'] == 'Accepted   ']['Uncert'+uncert_piece+'_'+al_piece])
+    sorted_indices = np.argsort(uncert_result)
+    smapled_indices = sorted_indices[numstep*(-1):][::-1]
+
     # Go through all sampled structral configurations
     # Collect the calculations and deploy all inputs for FHI-vibes
-    for jndex, jtem in enumerate(traj_DFT):
+    for jndex, jtem in enumerate(smapled_indices):
         # Get configurations until the number of target subsampling data
         if jndex < numstep:
             # Create a folder for each structral configuration
@@ -77,7 +97,7 @@ def run_DFT(temperature, pressure, index, numstep, num_calc):
                     os.chdir(calcpath_cwd)
             else:
                 # Get FHI-aims inputs from the template folder
-                aims_write('geometry.in', jtem)
+                aims_write('geometry.in', traj_DFT[jtem])
                 subprocess.run(['cp', '../../../DFT_INPUTS/aims.in', '.'])
                 # Collect the current calculation path
                 execute_cwd.append(os.getcwd())

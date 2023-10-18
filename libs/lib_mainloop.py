@@ -207,7 +207,7 @@ def MLMD_initial(
 def MLMD_main(
     MD_index, index, ensemble, temperature, pressure, timestep, friction,
     compressibility, taut, taup, mask, loginterval, ntotal, nstep, nmodel,
-    calc_MLIP, E_ref, steps_init, NumAtoms, kB,
+    calc_MLIP, E_ref, E_gs, steps_init, NumAtoms, kB,
     struc_step, al_type, uncert_type, uncert_shift, uncert_grad, harmonic_F, anharmonic_F
 ):
     """Function [MLMD_main]
@@ -306,7 +306,7 @@ def MLMD_main(
             # Check the existence of the file
             if os.path.exists(uncert_file):
                 # Start from the configuration with the largest real error
-                struc_step = traj_fromRealE(temperature, pressure, E_ref, index)
+                struc_step = traj_fromRealE(temperature, pressure, E_ref, E_gs, uncert_type, al_type, ntotal, index)
                 
                 # Open the uncertainty file for current step
                 if rank == 0:
@@ -441,8 +441,245 @@ def MLMD_main(
     mpi_print(f'[MLMD_main]\tThe main MLMD of the iteration {index} at {temperature}K and {pressure}bar is done', rank)
 
 
+def MLMD_main_period(
+    MD_index, MD_step_index, index, ensemble, temperature, pressure, timestep, friction,
+    compressibility, taut, taup, mask, loginterval, ntotal, nperiod, nstep, nmodel,
+    calc_MLIP, E_ref, E_gs, steps_init, NumAtoms, kB,
+    struc_step, al_type, uncert_type, uncert_shift, uncert_grad, harmonic_F, anharmonic_F
+):
+    """Function [MLMD_main]
+    Initiate the Molecular Dynamics with trained model
+    to sample the configuration satisfying the active learning critria
 
-def traj_fromRealE(temperature, pressure, E_ref, index):
+    Parameters:
+
+    MD_index: int
+        The index for MLMD_main steps
+        It also indicates the number of sampled configurations
+        It is used to resume a terminated calculation
+    index: int
+        The index of AL interactive step
+    ensemble: str
+        Type of MD ensembles; 'NVTLangevin'
+    temperature: float
+        The desired temperature in units of Kelvin (K)
+    pressure: float
+        The desired pressure in units of eV/Angstrom**3
+    timestep: float
+        The step interval for printing MD steps
+
+    friction: float
+        Strength of the friction parameter in NVTLangevin ensemble
+    compressibility: float
+        compressibility in units of eV/Angstrom**3 in NPTBerendsen
+    taut: float
+        Time constant for Berendsen temperature coupling
+        in NVTBerendsen and NPT Berendsen
+    taup: float
+        Time constant for Berendsen pressure coupling in NPTBerendsen
+    mask: Three-element tuple
+        Dynamic elements of the computational box (x,y,z);
+        0 is false, 1 is true
+
+    loginterval: int
+        The step interval for printing MD steps
+
+    ntotal: int
+        The total number of sampling data
+    nstep: int
+        The number of subsampling sets
+    nmodel: int
+        The number of ensemble model sets with different initialization
+    calc_MLIP: ASE calculator
+        Calculators from trained models
+    E_ref: flaot
+        The energy of reference state (Here, ground state)
+    steps_init: int
+        The number of initialization MD steps
+        to get averaged uncertainties and energies
+    al_type: str
+        Type of active learning: 'energy', 'force', 'force_max'
+    uncert_type: str
+        Type of uncertainty; 'absolute', 'relative'
+    uncert_shift: float
+        Shifting of erf function
+        (Value is relative to standard deviation)
+    uncert_grad: float
+        Gradient of erf function
+        (Value is relative to standard deviation)
+    """
+
+    # Extract MPI infos
+    comm = MPI.COMM_WORLD
+    rank = comm.Get_rank()
+
+    # Extract the criteria information from the initialization step
+    criteria_Epot_step_avg,   criteria_Epot_step_std,\
+    criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,\
+    criteria_UncertRel_E_avg, criteria_UncertRel_E_std,\
+    criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,\
+    criteria_UncertRel_F_avg, criteria_UncertRel_F_std,\
+    criteria_UncertAbs_S_avg, criteria_UncertAbs_S_std,\
+    criteria_UncertRel_S_avg, criteria_UncertRel_S_std\
+    = get_criteria(temperature, pressure, index, steps_init, al_type)
+    
+    # Open a trajectory file to store the sampled configurations
+    if rank == 0:
+        check_mkdir('TEMPORARY')
+        check_mkdir('TRAJ')
+    write_traj = TrajectoryWriter(
+        filename=f'TRAJ/traj-{temperature}K-{pressure}bar_{index+1}.traj',
+        mode='a'
+        )
+
+    mpi_print(f'[MLMD] Calculate it from index {index}, MD_index {MD_index}, MD_step_index {MD_step_index}', rank)
+    # When this initialization starts from scratch,
+    if MD_index == 0:
+        # Even when it is very first iterative step,
+        if index != 0:
+            # Name of the pervious uncertainty file
+            uncert_file = f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index-1}.txt'
+
+            # Check the existence of the file
+            if os.path.exists(uncert_file):
+                # Start from the configuration with the largest real error
+                struc_step = traj_fromRealE(temperature, pressure, E_ref, E_gs, uncert_type, al_type, ntotal, index)
+                
+                # Open the uncertainty file for current step
+                if rank == 0:
+                    check_mkdir('UNCERT')
+                    uncert_file_next = f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt'
+                    trajfile = open(uncert_file_next, 'w')
+                    trajfile.write(
+                        'Temperature[K]\tUncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'
+                        +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'
+                        +'\tCounting\tProbability\tAcceptance\n'
+                    )
+                    trajfile.close()
+
+            else: # If there is no privous uncertainty file
+                traj_temp     = f'TEMPORARY/temp-{temperature}K-{pressure}bar_{index}.traj'
+                mpi_print(f'[MLMD] Read a configuration from traj file', rank)
+                # Read the trajectory from previous trajectory file
+                traj_previous = Trajectory(traj_temp, properties=\
+                                           ['forces', 'velocities', 'temperature'])
+                # Resume the MD calculation from last configuration in the trajectory file
+                struc_step    = traj_previous[-1]; del traj_previous;
+
+        elif os.path.exists('start.in'):
+            mpi_print(f'[MLMD] Read a configuration from start.in', rank)
+            # Read the ground state structure with the primitive cell
+            struc_init = atoms_read(self.MD_input, format='aims')
+            # Make it supercell
+            struc_step = make_supercell(struc_init, self.supercell_init)
+            MaxwellBoltzmannDistribution(struc, temperature_K=self.temperature, force_temp=True)
+
+        else:
+            mpi_print(f'[MLMD] Read a configuration from trajectory_train.son', rank)
+            # Read the trajectory file from 'trajectory_train.son'
+            metadata, traj = son.load('trajectory_train.son')
+            # Take the last configuration from 'trajectory_train.son'
+            traj_ther = traj[-1]
+            # Convert 'trajectory.son' format to ASE atoms
+            struc_step = Atoms(
+                [atomic_numbers[item[1]] for item in traj[-1]['atoms']['symbols'] for index in range(item[0])],
+                positions = traj[-1]['atoms']['positions'],
+                cell = traj[-1]['atoms']['cell'],
+                pbc = traj[-1]['atoms']['pbc'],
+                velocities = traj[-1]['atoms']['velocities']
+            )
+    else: # If it starts from terminated point,
+        mpi_print(f'[MLMD] Read a configuration from temp file', rank)
+        if rank == 0:
+            # Read the trajectory from previous file
+            traj_previous = Trajectory(
+                f'TEMPORARY/temp-{temperature}K-{pressure}bar_{index}.traj',
+                properties=['forces', 'velocities', 'temperature']
+                )
+            struc_step = traj_previous[-1]; del traj_previous;
+        # Resume the MD calculatio nfrom last configuration
+        struc_step = comm.bcast(struc_step, root=0)
+
+    # Initiate the MD run starting from MD_index until reaching ntotal
+    # MD_index also indicates the number of sampled configurations
+    while MD_index < ntotal or MD_step_index < nperiod:
+        accept = '--         '
+
+        # MD information for temporary steps
+        trajectory   = f'TEMPORARY/temp-{temperature}K-{pressure}bar_{index}.traj'
+        
+        mpi_print(f'[MLMD] Run MD: iteration {MD_index}', rank)
+        # Implement the MD calculation for only one loginterval step
+        runMD(
+            struc_step, ensemble=ensemble, temperature=temperature,
+            pressure=pressure, timestep=timestep, friction=friction,
+            compressibility=compressibility, taut=taut, taup=taup,
+            mask=mask, loginterval=loginterval, steps=loginterval,
+            nstep=nstep, nmodel=nmodel, E_ref=E_ref, al_type=al_type,
+            logfile=None, trajectory=trajectory, calculator=calc_MLIP,
+            harmonic_F=harmonic_F, anharmonic_F=anharmonic_F, signal_uncert=False, signal_append=False
+        )
+        
+        # Get new configuration and velocities for next step
+        traj_current = Trajectory(
+            trajectory,
+            properties=['forces', 'velocities', 'temperature']
+            )
+        struc_step   = traj_current[-1]
+        del traj_current # Remove it to reduce the memory usage
+
+        # Get absolute and relative uncertainties of energy and force
+        # and also total energy
+        UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, UncertAbs_S, UncertRel_S, Epot_step, S_step =\
+        eval_uncert(struc_step, nstep, nmodel, E_ref, calc_MLIP, al_type, harmonic_F)
+        
+        # Get a criteria probability from uncertainty and energy informations
+        criteria = get_criteria_prob(
+            al_type, uncert_type, uncert_shift, uncert_grad,
+            kB, NumAtoms, temperature,
+            Epot_step,   criteria_Epot_step_avg,   criteria_Epot_step_std,
+            UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
+            UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std,
+            UncertAbs_F, criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
+            UncertRel_F, criteria_UncertRel_F_avg, criteria_UncertRel_F_std,
+            UncertAbs_S, criteria_UncertAbs_S_avg, criteria_UncertAbs_S_std,
+            UncertRel_S, criteria_UncertRel_S_avg, criteria_UncertRel_S_std
+        )
+
+        if rank == 0:
+            MD_step_index += 1
+            # Acceptance check with criteria
+            ##!! Epot_step should be rechecked.
+            if random.random() < criteria and Epot_step > 0.1:
+                accept = 'Accepted'
+                MD_index += 1
+                write_traj.write(atoms=struc_step)
+            else:
+                accept = 'Vetoed'
+
+            # Record the MD results at the current step
+            trajfile = open(f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt', 'a')
+            trajfile.write(
+                '{:.5e}'.format(Decimal(str(struc_step.get_temperature()))) + '\t' +
+                uncert_strconvter(UncertAbs_E) + '\t' +
+                uncert_strconvter(UncertRel_E) + '\t' +
+                uncert_strconvter(UncertAbs_F) + '\t' +
+                uncert_strconvter(UncertRel_F) + '\t' +
+                uncert_strconvter(UncertAbs_S) + '\t' +
+                uncert_strconvter(UncertRel_S) + '\t' +
+                uncert_strconvter(Epot_step) + '\t' +
+                uncert_strconvter(S_step) + '\t' +
+                str(MD_index) + '          \t' +
+                '{:.5e}'.format(Decimal(str(criteria))) + '\t' +
+                str(accept) + '   \n'
+            )
+            trajfile.close()
+        MD_index = comm.bcast(MD_index, root=0)
+
+    mpi_print(f'[MLMD_main]\tThe main MLMD of the iteration {index} at {temperature}K and {pressure}bar is done', rank)
+
+
+def traj_fromRealE(temperature, pressure, E_ref, E_gs, uncert_type, al_type, ntotal, index):
     """Function [traj_fromRealE]
     Get a configuratio nwith the largest real error
     to accelerate the investigation on unknown configurational space
@@ -474,20 +711,38 @@ def traj_fromRealE(temperature, pressure, E_ref, index):
         index_col=False, delimiter='\t'
         )
 
+    if uncert_type == 'absolute':
+        uncert_piece = 'Abs'
+    elif uncert_type == 'relative':
+        uncert_piece = 'Rel'
+
+    if al_type == 'energy':
+        al_piece = 'E'
+    elif al_type == 'force' or 'force_max':
+        al_piece = 'F'
+    elif al_type == 'sigma' or 'sigma_max':
+        al_piece = 'S'
+
     # Extract the accepted samples
-    RealError_data = uncertainty_data.loc[
+    RealError_data = uncertainty_data[
         uncertainty_data['Acceptance'] == 'Accepted   '
     ]
+
+    uncert_result = np.array(RealError_data['Uncert'+uncert_piece+'_'+al_piece])
+    sorted_indices = np.argsort(uncert_result)
+    first_ten_indices = sorted_indices[ntotal*(-1):][::-1]
+
+    MLIP_energy = np.array(RealError_data['Epot_average'])[first_ten_indices]
 
     # Find the configuration with the largest real error
     max_RealError = 0
     max_index = 0
-    for jndex in range(len(RealError_data)):
+    for jndex in range(ntotal):
         atoms, atoms_potE, atoms_forces = read_aims(
             f'CALC/{temperature}K-{pressure}bar_1/{jndex}/aims/calculations/aims.out'
             )
         RealError = np.absolute(
-            np.array(RealError_data['Epot_average'])[jndex] + E_ref - atoms_potE
+            MLIP_energy[jndex] + E_ref - atoms_potE
             )
         if RealError > max_RealError:
             max_RealError = RealError

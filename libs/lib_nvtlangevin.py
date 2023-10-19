@@ -103,7 +103,7 @@ def NVTLangevin(
                     file_log.write(
                         '\tUncertAbs_E\tUncertRel_E\t'
                         + 'UncertAbs_F\tUncertRel_F\t'
-                        + 'UncertAbs_S\tUncertRel_S\n'
+                        + 'UncertAbs_S\tUncertRel_S\tS_average\n'
                         )
                 else:
                     file_log.write('\n')
@@ -117,7 +117,7 @@ def NVTLangevin(
             if signal_uncert:
                 # Get absolute and relative uncertainties of energy and force
                 # and also total energy
-                UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, UncertAbs_S, UncertRel_S, Epot_step, S_step =\
+                uncerts, Epot_step, S_step =\
                 eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
             # Log MD information at the current step in the log file
@@ -133,12 +133,13 @@ def NVTLangevin(
                 if signal_uncert:
                     file_log.write(
                         '      \t' +
-                        uncert_strconvter(UncertAbs_E) + '\t' +
-                        uncert_strconvter(UncertRel_E) + '\t' +
-                        uncert_strconvter(UncertAbs_F) + '\t' +
-                        uncert_strconvter(UncertRel_F) + '\t' +
-                        uncert_strconvter(UncertAbs_S) + '\t' +
-                        uncert_strconvter(UncertRel_S) + '\n'
+                        uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                        uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                        uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_S) + '\t' +
+                        uncert_strconvter(S_step) + '\n'
                         )
                 else:
                     file_log.write('\n')
@@ -235,7 +236,7 @@ def NVTLangevin(
                 if signal_uncert:
                     # Get absolute and relative uncertainties of energy and force
                     # and also total energy
-                    UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, UncertAbs_S, UncertRel_S, Epot_step, S_step =\
+                    uncerts, Epot_step, S_step =\
                     eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
                 # mpi_print(f'Step 14: {time.time()-time_init}', rank)
@@ -252,12 +253,13 @@ def NVTLangevin(
                     if signal_uncert:
                         file_log.write(
                             '      \t' +
-                            uncert_strconvter(UncertAbs_E) + '\t' +
-                            uncert_strconvter(UncertRel_E) + '\t' +
-                            uncert_strconvter(UncertAbs_F) + '\t' +
-                            uncert_strconvter(UncertRel_F) + '\t' +
-                            uncert_strconvter(UncertAbs_S) + '\t' +
-                            uncert_strconvter(UncertRel_S) + '\n'
+                            uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                            uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                            uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                            uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                            uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                            uncert_strconvter(uncerts.UncertRel_S) + '\t' +
+                            uncert_strconvter(S_step) + '\n'
                             )
                     else:
                         file_log.write('\n')
@@ -376,66 +378,44 @@ def get_MDinfo_temp(
     rank = comm.Get_rank()
 
     # Get calculators from trained models and corresponding predicted quantities
-    if type(calculator) == list: 
-        info_TE, info_PE, info_KE, info_T = [], [], [], []
-        zndex = 0
-        for index_nmodel in range(nmodel):
-            for index_nstep in range(nstep):
-                if (index_nmodel*nstep + index_nstep) % size == rank:
-                    struc.calc = calculator[zndex]
-                    PE = struc.get_potential_energy()
-                    KE = struc.get_kinetic_energy()
-                    TE = PE + KE
-                    info_TE.append(TE)
-                    info_PE.append(PE)
-                    info_KE.append(KE)
-                    info_T.append(struc.get_temperature())
-                    zndex += 1
-        info_TE = comm.allgather(info_TE)
-        info_PE = comm.allgather(info_PE)
-        info_KE = comm.allgather(info_KE)
-        info_T = comm.allgather(info_T)
-        
-        # Get their average
-        info_TE_avg =\
-        np.average(np.array([i for items in info_TE for i in items]), axis=0)
+    info_TE, info_PE, info_KE, info_T = [], [], [], []
+    zndex = 0
+    for index_nmodel in range(nmodel):
+        for index_nstep in range(nstep):
+            if (index_nmodel*nstep + index_nstep) % size == rank:
+                struc.calc = calculator[zndex]
+                PE = struc.get_potential_energy()
+                KE = struc.get_kinetic_energy()
+                TE = PE + KE
+                info_TE.append(TE)
+                info_PE.append(PE)
+                info_KE.append(KE)
+                info_T.append(struc.get_temperature())
+                zndex += 1
+    info_TE = comm.allgather(info_TE)
+    info_PE = comm.allgather(info_PE)
+    info_KE = comm.allgather(info_KE)
+    info_T = comm.allgather(info_T)
+    
+    # Get their average
+    info_TE_avg =\
+    np.average(np.array([i for items in info_TE for i in items]), axis=0)
 
-        if harmonic_F:
-            from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-            displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
-            F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-            E_ha = get_E_ha(displacements, fc_ha)
-            info_PE_avg =\
-            np.average(np.array([i for items in info_PE for i in items]), axis=0) + E_ha
-        else:
-            info_PE_avg =\
-            np.average(np.array([i for items in info_PE for i in items]), axis=0)
-
-        info_KE_avg =\
-        np.average(np.array([i for items in info_KE for i in items]), axis=0)
-        info_T_avg =\
-        np.average(np.array([i for items in info_T for i in items]), axis=0)
+    if harmonic_F:
+        from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+        displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
+        F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+        E_ha = get_E_ha(displacements, fc_ha)
+        info_PE_avg =\
+        np.average(np.array([i for items in info_PE for i in items]), axis=0) + E_ha
     else:
-        info_TE, info_PE, info_KE, info_T = None, None, None, None
-        if rank == 0:
-            struc.calc = calculator
+        info_PE_avg =\
+        np.average(np.array([i for items in info_PE for i in items]), axis=0)
 
-            if harmonic_F:
-                from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-                displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
-                F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-                E_ha = get_E_ha(displacements, fc_ha)
-                info_PE = struc.get_potential_energy() + E_ha
-            else:
-                info_PE = struc.get_potential_energy()
-            
-            info_KE = struc.get_kinetic_energy()
-            info_TE = info_PE + info_KE
-            info_T = struc.get_temperature()
-        info_TE_avg = comm.bcast(info_TE, root=0)
-        info_PE_avg = comm.bcast(info_PE, root=0)
-        info_KE_avg = comm.bcast(info_KE, root=0)
-        info_T_avg = comm.bcast(info_T, root=0)
+    info_KE_avg =\
+    np.average(np.array([i for items in info_KE for i in items]), axis=0)
+    info_T_avg =\
+    np.average(np.array([i for items in info_T for i in items]), axis=0)
                       
     return info_TE_avg, info_PE_avg, info_KE_avg, info_T_avg
 

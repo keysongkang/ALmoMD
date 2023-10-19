@@ -117,7 +117,7 @@ def run_dft_cont(inputs):
     mpi_print(f'[cont]\tSubmit the DFT calculations for sampled configurations', inputs.rank)
     # Submit job-scripts for DFT calculationsions with sampled configurations and job-dependence for run_dft_gen
     if inputs.rank == 0:
-        run_DFT(inputs.temperature, inputs.pressure, inputs.index, inputs.ntotal, inputs.num_calc, inputs.uncert_type, inputs.al_type)
+        run_DFT(inputs)
     inputs.comm.Barrier()
 
     # Submit a job-dependence to execute run_dft_gen after the DFT calculations

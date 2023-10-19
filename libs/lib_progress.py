@@ -154,7 +154,7 @@ def check_progress(inputs):
                             break
 
                     else: # Not finished
-                        single_print(f'DFT calculations of {tinputs.emperature}K-{inputs.pressure}bar_{inputs.index+1} are not finished or not started.')
+                        single_print(f'DFT calculations of {inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1} are not finished or not started.')
                         signal = 1
                         break
                 else: # Otherwise, get the index of MLMD_main

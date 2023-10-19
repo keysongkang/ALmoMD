@@ -11,7 +11,7 @@ from decimal import Decimal
 from libs.lib_util   import check_mkdir
 
 
-def run_DFT(temperature, pressure, index, numstep, num_calc, uncert_type, al_type):
+def run_DFT(inputs):
     """Function [get_criteria_uncert]
     Create a folder and run DFT calculations
     for sampled structral configurations
@@ -30,14 +30,16 @@ def run_DFT(temperature, pressure, index, numstep, num_calc, uncert_type, al_typ
         The number of job scripts to be submitted
     """
 
+    condition = f'{inputs.temperature}K-{inputs.pressure}bar'
+
     # Read MD trajectory file of sampled configurations
     traj_DFT = Trajectory(
-        f'TRAJ/traj-{temperature}K-{pressure}bar_{index+1}.traj',
+        f'TRAJ/traj-{condition}_{inputs.index+1}.traj',
         properties='energy, forces'
         )
     
     # Set the path to folders implementing DFT calculations
-    calcpath = f'CALC/{temperature}K-{pressure}bar_{index+1}'
+    calcpath = f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}'
     # Create these folders
     check_mkdir(f'CALC')
     check_mkdir(calcpath)
@@ -51,35 +53,34 @@ def run_DFT(temperature, pressure, index, numstep, num_calc, uncert_type, al_typ
     calcpath_cwd = os.getcwd()
 
     # Get the template of the job script
-    with open('../../DFT_INPUTS/job-vibes.slurm', 'r') as job_script_DFT_initial:
+    with open(f'../../DFT_INPUTS/{inputs.job_dft_name}', 'r') as job_script_DFT_initial:
         job_script_DFT_default = job_script_DFT_initial.read()
-    # Prepare the command line for FHI-vibes
-    vibes_command = 'vibes run singlepoint aims.in &> log.aims'
+
     # Prepare an empty list for the calculation paths
     execute_cwd = []
 
-    if uncert_type == 'absolute':
+    if inputs.uncert_type == 'absolute':
         uncert_piece = 'Abs'
-    elif uncert_type == 'relative':
+    elif inputs.uncert_type == 'relative':
         uncert_piece = 'Rel'
 
-    if al_type == 'energy':
+    if inputs.al_type == 'energy':
         al_piece = 'E'
-    elif al_type == 'force' or 'force_max':
+    elif inputs.al_type == 'force' or 'force_max':
         al_piece = 'F'
-    elif al_type == 'sigma' or 'sigma_max':
+    elif inputs.al_type == 'sigma' or 'sigma_max':
         al_piece = 'S'
 
-    data = pd.read_csv(f'./../../UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt', sep='\t')
+    data = pd.read_csv(f'./../../UNCERT/uncertainty-{condition}_{inputs.index}.txt', sep='\t')
     uncert_result = np.array(data[data['Acceptance'] == 'Accepted   ']['Uncert'+uncert_piece+'_'+al_piece])
     sorted_indices = np.argsort(uncert_result)
-    smapled_indices = sorted_indices[numstep*(-1):][::-1]
+    smapled_indices = sorted_indices[inputs.ntotal*(-1):][::-1]
 
     # Go through all sampled structral configurations
     # Collect the calculations and deploy all inputs for FHI-vibes
     for jndex, jtem in enumerate(smapled_indices):
         # Get configurations until the number of target subsampling data
-        if jndex < numstep:
+        if jndex < inputs.ntotal:
             # Create a folder for each structral configuration
             check_mkdir(f'{jndex}')
             # Move to that folder
@@ -105,17 +106,17 @@ def run_DFT(temperature, pressure, index, numstep, num_calc, uncert_type, al_typ
                 os.chdir(calcpath_cwd)
     
     # Create job scripts and submit them
-    for index_calc in range(num_calc):
-        job_script = f'job-vibes_{index_calc}.slurm'
+    for index_calc in range(inputs.num_calc):
+        job_script = f'{inputs.job_dft_name.split(".")[0]}_{index_calc}.{inputs.job_dft_name.split(".")[1]}'
         with open(job_script, 'w') as writing_input:
             writing_input.write(job_script_DFT_default)
             for index_execute_cwd, value_execute_cwd in enumerate(execute_cwd):
-                if index_execute_cwd % num_calc == index_calc:
+                if index_execute_cwd % inputs.num_calc == index_calc:
                     writing_input.write('cd '+value_execute_cwd+'\n')
-                    writing_input.write(vibes_command+'\n')
+                    writing_input.write(inputs.vibes_command+'\n')
         # If the previous calculation is not finished, rerun it
-        # subprocess.run(['sbatch', job_script])
-        # os.system(f'sbatch {job_script}')
+        # subprocess.run([inputs.job_command, job_script])
+        # os.system(f'{inputs.job_command} {job_script}')
 
     # Move back to the original position
     os.chdir(mainpath_cwd)

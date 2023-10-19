@@ -142,7 +142,8 @@ def get_testerror(inputs):
         prd_R = []
         zndex = 0
         
-        mpi_print(f'[Termi]\tTesting: sample {id_step}', inputs.rank)
+        if id_step % inputs.printinterval == 0:
+            mpi_print(f'[Termi]\tTesting: sample {id_step}', inputs.rank)
 
         # Go through all trained models
         for index_nmodel in range(inputs.nmodel):

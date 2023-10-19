@@ -19,7 +19,7 @@ class inputs:
         """
 
         ### Version
-        self.version = '0.0.0'
+        self.version = '0.1.0'
 
         ### Default setting for inputs
         ##[Active learning types]
@@ -97,7 +97,7 @@ class inputs:
         # loginterval: int
         #     The step interval for printing MD steps
         self.loginterval = 10
-        self.MLMD_interval = 1
+        self.printinterval = 1
         # temperature: float
         #     The desired temperature in units of Kelvin (K)
         self.temperature = 2000
@@ -166,6 +166,11 @@ class inputs:
         #     Boltzmann constant in units of eV/K
         self.kB = 8.617333262e-5
 
+        self.job_command = 'sbatch'
+        self.job_dft_name = 'job-vibes.slurm'
+        self.job_MLIP_name = 'job-nequip-gpu.slurm'
+        # Prepare the command line for FHI-vibes
+        self.vibes_command = 'vibes run singlepoint aims.in &> log.aims'
 
         ### Implement reading the input file
         # Read input variables from the input file

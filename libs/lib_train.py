@@ -247,12 +247,12 @@ def execute_train_job(
         for index_num_mdl in range(inputs.num_mdl_calc):
 
             # Prepare ingredients for the job script
-            with open('./job-nequip-gpu.slurm', 'r') as job_script_initial:
+            with open(f'./{inputs.job_MLIP_name}', 'r') as job_script_initial:
                 job_script_default = job_script_initial.read()
 
             os.chdir(workpath)
             # Write an input for NequIP
-            job_script   = f'./job-nequip-gpu_{index_num_mdl}.slurm'
+            job_script   = f'./{inputs.job_MLIP_name.split(".")[0]}_{index_num_mdl}.{inputs.job_MLIP_name.split(".")[1]}'
 
             with open(job_script, 'w') as writing_input:
                 writing_input.write(job_script_default)
@@ -261,5 +261,5 @@ def execute_train_job(
                         writing_input.write(job_item)
 
             # Submit the job scripts
-            subprocess.run(['sbatch', job_script]);
+            subprocess.run([inputs.job_command, job_script]);
             os.chdir(currentpath)

@@ -12,9 +12,9 @@ from libs.lib_util        import mpi_print, single_print, rm_mkdir
 import torch
 torch.set_default_dtype(torch.float64)
 
+
 def get_train_job(
-    struc_relaxed, ntrain, nval, rmax, lmax, nfeatures,
-    workpath, nstep, nmodel, device
+    inputs, struc_relaxed, ntrain, nval, workpath
 ):
     """Function [get_train_job]
     Get calculators from previously trained MLIP and
@@ -51,45 +51,39 @@ def get_train_job(
         Collected calculators from trained models
     """
 
-    # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    size = comm.Get_size()
-    rank = comm.Get_rank()
-
     # Initialization of signal
     signal    = 0
     # Get a current path
     currentpath  = os.getcwd()
 
     calc_MLIP = []
-    for index_nmodel in range(nmodel):
+    for index_nmodel in range(inputs.nmodel):
         job_script_input = ''
 
-        for index_nstep in range(nstep):
+        for index_nstep in range(inputs.nstep):
             dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-            if (index_nmodel*nstep + index_nstep) % size == rank:
+            if (index_nmodel*inputs.nstep + index_nstep) % inputs.size == inputs.rank:
                 # Check the existence of trained models
                 # If yes, collect trained models
                 if os.path.exists(f'{workpath}/{dply_model}'):
                     mpi_print(f'\t\tFound the deployed model: {dply_model}', rank=0)
                     calc_MLIP.append(
                         nequip_calculator.NequIPCalculator.\
-                        from_deployed_model(f'{workpath}/{dply_model}', device=device)
+                        from_deployed_model(f'{workpath}/{dply_model}', device=inputs.device)
                     )
                 else: # If not, prepare the training job
                     rm_mkdir(f'{workpath}/train_{index_nmodel}_{index_nstep}')
                     job_script_input += nequip_train_job(
-                        ntrain, nval, rmax, lmax, nfeatures,
-                        workpath, index_nstep, index_nmodel, dply_model, rank
+                        inputs, ntrain, nval, workpath, index_nstep, index_nmodel, dply_model
                     )
                     mpi_print(f'\t\tDeploying the model: {dply_model}', rank=0)
                     # Activate the termination signal
                     signal = 1
-                    signal = comm.bcast(signal, root=rank)
+                    signal = inputs.comm.bcast(signal, root=inputs.rank)
 
-        job_script_input = comm.gather(job_script_input, root=0)
-        if rank == 0:
-            if job_script_input != ['' for i in range(size)]:
+        job_script_input = inputs.comm.gather(job_script_input, root=0)
+        if inputs.rank == 0:
+            if job_script_input != ['' for i in range(inputs.size)]:
                 # Prepare ingredients for the job script
                 with open('./job-nequip-gpu.slurm', 'r') as job_script_initial:
                     job_script_default = job_script_initial.read()
@@ -114,13 +108,13 @@ def get_train_job(
     # Get ground state energies predicted by trained models
     E_inter   = []
     zndex = 0
-    for index_nmodel in range(nmodel):
-        for index_nstep in range(nstep):
-            if (index_nmodel*nstep + index_nstep) % size == rank:
+    for index_nmodel in range(inputs.nmodel):
+        for index_nstep in range(inputs.nstep):
+            if (index_nmodel*inputs.nstep + index_nstep) % inputs.size == inputs.rank:
                 struc_relaxed.calc = calc_MLIP[zndex]
                 E_inter.append(struc_relaxed.get_potential_energy())
                 zndex += 1
-    E_inter = comm.allgather(E_inter)
+    E_inter = inputs.comm.allgather(E_inter)
     
     # Calculate the average of ground state energies
     E_ref = np.average(np.array([i for items in E_inter for i in items]), axis=0);
@@ -129,9 +123,9 @@ def get_train_job(
     return E_ref, calc_MLIP
 
 
+
 def nequip_train_job(
-    ntrain, nval, rmax, lmax, nfeatures,
-    workpath, index_nstep, index_nmodel, dply_model, rank
+    inputs, ntrain, nval, workpath, index_nstep, index_nmodel, dply_model
 ):
     """Function [nequip_train_job]
     Generate a NequIP input and provide a command line
@@ -157,8 +151,6 @@ def nequip_train_job(
         The index of current ensemble model set
     dply_model: str
         Path to the deployed model
-    rank: int
-        The index of current MPI thread
 
     Returns:
 
@@ -181,10 +173,10 @@ def nequip_train_job(
         + f'workdir: train\n'
         + f'dataset_file_name: ./data-train_{index_nstep}.npz\n'
         + f'n_train: {ntrain}\n'
-        + f'n_val: {nval}\n'
-        + f'r_max: {rmax}\n'
-        + f'l_max: {lmax}\n'
-        + f'num_features: {nfeatures}\n\n'
+        + f'n_val: {inputs.nval}\n'
+        + f'r_max: {inputs.rmax}\n'
+        + f'l_max: {inputs.lmax}\n'
+        + f'num_features: {inputs.nfeatures}\n\n'
         + f'seed: {index_nmodel}\n'
     )
         
@@ -207,11 +199,10 @@ def nequip_train_job(
     os.chdir(currentpath)
     
     return f'{job_script_extra} {nequip_input}\n{job_script_deploy} {modelpath} {deploy_model}\n'
-    
-    
+
+
 def execute_train_job(
-    ntrain, nval, rmax, lmax, nfeatures,
-    workpath, nstep, nmodel
+    inputs, ntrain, nval, workpath
 ):
     """Function [execute_train_job]
     Generate a NequIP input and submit the corresponding job script.
@@ -236,48 +227,39 @@ def execute_train_job(
         The number of ensemble model sets with different initialization
     """
 
-    # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    size = comm.Get_size()
-    rank = comm.Get_rank()
-
     # Get a current path
     currentpath  = os.getcwd()
     
-    for index_nmodel in range(nmodel):
-        job_script_input = ''
-
-        for index_nstep in range(nstep):
+    job_script_input = []
+    for index_nmodel in range(inputs.nmodel):
+        for index_nstep in range(inputs.nstep):
             dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-            if (index_nmodel*nstep + index_nstep) % size == rank:
-                # Check the existence of trained models
-                # If yes, indicates the existance
-                if os.path.exists(f'{workpath}/{dply_model}'):
-                    single_print(f'\t\tFound the deployed model: {dply_model}')
-                else: # If not, prepare the training job
-                    rm_mkdir(f'{workpath}/train_{index_nmodel}_{index_nstep}')
-                    job_script_input += nequip_train_job(
-                        ntrain, nval, rmax, lmax, nfeatures,
-                        workpath, index_nstep, index_nmodel, dply_model, rank
-                    )
-                    single_print(f'\t\tDeploying the model: {dply_model}')
+            if os.path.exists(f'{workpath}/{dply_model}'):
+                mpi_print(f'\t\tFound the deployed model: {dply_model}', inputs.rank)
+            else: # If not, prepare the training job
+                rm_mkdir(f'{workpath}/train_{index_nmodel}_{index_nstep}')
+                job_script_input.append(nequip_train_job(
+                    inputs, ntrain, nval, workpath, index_nstep, index_nmodel, dply_model
+                ))
+                mpi_print(f'\t\tPrepare a command line for traing a model: {dply_model}', inputs.rank)
 
-        job_script_input = comm.gather(job_script_input, root=0)
-        if rank == 0:
-            if job_script_input != ['' for i in range(size)]:
-                # Prepare ingredients for the job script
-                with open('./job-nequip-gpu.slurm', 'r') as job_script_initial:
-                    job_script_default = job_script_initial.read()
+    if inputs.rank == 0:
+        for index_num_mdl in range(inputs.num_mdl_calc):
 
-                os.chdir(workpath)
-                # Write an input for NequIP
-                job_script   = f'./job-nequip-gpu_{index_nmodel}.slurm'
+            # Prepare ingredients for the job script
+            with open('./job-nequip-gpu.slurm', 'r') as job_script_initial:
+                job_script_default = job_script_initial.read()
 
-                with open(job_script, 'w') as writing_input:
-                    writing_input.write(job_script_default)
-                    for job_item in job_script_input:
+            os.chdir(workpath)
+            # Write an input for NequIP
+            job_script   = f'./job-nequip-gpu_{index_num_mdl}.slurm'
+
+            with open(job_script, 'w') as writing_input:
+                writing_input.write(job_script_default)
+                for index_item, job_item in enumerate(job_script_input):
+                    if index_item % inputs.num_mdl_calc == index_num_mdl:
                         writing_input.write(job_item)
 
-                # Submit the job scripts
-                subprocess.run(['sbatch', job_script]);
-                os.chdir(currentpath)
+            # Submit the job scripts
+            subprocess.run(['sbatch', job_script]);
+            os.chdir(currentpath)

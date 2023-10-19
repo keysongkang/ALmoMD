@@ -6,62 +6,92 @@ def init_command(args):
     """
     Implement the logic for "almomd init" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_init()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_init import run_dft_init
+    
+    run_dft_init(variables)
 
 
 def cont_command(args):
     """
     Implement the logic for "almomd cont" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_cont()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_cont import run_dft_cont
+    
+    run_dft_cont(variables)
 
 
 def gen_command(args):
     """
     Implement the logic for "almomd gene" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_gen()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_gen import run_dft_gen
+    
+    run_dft_gen(variables)
 
 
 def aiMD_rand_command(args):
     """
     Implement the logic for "almomd aimd-random" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_rand()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_rand import run_dft_rand
+    
+    run_dft_rand(variables)
 
 
 def test_command(args):
     """
     Implement the logic for "almomd test" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_test()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_test import run_dft_test
+    
+    run_dft_test(variables)
 
 
 def runmd_command(args):
     """
     Implement the logic for "almomd runMD" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_runmd()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_runmd import run_dft_runmd
+    
+    run_dft_runmd(variables)
+
 
 def cnvg_command(args):
     """
     Implement the logic for "almomd cnvg" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_cnvg()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_cnvg import run_dft_cnvg
+    
+    run_dft_cnvg(variables)
+
 
 def aims2son_command(args):
     """
@@ -176,18 +206,17 @@ def traj_run_command(args):
     if not hasattr(args, 'traj_path') or args.traj_path is None or \
             not hasattr(args, 'thermal_cutoff') or args.thermal_cutoff is None or \
             not hasattr(args, 'num_traj') or args.num_traj is None or \
-            not hasattr(args, 'DFT_calc') or args.DFT_calc is None:
-            # not hasattr(args, 'harmonic_F') or args.harmonic_F is None:
+            not hasattr(args, 'DFT_calc') or args.DFT_calc is None or \
+            not hasattr(args, 'harmonic_F') or args.harmonic_F is None:
         print(
             'Please provide the path to the trajectory file, '
             'thermalization cutoff, the number of configurations '
             'to be calculated by DFT and the DFT calclulator, '
             'and the usage of the harmonic constants'
-            '(e.g. almomd utils traj_run md.traj 300 500 aims 50 --harmonic_F)'
+            '(e.g. almomd utils traj_run md.traj 300 500 aims --harmonic_F)'
             )
     else:
-        # traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc, harmonic_F)
-        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc)
+        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc, harmonic_F)
 
 
 def cnvg_post_command(args):
@@ -387,10 +416,10 @@ def main():
         'num_calc', nargs='?', type=int,
         help='The number of job scripts to be submitted'
         )
-    # traj_run_parser.add_argument(
-    #     'harmonic_F', nargs='?', type=bool,
-    #     help='The usage of the harmonic force constants'
-    #     )
+    traj_run_parser.add_argument(
+        'harmonic_F', nargs='?', type=bool,
+        help='The usage of the harmonic force constants'
+        )
     traj_run_parser.set_defaults(func=traj_run_command)
 
     # Subparser for "utils cnvg_post" subcommand
@@ -406,7 +435,7 @@ def main():
         'nstep', nargs='?', type=int,
         help='The number of the subsampling'
         )
-    cnvg_post_parser.set_defaults(func=cnvg_post_command)
+    cnvg_post_parser.set_defaults(func=traj_run_command)
 
     # Subparser for "utils covert_npz" subcommand
     convert_npz_parser = utils_subparsers.add_parser(
@@ -422,7 +451,7 @@ def main():
         action='store_true',
         help='Exclude harmonic terms'
         )
-    convert_npz_parser.set_defaults(func=convert_npz_command)
+    convert_npz_parser.set_defaults(func=traj_run_command)
 
     args = parser.parse_args()
 

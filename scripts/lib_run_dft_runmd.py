@@ -1,0 +1,111 @@
+import os
+import son
+import sys
+import numpy as np
+
+from nequip.ase import nequip_calculator
+
+from ase import Atoms
+from ase.build import make_supercell
+from ase.data   import atomic_numbers
+from ase.io import read as atoms_read
+from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
+
+from libs.lib_md import runMD
+from libs.lib_util  import output_init, single_print, mpi_print, check_mkdir
+
+import torch
+torch.set_default_dtype(torch.float64)
+
+
+def run_dft_runmd(inputs):
+    """Function [run_dft_runmd]
+    Initiate MD calculation using trained models.
+    """
+
+    # Print the head
+    output_init('runMD', inputs.version, inputs.rank)
+    mpi_print(f'[runMD]\tInitiate runMD process', inputs.rank)
+    inputs.comm.Barrier()
+
+    # Initialization of a termination signal
+    signal = 0
+
+    mpi_print(f'[runMD]\tCheck the initial configuration', inputs.rank)
+    if os.path.exists('start.in'):
+        mpi_print(f'[runMD]\tFound the start.in file. MD starts from this.', inputs.rank)
+        # Read the ground state structure with the primitive cell
+        struc_init = atoms_read('start.in', format='aims')
+        # Make it supercell
+        struc = make_supercell(struc_init, inputs.supercell_init)
+        MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
+    else:
+        mpi_print(f'[runMD]\tMD starts from the last entry of the trajectory.son file', inputs.rank)
+        # Read all structural configurations in SON file
+        metadata, data = son.load('trajectory.son')
+        atom_numbers = [
+        atomic_numbers[items[1]]
+        for items in data[-1]['atoms']['symbols']
+        for jndex in range(items[0])
+        ]
+        struc_son = Atoms(
+            atom_numbers,
+            positions=data[-1]['atoms']['positions'],
+            cell=data[-1]['atoms']['cell'],
+            pbc=data[-1]['atoms']['pbc']
+            )
+        struc_son.set_velocities(data[-1]['atoms']['velocities'])
+        struc = make_supercell(struc_son, inputs.supercell_init)
+    inputs.comm.Barrier()
+
+    ## Prepare the ground state structure
+    # Read the ground state structure with the primitive cell
+    struc_init = atoms_read('geometry.in.supercell', format='aims')
+    mpi_print(f'[runMD]\tRead the reference structure: geometry.in.next_step', inputs.rank)
+    inputs.comm.Barrier()
+
+    mpi_print(f'[runMD]\tFind the trained models: {inputs.modelpath}', inputs.rank)
+    # Prepare empty lists for potential and total energies
+    Epot_step = []
+    calc_MLIP = []
+
+    mpi_print(f'\t\tDevice: {inputs.device}', inputs.rank)
+
+    for index_nmodel in range(inputs.nmodel):
+        for index_nstep in range(inputs.nstep):
+            if (index_nmodel * inputs.nstep + index_nstep) % inputs.size == inputs.rank:
+                dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
+                if os.path.exists(f'{inputs.modelpath}/{dply_model}'):
+                    single_print(f'\t\tFound the deployed model: {dply_model}')
+                    calc_MLIP.append(
+                        nequip_calculator.NequIPCalculator.from_deployed_model(
+                            f'{inputs.modelpath}/{dply_model}', device=inputs.device
+                            )
+                    )
+                    struc_init.calc = calc_MLIP[-1]
+                    Epot_step.append(struc_init.get_potential_energy() - inputs.E_gs)
+                else:
+                    # If there is no model, turn on the termination signal
+                    single_print(f'\t\tCannot find the model: {dply_model}')
+                    signal = 1
+                    signal = inputs.comm.bcast(inputs.signal, root=inputs.rank)
+    Epot_step = inputs.comm.allgather(Epot_step)
+
+    # Get averaged energy from trained models
+    Epot_step_avg =\
+    np.average(np.array([i for items in Epot_step for i in items]), axis=0)
+    mpi_print(f'[runMD]\tGet the potential energy of the reference structure: {Epot_step_avg}', inputs.rank)
+
+    # if the number of trained model is not enough, terminate it
+    if signal == 1:
+        sys.exit()
+    inputs.comm.Barrier()
+
+    mpi_print(f'[runMD]\tInitiate MD with trained models', inputs.rank)
+    runMD(
+        inputs, struc, inputs.steps,
+        inputs.logfile, inputs.trajectory, calc_MLIP,
+        signal_uncert=True, signal_append=True
+        )
+
+    mpi_print(f'[runMD]\t!! Finish MD calculations', inputs.rank)

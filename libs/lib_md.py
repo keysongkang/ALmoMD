@@ -6,12 +6,10 @@ import pandas as pd
 from libs.lib_util import mpi_print
 from libs.lib_nvtlangevin import NVTLangevin
 
-
 def runMD(
-    struc, ensemble, temperature, pressure, timestep, friction,
-    compressibility, taut, taup, mask, loginterval, steps,
-    nstep, nmodel, E_ref, al_type, logfile, trajectory,
-    calculator, harmonic_F, anharmonic_F, signal_uncert, signal_append
+    inputs, struc, steps,
+    logfile, trajectory, calculator,
+    signal_uncert, signal_append
 ):
     """Function [runMD]
     Initiate the Molecular Dynamics simulation using various ensembles
@@ -59,30 +57,25 @@ def runMD(
         Calculators from trained models
     """
 
-    if ensemble == 'NVTLangevin':
+    if inputs.ensemble == 'NVTLangevin':
         NVTLangevin(
             struc = struc,
-            timestep = timestep * units.fs,
-            temperature = temperature * units.kB,
-            friction = friction,
+            timestep = inputs.timestep * units.fs,
+            temperature = inputs.temperature * units.kB,
+            friction = inputs.friction,
             steps = steps,
-            loginterval = loginterval,
-            nstep = nstep,
-            nmodel = nmodel,
+            loginterval = inputs.loginterval,
+            nstep = inputs.nstep,
+            nmodel = inputs.nmodel,
             calculator = calculator,
-            E_ref = E_ref,
-            al_type = al_type,
+            E_ref = 0.0,
+            al_type = inputs.al_type,
             trajectory = trajectory,
-            harmonic_F = harmonic_F,
-            anharmonic_F = anharmonic_F,
+            harmonic_F = inputs.harmonic_F,
+            anharmonic_F = inputs.anharmonic_F,
             logfile = logfile,
             signal_uncert = signal_uncert,
             signal_append = signal_append
         )
-    else:
-        from mpi4py import MPI
-        # Extract MPI infos
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-        
-        mpi_print(f'The ensemble model is not determined.', rank)
+    else:        
+        mpi_print(f'The ensemble model is not determined.', inputs.rank)

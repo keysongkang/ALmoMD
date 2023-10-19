@@ -80,39 +80,32 @@ def rm_file(dir_name):
         os.system('rm ./'+dir_name)
 
 
-def output_init(string, version, MPI=False):
+def output_init(string, version, rank):
     from datetime import datetime
 
-    if MPI:
-        from mpi4py import MPI
-        # Extract MPI infos
-        comm = MPI.COMM_WORLD
-        rank = comm.Get_rank()
-    else:
-        rank = 0
-
-    mpi_print(
-        '\n'
-        '#################################################################\n'
-        '#                                                               #\n'
-        '#     @       @                             @@   @@   @@@@@     #\n'
-        '#     @       @                             @ @ @ @   @    @    #\n'
-        '#    @ @      @                             @ @ @ @   @     @   #\n'
-        '#    @ @      @                             @  @  @   @     @   #\n'
-        '#   @   @     @        @ @@ @@     @@@@@    @     @   @     @   #\n'
-        '#   @@@@@     @         @  @  @   @     @   @     @   @     @   #\n'
-        '#  @     @    @         @  @  @   @     @   @     @   @    @    #\n'
-        '#  @     @    @@@@@@@   @  @  @    @@@@@    @     @   @@@@@     #\n'
-        '#                                                               #\n'
-        '#################################################################\n',
-        rank
-        )
+    if not string == 'cont' and not string == 'gen':
+        mpi_print(
+            '\n'
+            '#################################################################\n'
+            '#                                                               #\n'
+            '#     @       @                             @@   @@   @@@@@     #\n'
+            '#     @       @                             @ @ @ @   @    @    #\n'
+            '#    @ @      @                             @ @ @ @   @     @   #\n'
+            '#    @ @      @                             @  @  @   @     @   #\n'
+            '#   @   @     @        @ @@ @@     @@@@@    @     @   @     @   #\n'
+            '#   @@@@@     @         @  @  @   @     @   @     @   @     @   #\n'
+            '#  @     @    @         @  @  @   @     @   @     @   @    @    #\n'
+            '#  @     @    @@@@@@@   @  @  @    @@@@@    @     @   @@@@@     #\n'
+            '#                                                               #\n'
+            '#################################################################\n',
+            rank
+            )
 
     mpi_print(f'[{string}]\t' + datetime.now().strftime("Date/Time: %Y %m %d %H:%M"), rank)
 
     mpi_print(f'[{string}]\tALmoMD Version: {version}', rank)
 
-        
+
         
 def job_dependency(job_str, num_jobs):
     """Function [job_dependency]
@@ -372,7 +365,7 @@ def read_input_file(file_path):
                 'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature', 'taut',
                 'pressure', 'taup', 'steps_ther', 'steps_init', 'steps_random',
                 'timestep', 'cutoff_ther', 'lmax', 'nfeatures', 'random_index',
-                'wndex', 'steps', 'loginterval', 'num_calc', 'test_index'
+                'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc'
                 ]:
                     value = int(value)
                 else:

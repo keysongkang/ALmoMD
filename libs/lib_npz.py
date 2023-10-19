@@ -8,11 +8,7 @@ from ase.io     import read as atoms_read
 from libs.lib_util   import read_aims, single_print
 import son
 
-
-
-def generate_npz_DFT_init(
-    traj, ntrain, nval, nstep, E_gs, workpath, harmonic_F
-):
+def generate_npz_DFT_init(inputs, traj, workpath):
     """Function [generate_npz_DFT_init]
     Generate the initial training data sets from trajectory
 
@@ -37,37 +33,34 @@ def generate_npz_DFT_init(
     """
 
     # Prepare the empty list of propreties for each subsampling set
-    E_train      = [[] for i in range(nstep)];
-    F_train      = [[] for i in range(nstep)];
-    R_train      = [[] for i in range(nstep)];
-    z_train      = [[] for i in range(nstep)];
-    CELL_train   = [[] for i in range(nstep)];
-    PBC_train    = [[] for i in range(nstep)];
+    E_train      = [[] for i in range(inputs.nstep)];
+    F_train      = [[] for i in range(inputs.nstep)];
+    R_train      = [[] for i in range(inputs.nstep)];
+    z_train      = [[] for i in range(inputs.nstep)];
+    CELL_train   = [[] for i in range(inputs.nstep)];
+    PBC_train    = [[] for i in range(inputs.nstep)];
     
-    # The total number of data we need for the training process
-    total_ntrain = (ntrain+nval) * nstep
-
-    single_print(f'[npz]\tSample {nstep} different training data\n')
+    single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
     # Random sampling for the structural configurations from trajectory
     for i, step in zip(
-        random.sample(range(0,len(traj)),total_ntrain),
-        tqdm(range(total_ntrain))
+        random.sample(range(0,len(traj)),inputs.ntotal),
+        tqdm(range(inputs.ntotal))
         ):
-        for index_nstep in range(nstep):
-            if step < (ntrain+nval) * (index_nstep + 1) and step >= (ntrain+nval) * (index_nstep):
+        for index_nstep in range(inputs.nstep):
+            if step < (inputs.ntrain+inputs.nval) * (index_nstep + 1) and step >= (inputs.ntrain+inputs.nval) * (index_nstep):
                 # Energy is shifted by the reference energy
                 # to avoid the unsual weighting with forces in NequIP
 
-                if harmonic_F:
+                if inputs.harmonic_F:
                     from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
                     displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
                     F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
                     F_step = np.array(traj[i]['calculator']['forces']) - F_ha
                     E_ha = get_E_ha(displacements, F_ha)
-                    E_step = np.array(traj[i]['calculator']['energy']) - E_gs - E_ha
+                    E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs - E_ha
                 else:
                     F_step = np.array(traj[i]['calculator']['forces'])
-                    E_step = np.array(traj[i]['calculator']['energy']) - E_gs
+                    E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs
 
                 E_train[index_nstep].append(E_step)
                 F_train[index_nstep].append(F_step);
@@ -78,7 +71,7 @@ def generate_npz_DFT_init(
                 break
 
     # Split the sampled data into individual files for each subsampling set
-    for index_nstep in range(nstep):
+    for index_nstep in range(inputs.nstep):
         E_train_store    = E_train[index_nstep]
         F_train_store    = F_train[index_nstep]
         R_train_store    = R_train[index_nstep]
@@ -87,9 +80,9 @@ def generate_npz_DFT_init(
         PBC_train_store  = PBC_train[index_nstep]
 
         # Save each subsampling data
-        npz_name = f'{workpath}/data-train_{index_nstep}.npz'
+        npz_name = f'{workpath}/data-train_{index_nstep}'
         np.savez(
-            npz_name[:-4],
+            npz_name,
             E = np.array(E_train_store),
             F = np.array(F_train_store),
             R = np.array(R_train_store),
@@ -101,10 +94,7 @@ def generate_npz_DFT_init(
     single_print('[npz]\tFinish the sampling process: data-train_*.npz')
     
     
-def generate_npz_DFT(
-    ntrain, nval, nstep, E_gs, index,
-    temperature, output_format, pressure, workpath, harmonic_F
-):
+def generate_npz_DFT(inputs, workpath):
     """Function [generate_npz_DFT]
     Generate training data sets
     by adding new data from the trajectory file (DFT results)
@@ -139,51 +129,48 @@ def generate_npz_DFT(
     """
 
     # Prepare the empty list of propreties for each subsampling set
-    E_train      = [[] for i in range(nstep)];
-    F_train      = [[] for i in range(nstep)];
-    R_train      = [[] for i in range(nstep)];
-    z_train      = [[] for i in range(nstep)];
-    CELL_train   = [[] for i in range(nstep)];
-    PBC_train    = [[] for i in range(nstep)];
-    
-    # The total number of data we need for the training process
-    total_ntrain = (ntrain+nval) * nstep
+    E_train      = [[] for i in range(inputs.nstep)];
+    F_train      = [[] for i in range(inputs.nstep)];
+    R_train      = [[] for i in range(inputs.nstep)];
+    z_train      = [[] for i in range(inputs.nstep)];
+    CELL_train   = [[] for i in range(inputs.nstep)];
+    PBC_train    = [[] for i in range(inputs.nstep)];
 
     # Check the existence of NPZ files containing previous data
     npz_check = [os.path.exists(f'{workpath}/data-train_{index_nstep}.npz')\
-                 for index_nstep in range(nstep)];
+                 for index_nstep in range(inputs.nstep)];
 
     # For first run, of course there is no NPZ file
     if all(npz_check) == False: # If there is any missing NPZ file,
         del npz_check
-        single_print(f'[npz]\tSample {nstep} different training data\n')
+        single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
 
         # Randomly sample the new data
         for i, step in zip(
-            random.sample(range(0,total_ntrain),total_ntrain),
-            tqdm(range(total_ntrain))
+            random.sample(range(0,inputs.ntotal),inputs.ntotal),
+            tqdm(range(inputs.ntotal))
             ):
             # Collect these new data for each subsampling
-            for index_nstep in range(nstep):
-                if step < (ntrain+nval) * (index_nstep + 1) and step >= (ntrain+nval) * (index_nstep):
-                    if output_format == 'aims.out':
+            for index_nstep in range(inputs.nstep):
+                if step < (inputs.ntrain+inputs.nval) * (index_nstep + 1) and step >= (inputs.ntrain+inputs.nval) * (index_nstep):
+                    if inputs.output_format == 'aims.out':
                         # Convert 'aims.out' format to ASE trajectory format
                         atoms, atoms_potE, atoms_forces = read_aims(
-                            f'./CALC/{temperature}K-{pressure}bar_{index}/{i}/aims/calculations/aims.out'
+                            f'./CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}/{i}/aims/calculations/aims.out'
                             )
                         # Energy is shifted by the reference energy
                         # to avoid the unsual weighting with forces in NequIP
 
-                        if harmonic_F:
+                        if inputs.harmonic_F:
                             from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
                             displacements = get_displacements(atoms.get_positions(), 'geometry.in.supercell')
                             F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
                             F_step = np.array(atoms_forces) - F_ha
                             E_ha = get_E_ha(displacements, F_ha)
-                            E_step = atoms_potE - E_gs - E_ha
+                            E_step = atoms_potE - inputs.E_gs - E_ha
                         else:
                             F_step = np.array(atoms_forces)
-                            E_step = atoms_potE - E_gs
+                            E_step = atoms_potE - inputs.E_gs
 
                         E_train[index_nstep].append(E_step);
                         F_train[index_nstep].append(F_step);
@@ -192,10 +179,10 @@ def generate_npz_DFT(
                         CELL_train[index_nstep].append(atoms.get_cell());
                         PBC_train[index_nstep].append(atoms.get_pbc());
                         break
-                    elif output_format == 'trajectory.son':
+                    elif inputs.output_format == 'trajectory.son':
                         # Convert 'trajectory.son' format to ASE trajectory format
                         metadata, data = son.load(
-                            f'./CALC/{temperature}K-{pressure}bar_{index}/{i}/aims/trajectory.son'
+                            f'./CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}/{i}/aims/trajectory.son'
                             )
                         atom_numbers = []
                         for items in data[0]['atoms']['symbols']:
@@ -204,16 +191,16 @@ def generate_npz_DFT(
                         # Energy is shifted by the reference energy
                         # to avoid the unsual weighting with forces in NequIP
 
-                        if harmonic_F:
+                        if inputs.harmonic_F:
                             from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
                             displacements = get_displacements(data[0]['atoms']['positions'], 'geometry.in.supercell')
                             F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
                             F_step = np.array(data[0]['calculator']['forces']) - F_ha
                             E_ha = get_E_ha(displacements, F_ha)
-                            E_step = np.array(data[0]['calculator']['energy']) - E_gs - E_ha
+                            E_step = np.array(data[0]['calculator']['energy']) - inputs.E_gs - E_ha
                         else:
                             F_step = np.array(data[0]['calculator']['forces'])
-                            E_step = np.array(data[0]['calculator']['energy']) - E_gs
+                            E_step = np.array(data[0]['calculator']['energy']) - inputs.E_gs
 
                         E_train[index_nstep].append(E_step);
                         F_train[index_nstep].append(F_step);
@@ -227,9 +214,9 @@ def generate_npz_DFT(
 
         # Merge new data with previous data
         # Split the sampled data into individual files for each subsampling set
-        for index_nstep in range(nstep):
+        for index_nstep in range(inputs.nstep):
             # Path to previous data
-            npz_previous = f'./MODEL/{temperature}K-{pressure}bar_{index-1}'\
+            npz_previous = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index-1}'\
                            + f'/data-train_{index_nstep}.npz'
             
             # When there is previous data, merge them together
@@ -273,9 +260,7 @@ def generate_npz_DFT(
 
         
         
-def generate_npz_DFT_rand_init(
-    traj, ntrain, nval, nstep, E_gs, workpath, harmonic_F
-):
+def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
     """Function [generate_npz_DFT_rand_init]
     Generate the initial training data sets from trajectory.
     The main distinction from the function [generate_npz_DFT_init] is
@@ -307,39 +292,36 @@ def generate_npz_DFT_rand_init(
     """
 
     # Prepare the empty list of propreties for each subsampling set
-    E_train      = [[] for i in range(nstep)];
-    F_train      = [[] for i in range(nstep)];
-    R_train      = [[] for i in range(nstep)];
-    z_train      = [[] for i in range(nstep)];
-    CELL_train   = [[] for i in range(nstep)];
-    PBC_train    = [[] for i in range(nstep)];
+    E_train      = [[] for i in range(inputs.nstep)];
+    F_train      = [[] for i in range(inputs.nstep)];
+    R_train      = [[] for i in range(inputs.nstep)];
+    z_train      = [[] for i in range(inputs.nstep)];
+    CELL_train   = [[] for i in range(inputs.nstep)];
+    PBC_train    = [[] for i in range(inputs.nstep)];
     traj_idx     = [];
-    
-    # The total number of data we need for the training process
-    total_ntrain = (ntrain+nval) * nstep
 
-    single_print(f'[npz]\tSample {nstep} different training data\n')
+    single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
     # Random sampling for the structural configurations from trajectory
     for i, step in zip(
-        random.sample(range(0,len(traj)),total_ntrain),
-        tqdm(range(total_ntrain))
+        random.sample(range(0,len(traj)),inputs.ntotal),
+        tqdm(range(inputs.ntotal))
         ):
-        for index_nstep in range(nstep):
-            if step < (ntrain+nval) * (index_nstep + 1) and step >= (ntrain+nval) * (index_nstep):
+        for index_nstep in range(inputs.nstep):
+            if step < (inputs.ntrain+inputs.nval) * (index_nstep + 1) and step >= (inputs.ntrain+inputs.nval) * (index_nstep):
                 # Energy is shifted by the reference energy
                 # to avoid the unsual weighting with forces in NequIP
 
-                if harmonic_F:
+                if inputs.harmonic_F:
                     from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
                     displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
                     F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
                     F_step = np.array(traj[i]['calculator']['forces']) - F_ha
                     E_ha = get_E_ha(displacements, F_ha)
-                    E_step = np.array(traj[i]['calculator']['energy']) - E_gs - E_ha
+                    E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs - E_ha
                     
                 else:
                     F_step = np.array(traj[i]['calculator']['forces'])
-                    E_step = np.array(traj[i]['calculator']['energy']) - E_gs
+                    E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs
 
                 E_train[index_nstep].append(E_step);
                 F_train[index_nstep].append(F_step);
@@ -351,7 +333,7 @@ def generate_npz_DFT_rand_init(
                 break
 
     # Split the sampled data into individual files for each subsampling set
-    for index_nstep in range(nstep):
+    for index_nstep in range(inputs.nstep):
         E_train_store    = E_train[index_nstep]
         F_train_store    = F_train[index_nstep]
         R_train_store    = R_train[index_nstep]
@@ -377,8 +359,7 @@ def generate_npz_DFT_rand_init(
     
 
 def generate_npz_DFT_rand(
-    traj, ntrain, nval, nstep, E_gs, index,
-    temperature, pressure, workpath, traj_idx, harmonic_F
+    inputs, traj, workpath, traj_idx
 ):
     """Function [generate_npz_DFT_rand]
     Generate training data sets
@@ -424,44 +405,41 @@ def generate_npz_DFT_rand(
     """
 
     # Prepare the empty list of propreties for each subsampling set
-    E_train      = [[] for i in range(nstep)];
-    F_train      = [[] for i in range(nstep)];
-    R_train      = [[] for i in range(nstep)];
-    z_train      = [[] for i in range(nstep)];
-    CELL_train   = [[] for i in range(nstep)];
-    PBC_train    = [[] for i in range(nstep)];
-    
-    # The total number of data we need for the training process
-    total_ntrain = (ntrain+nval) * nstep
+    E_train      = [[] for i in range(inputs.nstep)];
+    F_train      = [[] for i in range(inputs.nstep)];
+    R_train      = [[] for i in range(inputs.nstep)];
+    z_train      = [[] for i in range(inputs.nstep)];
+    CELL_train   = [[] for i in range(inputs.nstep)];
+    PBC_train    = [[] for i in range(inputs.nstep)];
 
     # Check the existence of NPZ files containing previous data
     npz_check = [os.path.exists(f'{workpath}/data-train_{index_nstep}.npz')\
-                 for index_nstep in range(nstep)];
+                 for index_nstep in range(inputs.nstep)];
 
     # For first run, of course there is no NPZ file
     if all(npz_check) == False: # If there is any missing NPZ file,
         del npz_check
-        single_print(f'[npz]\tSample {nstep} different training data\n')
+        single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
 
         # Randomly sample the new data except previously sampled ones
         for i, step in zip(
-            random.sample(list(set(range(0,len(traj)))-set(traj_idx)),total_ntrain),
-            tqdm(range(total_ntrain))
+            random.sample(list(set(range(0,len(traj)))-set(traj_idx)),inputs.ntotal),
+            tqdm(range(inputs.ntotal))
             ):
             # Collect these new data for each subsampling
-            for index_nstep in range(nstep):
-                if step < (ntrain+nval) * (index_nstep + 1) and step >= (ntrain+nval) * (index_nstep):
-                    if harmonic_F:
+            for index_nstep in range(inputs.nstep):
+                if step < (inputs.ntrain+inputs.nval) * (index_nstep + 1) and step >= (inputs.ntrain+inputs.nval) * (index_nstep):
+                    if inputs.harmonic_F:
                         from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
                         displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
                         F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
                         F_step = np.array(traj[i]['calculator']['forces']) - F_ha
                         E_ha = get_E_ha(displacements, F_ha)
-                        E_step = np.array(traj[i]['calculator']['energy']) - E_gs - E_ha
+                        E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs - E_ha
                         
                     else:
                         F_step = np.array(traj[i]['calculator']['forces'])
-                        E_step = np.array(traj[i]['calculator']['energy']) - E_gs
+                        E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs
 
                     E_train[index_nstep].append(E_step);
                     F_train[index_nstep].append(F_step);
@@ -474,8 +452,8 @@ def generate_npz_DFT_rand(
 
         # Merge new data with previous data
         # Split the sampled data into individual files for each subsampling set   
-        for index_nstep in range(nstep):
-            npz_previous = f'./MODEL/{temperature}K-{pressure}bar_{index-1}'\
+        for index_nstep in range(inputs.nstep):
+            npz_previous = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index-1}'\
                            + f'/data-train_{index_nstep}.npz'
             
             # When there is previous data, merge them together

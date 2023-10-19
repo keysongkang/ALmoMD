@@ -105,7 +105,7 @@ def eval_uncert(
             '----          ',
             np.ndarray.max(F_step_norm_std),
             np.ndarray.max(
-                np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std) if avg > 0.0001])
+                np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std)])
             ),
             '----          ',
             '----          ',
@@ -523,36 +523,32 @@ def get_criteria(
 
 
 
-def get_result(temperature, pressure, index, steps_init, al_type):
+def get_result(inputs):
     """Function [get_result]
     Get average and standard deviation of absolute and relative undertainty
     of energies and forces and also those of total energy for all steps
 
     Parameters:
 
-    temperature: float
+    inputs.temperature: float
         The desired temperature in units of Kelvin (K)
-    pressure: float
+    inputs.pressure: float
         The desired pressure in units of eV/Angstrom**3
-    index: int
+    inputs.index: int
         The index of AL interactive step
-    steps_init: int
+    inputs.steps_init: int
         Initialize MD steps to get averaged uncertainties and energies
     """
 
-    # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-
     # Read all uncertainty results
     uncert_data = pd.read_csv(
-        f'UNCERT/uncertainty-{temperature}K-{pressure}bar_{index}.txt',
+        f'UNCERT/uncertainty-{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}.txt',
         index_col=False, delimiter='\t'
         )
 
     result_print = ''
     # Get their average and standard deviation
-    if al_type == 'energy':
+    if inputs.al_type == 'energy':
         UncerAbs_E_list = uncert_data.loc[:,'UncertAbs_E'].values
         UncerRel_E_list = uncert_data.loc[:,'UncertRel_E'].values
         criteria_UncertAbs_E_avg_all = uncert_average(UncerAbs_E_list[:])
@@ -560,7 +556,7 @@ def get_result(temperature, pressure, index, steps_init, al_type):
         result_print +=   '\t' + uncert_strconvter(criteria_UncertRel_E_avg_all)\
                         + '\t' + uncert_strconvter(criteria_UncertAbs_E_avg_all)
 
-    if al_type == 'force' or al_type == 'force_max':
+    if inputs.al_type == 'force' or inputs.al_type == 'force_max':
         UncerAbs_F_list = uncert_data.loc[:,'UncertAbs_F'].values
         UncerRel_F_list = uncert_data.loc[:,'UncertRel_F'].values
         criteria_UncertAbs_F_avg_all = uncert_average(UncerAbs_F_list[:])
@@ -568,7 +564,7 @@ def get_result(temperature, pressure, index, steps_init, al_type):
         result_print +=   '\t' + uncert_strconvter(criteria_UncertRel_F_avg_all)\
                         + '\t' + uncert_strconvter(criteria_UncertAbs_F_avg_all)
 
-    if al_type == 'sigma' or al_type == 'sigma_max':
+    if inputs.al_type == 'sigma' or inputs.al_type == 'sigma_max':
         UncerAbs_S_list = uncert_data.loc[:,'UncertAbs_S'].values
         UncerRel_S_list = uncert_data.loc[:,'UncertRel_S'].values
         criteria_UncertAbs_S_avg_all = uncert_average(UncerAbs_S_list[:])
@@ -577,7 +573,7 @@ def get_result(temperature, pressure, index, steps_init, al_type):
                         + '\t' + uncert_strconvter(criteria_UncertRel_S_avg_all)
 
     # Record the average values
-    if rank == 0:
+    if inputs.rank == 0:
         with open('result.txt', 'a') as criteriafile:
             criteriafile.write(result_print+ '\n')
 

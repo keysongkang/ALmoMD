@@ -6,62 +6,92 @@ def init_command(args):
     """
     Implement the logic for "almomd init" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_init()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_init import run_dft_init
+    
+    run_dft_init(variables)
 
 
 def cont_command(args):
     """
     Implement the logic for "almomd cont" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_cont()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_cont import run_dft_cont
+    
+    run_dft_cont(variables)
 
 
 def gen_command(args):
     """
     Implement the logic for "almomd gene" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_gen()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_gen import run_dft_gen
+    
+    run_dft_gen(variables)
 
 
 def aiMD_rand_command(args):
     """
     Implement the logic for "almomd aimd-random" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_rand()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_rand import run_dft_rand
+    
+    run_dft_rand(variables)
 
 
 def test_command(args):
     """
     Implement the logic for "almomd test" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_test()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_test import run_dft_test
+    
+    run_dft_test(variables)
 
 
 def runmd_command(args):
     """
     Implement the logic for "almomd runMD" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_runmd()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_runmd import run_dft_runmd
+    
+    run_dft_runmd(variables)
+
 
 def cnvg_command(args):
     """
     Implement the logic for "almomd cnvg" command
     """
-    from scripts.almd import almd
-    run_almd = almd()
-    run_almd.run_dft_cnvg()
+    from libs.lib_input import inputs
+
+    variables = inputs()
+
+    from scripts.lib_run_dft_cnvg import run_dft_cnvg
+    
+    run_dft_cnvg(variables)
+
 
 def aims2son_command(args):
     """

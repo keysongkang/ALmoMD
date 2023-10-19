@@ -97,6 +97,7 @@ class inputs:
         # loginterval: int
         #     The step interval for printing MD steps
         self.loginterval = 10
+        self.MLMD_interval = 1
         # temperature: float
         #     The desired temperature in units of Kelvin (K)
         self.temperature = 2000

@@ -7,7 +7,7 @@ from libs.lib_util  import output_init, mpi_print, check_mkdir
 from libs.lib_train import get_train_job
 from libs.lib_load_model  import load_model
 from libs.lib_criteria    import get_result
-from libs.lib_mainloop    import MLMD_main, MLMD_main_period, MLMD_random
+from libs.lib_mainloop    import MLMD_main, MLMD_random
 from libs.lib_progress    import check_progress, check_progress_rand, check_index
 from libs.lib_termination     import termination
 
@@ -101,13 +101,9 @@ def run_dft_cont(inputs):
     mpi_print(f'[cont]\tImplement MD for active learning (Mode: {inputs.calc_type})', inputs.rank)
     ### MLMD steps
     # For active learning sampling,
-    if inputs.calc_type == 'active':
-        # Run MLMD calculation with active learning sampling
-        MLMD_main(inputs, MD_index, inputs.calc_MLIP, 0.0) # E_ref -> 0.0
-
-    elif inputs.calc_type == 'period':
+    if inputs.calc_type == 'active' or inputs.calc_type == 'period':
         # Run MLMD calculation with active learning sampling for a finite period
-        MLMD_main_period(inputs, MD_index, MD_step_index, inputs.calc_MLIP, 0.0) # E_ref -> 0.0
+        MLMD_main(inputs, MD_index, MD_step_index, inputs.calc_MLIP, 0.0) # E_ref -> 0.0
 
     # For random sampling,
     elif inputs.calc_type == 'random':

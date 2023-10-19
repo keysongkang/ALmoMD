@@ -324,6 +324,10 @@ def generate_msg(al_type):
     return result_msg
 
 
+class empty_inputs:
+    pass
+
+
 def read_input_file(file_path):
     """Function [read_input_file]
     Read 'input.in' and assign variables.

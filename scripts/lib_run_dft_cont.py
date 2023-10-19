@@ -61,7 +61,7 @@ def run_dft_cont(inputs):
         # Open the uncertainty output file
         MD_index, inputs.index, signal = check_progress_rand(inputs, 'cont')
     else:
-        single_print('You need to assign calc_type.')
+        sys.exit("You need to assign calc_type.")
 
     MD_index = inputs.comm.bcast(MD_index, root=0)
     MD_step_index = inputs.comm.bcast(MD_step_index, root=0)
@@ -90,12 +90,7 @@ def run_dft_cont(inputs):
         check_mkdir(workpath)
     inputs.comm.Barrier()
 
-    # mpi_print(f'[cont]\tFind the trained models: {workpath}', inputs.rank)
-    # # Get calculators from previously trained MLIP and its total energy of ground state structure
-    # E_ref, calc_MLIP = get_train_job(
-    #     inputs, struc_init, total_ntrain, total_nval, workpath
-    # )
-    # inputs.comm.Barrier()
+    # Currently E_ref uses E_GS which menas zero.
     E_ref = 0.0
 
     mpi_print(f'[cont]\tImplement MD for active learning (Mode: {inputs.calc_type})', inputs.rank)
@@ -103,12 +98,12 @@ def run_dft_cont(inputs):
     # For active learning sampling,
     if inputs.calc_type == 'active' or inputs.calc_type == 'period':
         # Run MLMD calculation with active learning sampling for a finite period
-        MLMD_main(inputs, MD_index, MD_step_index, inputs.calc_MLIP, 0.0) # E_ref -> 0.0
+        MLMD_main(inputs, MD_index, MD_step_index, inputs.calc_MLIP, E_ref)
 
     # For random sampling,
     elif inputs.calc_type == 'random':
         # Run MLMD calculation with random sampling
-        MLMD_random(inputs, MD_index, inputs.steps_random*inputs.loginterval, inputs.calc_MLIP, 0.0) # E_ref -> 0.0
+        MLMD_random(inputs, MD_index, inputs.steps_random*inputs.loginterval, inputs.calc_MLIP, E_ref)
     else:
         raise ValueError("[cont]\tInvalid calc_type. Supported values are 'active' and 'random'.")
     inputs.comm.Barrier()

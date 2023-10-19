@@ -86,15 +86,8 @@ def MLMD_main(
     """
 
     # Extract the criteria information from the initialization step
-    criteria_Epot_step_avg,   criteria_Epot_step_std,\
-    criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,\
-    criteria_UncertRel_E_avg, criteria_UncertRel_E_std,\
-    criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,\
-    criteria_UncertRel_F_avg, criteria_UncertRel_F_std,\
-    criteria_UncertAbs_S_avg, criteria_UncertAbs_S_std,\
-    criteria_UncertRel_S_avg, criteria_UncertRel_S_std\
-    = get_criteria(inputs.temperature, inputs.pressure, inputs.index, inputs.steps_init, inputs.al_type)
-    
+    criteria_collected = get_criteria(inputs.temperature, inputs.pressure, inputs.index, inputs.steps_init, inputs.al_type)
+
     # Open a trajectory file to store the sampled configurations
     if inputs.rank == 0:
         check_mkdir('TEMPORARY')
@@ -202,21 +195,11 @@ def MLMD_main(
 
         # Get absolute and relative uncertainties of energy and force
         # and also total energy
-        UncertAbs_E, UncertRel_E, UncertAbs_F, UncertRel_F, UncertAbs_S, UncertRel_S, Epot_step, S_step =\
+        uncerts, Epot_step, S_step =\
         eval_uncert(struc_step, inputs.nstep, inputs.nmodel, 0.0, calc_MLIP, inputs.al_type, inputs.harmonic_F)
-        
+
         # Get a criteria probability from uncertainty and energy informations
-        criteria = get_criteria_prob(
-            inputs.al_type, inputs.uncert_type, inputs.uncert_shift, inputs.uncert_grad,
-            inputs.kB, inputs.NumAtoms, inputs.temperature,
-            Epot_step,   criteria_Epot_step_avg,   criteria_Epot_step_std,
-            UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
-            UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std,
-            UncertAbs_F, criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
-            UncertRel_F, criteria_UncertRel_F_avg, criteria_UncertRel_F_std,
-            UncertAbs_S, criteria_UncertAbs_S_avg, criteria_UncertAbs_S_std,
-            UncertRel_S, criteria_UncertRel_S_avg, criteria_UncertRel_S_std
-        )
+        criteria = get_criteria_prob(inputs, Epot_step, uncerts, criteria_collected)
 
         if inputs.rank == 0:
             MD_step_index += 1
@@ -233,12 +216,12 @@ def MLMD_main(
             trajfile = open(f'UNCERT/uncertainty-{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}.txt', 'a')
             trajfile.write(
                 '{:.5e}'.format(Decimal(str(struc_step.get_temperature()))) + '\t' +
-                uncert_strconvter(UncertAbs_E) + '\t' +
-                uncert_strconvter(UncertRel_E) + '\t' +
-                uncert_strconvter(UncertAbs_F) + '\t' +
-                uncert_strconvter(UncertRel_F) + '\t' +
-                uncert_strconvter(UncertAbs_S) + '\t' +
-                uncert_strconvter(UncertRel_S) + '\t' +
+                uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                uncert_strconvter(uncerts.UncertRel_S) + '\t' +
                 uncert_strconvter(Epot_step) + '\t' +
                 uncert_strconvter(S_step) + '\t' +
                 str(MD_index) + '          \t' +

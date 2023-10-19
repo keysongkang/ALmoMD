@@ -2,7 +2,6 @@ import os
 import sys
 import numpy as np
 import pandas as pd
-from mpi4py import MPI
 from decimal import Decimal
 from scipy import special
 from libs.lib_util import single_print
@@ -44,177 +43,129 @@ def eval_uncert(
 
     ## Depending on an active learning type (al_type), the format of output changes
     # Active learning based on the uncertainty of predicted energy
-    if al_type == 'energy':
-        Epot_step_avg, Epot_step_std = eval_uncert_E(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        S_step_avg, S_step_std = eval_uncert_S(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        
-        return (
-            Epot_step_std,
-            Epot_step_std / Epot_step_avg,
-            '----          ',
-            '----          ',
-            '----          ',
-            '----          ',
-            Epot_step_avg,
-            S_step_avg
-        )
 
-    # Active learning based on the AVERAGED uncertainty of predicted force
-    elif al_type == 'force':
-        # Just get potential energy for the ensemble probability
-        Epot_step_avg, Epot_step_std = eval_uncert_E(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        F_step_norm_avg, F_step_norm_std = eval_uncert_F(
-            struc_step, nstep, nmodel, E_ref, calculator, harmonic_F
-        )
-        S_step_avg, S_step_std = eval_uncert_S(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
+    Epot_step_avg, Epot_step_std, F_step_norm_avg, F_step_norm_std, S_step_avg, S_step_std\
+    = eval_uncert_all(struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
-        return (
-            '----          ',
-            '----          ',
-            np.average(F_step_norm_std),
-            np.average(F_step_norm_std / F_step_norm_avg),
-            '----          ',
-            '----          ',
-            Epot_step_avg,
-            S_step_avg
-        )
+    from libs.lib_util import empty_inputs
+    uncerts = empty_inputs()
+
+    if al_type == 'energy' or al_type == 'force' or al_type == 'sigma' or al_type == 'all':
+        uncerts.UncertAbs_E = Epot_step_std
+        uncerts.UncertRel_E = Epot_step_std / Epot_step_avg
+        uncerts.UncertAbs_F = np.average(F_step_norm_std)
+        uncerts.UncertRel_F = np.average(F_step_norm_std / F_step_norm_avg)
+        uncerts.UncertAbs_S = S_step_std
+        uncerts.UncertRel_S = S_step_std / S_step_avg
+
+        return (uncerts, Epot_step_avg, S_step_avg)
 
     # Active learning based on the MAXIUM uncertainty of predicted force
     elif al_type == 'force_max':
-        # Just get potential energy for the ensemble probability
-        Epot_step_avg, Epot_step_std = eval_uncert_E(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        F_step_norm_avg, F_step_norm_std = eval_uncert_F(
-            struc_step, nstep, nmodel, E_ref, calculator, harmonic_F
-        )
-        S_step_avg, S_step_std = eval_uncert_S(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
+        uncerts.UncertAbs_E = Epot_step_std
+        uncerts.UncertRel_E = Epot_step_std / Epot_step_avg
+        uncerts.UncertAbs_F = np.ndarray.max(F_step_norm_std)
+        uncerts.UncertRel_F = np.ndarray.max(
+            np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std)])
+            )
+        uncerts.UncertAbs_S = S_step_std
+        uncerts.UncertRel_S = S_step_std / S_step_avg
 
-        return (
-            '----          ',
-            '----          ',
-            np.ndarray.max(F_step_norm_std),
-            np.ndarray.max(
-                np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std)])
-            ),
-            '----          ',
-            '----          ',
-            Epot_step_avg,
-            S_step_avg
-        )
+        return (uncerts, Epot_step_avg, S_step_avg)
 
-    elif al_type == 'sigma':
-        # Just get potential energy for the ensemble probability
-        Epot_step_avg, Epot_step_std = eval_uncert_E(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        S_step_avg, S_step_std = eval_uncert_S(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-
-        return (
-            '----          ',
-            '----          ',
-            '----          ',
-            '----          ',
-            S_step_std,
-            S_step_std / S_step_avg,
-            Epot_step_avg,
-            S_step_avg
-        )
-
-    elif al_type == 'sigma_max':
-        # Just get potential energy for the ensemble probability
-        Epot_step_avg, Epot_step_std = eval_uncert_E(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        S_step_avg_list, S_step_std_list = eval_uncert_S(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        S_step_avg, S_step_std = eval_uncert_S(
-            struc_step = struc_step,
-            nstep = nstep,
-            nmodel = nmodel,
-            E_ref = E_ref,
-            calculator = calculator,
-            al_type = 'a',
-            harmonic_F = harmonic_F
-        )
-
-        return (
-            '----          ',
-            '----          ',
-            '----          ',
-            '----          ',
-            np.ndarray.max(S_step_std_list),
-            np.ndarray.max(
-                np.array([std / avg for avg, std in zip(S_step_avg_list, S_step_std_list) if avg > 0.000001])
-            ),
-            Epot_step_avg,
-            S_step_avg
-        )
-
-    elif al_type == 'all':
-        # Just get potential energy for the ensemble probability
-        Epot_step_avg, Epot_step_std = eval_uncert_E(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type='energy', harmonic_F=harmonic_F
-        )
-        F_step_norm_avg, F_step_norm_std = eval_uncert_F(
-            struc_step, nstep, nmodel, E_ref, calculator, harmonic_F
-        )
-        S_step_avg, S_step_std = eval_uncert_S(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type='sigma', harmonic_F=harmonic_F
-        )
-
-        return (
-            Epot_step_std,
-            Epot_step_std / Epot_step_avg,
-            np.average(F_step_norm_std),
-            np.average(F_step_norm_std / F_step_norm_avg),
-            S_step_std,
-            S_step_std / S_step_avg,
-            Epot_step_avg,
-            S_step_avg
-        )
-
-    ##!! this part is needed to be check. it might need F instead of Fmax
-    elif al_type == 'EandFmax' or al_type == 'EorFmax':
-        Epot_step_avg, Epot_step_std = eval_uncert_E(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        F_step_norm_avg, F_step_norm_std = eval_uncert_F(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-        S_step_avg, S_step_std = eval_uncert_S(
-            struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
-        )
-
-        return (
-            Epot_step_std,
-            Epot_step_std / Epot_step_avg,
-            np.ndarray.max(F_step_norm_std),
-            np.ndarray.max(
-                np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std) if avg > 0.0001])
-            ),
-            '----          ',
-            '----          ',
-            Epot_step_avg,
-            S_step_avg
-        )
-    
     else:
         sys.exit("You need to set al_type.")
         
+
+def eval_uncert_all(
+    struc_step, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
+):
+    """Function [eval_uncert_E]
+    Evalulate the average and standard deviation of predicted energies.
+
+    Parameters:
+
+    struc_step: ASE atoms
+        A structral configuration at the current step
+    nstep: int
+        The number of subsampling sets
+    nmodel: int
+        The number of ensemble model sets with different initialization
+    E_ref: flaot
+        The energy of reference state (Here, ground state)
+    calculator: ASE calculator
+        Calculators from trained models
+    al_type: str
+        Type of active learning: 'energy', 'force', 'force_max'
+
+    Returns:
+
+    Epot_step_avg: float
+        Average of predicted energies
+    Epot_step_std: float
+        Standard deviation of predicted energies
+    """
+
+    from mpi4py import MPI
+    from libs.lib_util import eval_sigma
+
+    # Extract MPI infos
+    comm = MPI.COMM_WORLD
+    size = comm.Get_size()
+    rank = comm.Get_rank()
+
+    # Prepare empty lists for potential and total energies
+    Epot_step = []
+    F_step = []
+    prd_struc = []
+    zndex = 0
+
+    # Get predicted potential and total energies shifted by E_ref (ground state energy)
+    for index_nmodel in range(nmodel):
+        for index_nstep in range(nstep):
+            if (index_nmodel*nstep + index_nstep) % size == rank:
+                struc_step.calc = calculator[zndex]
+                Epot_step.append(struc_step.get_potential_energy() - E_ref)
+                F_step.append(struc_step.get_forces())
+                prd_struc.append(struc_step.get_positions())
+                zndex += 1
+    Epot_step = comm.allgather(Epot_step)
+    F_step = comm.allgather(F_step)
+    prd_struc = comm.allgather(prd_struc) 
+
+    # Get the average and standard deviation of predicted potential energies
+    # and the average of total energies
+    Epot_step_filtered = np.array([jtem for item in Epot_step if len(item) != 0 for jtem in item])
+    # Get the average and standard deviation of the norm of predicted forces
+    F_step_filtered = np.array([jtem for item in F_step if len(item) != 0 for jtem in item])
+    struc_filtered = [jtem for item in prd_struc if len(item) != 0 for jtem in item]
+
+    if harmonic_F:
+        from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+        displacements = get_displacements(struc_step.get_positions(), 'geometry.in.supercell')
+        F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+        E_ha = get_E_ha(displacements, F_ha)
+        Epot_step_filtered = Epot_step_filtered + E_ha
+        F_step_filtered = F_step_filtered + F_ha
+
+    Epot_step_avg = np.average(Epot_step_filtered, axis=0)
+    Epot_step_std = np.std(Epot_step_filtered, axis=0)
+
+    F_step_avg = np.average(F_step_filtered, axis=0)
+    F_step_norm = np.array([[np.linalg.norm(Fcomp) for Fcomp in Ftems] for Ftems in F_step_filtered - F_step_avg])
+    F_step_norm_std = np.sqrt(np.average(F_step_norm ** 2, axis=0))
+    F_step_norm_avg = np.linalg.norm(F_step_avg, axis=1)
+
+    prd_sigma = []
+    for prd_F_step, prd_struc_step in zip(F_step_filtered, struc_filtered):
+        prd_sigma.append(eval_sigma(prd_F_step, prd_struc_step, al_type))
+
+    # Get the average and standard deviation of the norm of predicted forces
+    sigma_step_avg = np.average(prd_sigma, axis=0)
+    sigma_step_std = np.std(prd_sigma, axis=0)
+
+    return Epot_step_avg, Epot_step_std, F_step_norm_avg, F_step_norm_std, sigma_step_avg, sigma_step_std
+
 
 
 def eval_uncert_E(
@@ -245,6 +196,8 @@ def eval_uncert_E(
     Epot_step_std: float
         Standard deviation of predicted energies
     """
+
+    from mpi4py import MPI
 
     # Extract MPI infos
     comm = MPI.COMM_WORLD
@@ -284,7 +237,6 @@ def eval_uncert_E(
         Epot_step_std = '----          '
     
     return Epot_step_avg, Epot_step_std
-
 
 
 def eval_uncert_F(
@@ -464,9 +416,8 @@ def get_criteria(
         Standard deviation of potential energies
     """
 
-    # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
+    from libs.lib_util import empty_inputs
+    criteria = empty_inputs()
 
     # Read all uncertainty results
     result_data = pd.read_csv(
@@ -475,52 +426,43 @@ def get_criteria(
         )
 
     # Get their average and standard deviation
-    criteria_Epotential_avg = result_data.loc[:, 'E_potent_avg_i'].to_numpy()[-1]
-    criteria_Epotential_std = result_data.loc[:, 'E_potent_std_i'].to_numpy()[-1]
+    criteria.Epotential_avg = result_data.loc[:, 'E_potent_avg_i'].to_numpy()[-1]
+    criteria.Epotential_std = result_data.loc[:, 'E_potent_std_i'].to_numpy()[-1]
     
     if al_type == 'energy':
-        criteria_Un_Abs_E_avg_i = result_data.loc[:, 'Un_Abs_E_avg_i'].to_numpy()[-1]
-        criteria_Un_Abs_E_std_i = result_data.loc[:, 'Un_Abs_E_std_i'].to_numpy()[-1]
-        criteria_Un_Rel_E_avg_i = result_data.loc[:, 'Un_Rel_E_avg_i'].to_numpy()[-1]
-        criteria_Un_Rel_E_std_i = result_data.loc[:, 'Un_Rel_E_std_i'].to_numpy()[-1]
+        criteria.Un_Abs_E_avg_i = result_data.loc[:, 'Un_Abs_E_avg_i'].to_numpy()[-1]
+        criteria.Un_Abs_E_std_i = result_data.loc[:, 'Un_Abs_E_std_i'].to_numpy()[-1]
+        criteria.Un_Rel_E_avg_i = result_data.loc[:, 'Un_Rel_E_avg_i'].to_numpy()[-1]
+        criteria.Un_Rel_E_std_i = result_data.loc[:, 'Un_Rel_E_std_i'].to_numpy()[-1]
     else:
-        criteria_Un_Abs_E_avg_i = 0.0
-        criteria_Un_Abs_E_std_i = 0.0
-        criteria_Un_Rel_E_avg_i = 0.0
-        criteria_Un_Rel_E_std_i = 0.0
+        criteria.Un_Abs_E_avg_i = 0.0
+        criteria.Un_Abs_E_std_i = 0.0
+        criteria.Un_Rel_E_avg_i = 0.0
+        criteria.Un_Rel_E_std_i = 0.0
 
     if al_type == 'force' or al_type == 'force_max':
-        criteria_Un_Abs_F_avg_i = result_data.loc[:, 'Un_Abs_F_avg_i'].to_numpy()[-1]
-        criteria_Un_Abs_F_std_i = result_data.loc[:, 'Un_Abs_F_std_i'].to_numpy()[-1]
-        criteria_Un_Rel_F_avg_i = result_data.loc[:, 'Un_Rel_F_avg_i'].to_numpy()[-1]
-        criteria_Un_Rel_F_std_i = result_data.loc[:, 'Un_Rel_F_std_i'].to_numpy()[-1]
+        criteria.Un_Abs_F_avg_i = result_data.loc[:, 'Un_Abs_F_avg_i'].to_numpy()[-1]
+        criteria.Un_Abs_F_std_i = result_data.loc[:, 'Un_Abs_F_std_i'].to_numpy()[-1]
+        criteria.Un_Rel_F_avg_i = result_data.loc[:, 'Un_Rel_F_avg_i'].to_numpy()[-1]
+        criteria.Un_Rel_F_std_i = result_data.loc[:, 'Un_Rel_F_std_i'].to_numpy()[-1]
     else:
-        criteria_Un_Abs_F_avg_i = 0.0
-        criteria_Un_Abs_F_std_i = 0.0
-        criteria_Un_Rel_F_avg_i = 0.0
-        criteria_Un_Rel_F_std_i = 0.0
+        criteria.Un_Abs_F_avg_i = 0.0
+        criteria.Un_Abs_F_std_i = 0.0
+        criteria.Un_Rel_F_avg_i = 0.0
+        criteria.Un_Rel_F_std_i = 0.0
 
     if al_type == 'sigma' or al_type == 'sigma_max':
-        criteria_Un_Abs_S_avg_i = result_data.loc[:, 'Un_Abs_S_avg_i'].to_numpy()[-1]
-        criteria_Un_Abs_S_std_i = result_data.loc[:, 'Un_Abs_S_std_i'].to_numpy()[-1]
-        criteria_Un_Rel_S_avg_i = result_data.loc[:, 'Un_Rel_S_avg_i'].to_numpy()[-1]
-        criteria_Un_Rel_S_std_i = result_data.loc[:, 'Un_Rel_S_std_i'].to_numpy()[-1]
+        criteria.Un_Abs_S_avg_i = result_data.loc[:, 'Un_Abs_S_avg_i'].to_numpy()[-1]
+        criteria.Un_Abs_S_std_i = result_data.loc[:, 'Un_Abs_S_std_i'].to_numpy()[-1]
+        criteria.Un_Rel_S_avg_i = result_data.loc[:, 'Un_Rel_S_avg_i'].to_numpy()[-1]
+        criteria.Un_Rel_S_std_i = result_data.loc[:, 'Un_Rel_S_std_i'].to_numpy()[-1]
     else:
-        criteria_Un_Abs_S_avg_i = 0.0
-        criteria_Un_Abs_S_std_i = 0.0
-        criteria_Un_Rel_S_avg_i = 0.0
-        criteria_Un_Rel_S_std_i = 0.0
+        criteria.Un_Abs_S_avg_i = 0.0
+        criteria.Un_Abs_S_std_i = 0.0
+        criteria.Un_Rel_S_avg_i = 0.0
+        criteria.Un_Rel_S_std_i = 0.0
 
-    return (
-        criteria_Epotential_avg, criteria_Epotential_std,
-        criteria_Un_Abs_E_avg_i, criteria_Un_Abs_E_std_i,
-        criteria_Un_Rel_E_avg_i, criteria_Un_Rel_E_std_i,
-        criteria_Un_Abs_F_avg_i, criteria_Un_Abs_F_std_i,
-        criteria_Un_Rel_F_avg_i, criteria_Un_Rel_F_std_i,
-        criteria_Un_Abs_S_avg_i, criteria_Un_Abs_S_std_i,
-        criteria_Un_Rel_S_avg_i, criteria_Un_Rel_S_std_i
-    )
-
+    return criteria
 
 
 def get_result(inputs):
@@ -619,18 +561,8 @@ def uncert_strconvter(value):
         return value
     return '{:.5e}'.format(Decimal(value))
     
-    
-def get_criteria_prob(
-    al_type, uncert_type, uncert_shift, uncert_grad,
-    kB, NumAtoms, temperature, 
-    Epot_step, criteria_Epot_step_avg, criteria_Epot_step_std,
-    UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
-    UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std,
-    UncertAbs_F, criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
-    UncertRel_F, criteria_UncertRel_F_avg, criteria_UncertRel_F_std,
-    UncertAbs_S, criteria_UncertAbs_S_avg, criteria_UncertAbs_S_std,
-    UncertRel_S, criteria_UncertRel_S_avg, criteria_UncertRel_S_std
-):
+
+def get_criteria_prob(inputs, Epot_step, uncerts, criteria):
     """Function [get_criteria_prob]
     Utilize the average and standard deviation obtained from 'get_criteria'
     to calculate the probability of satisfying the acceptance criteria.
@@ -703,52 +635,41 @@ def get_criteria_prob(
     criteria_Uncert_E = 1
     criteria_Uncert_F = 1
     criteria_Uncert_S = 1
-    
-    # Calculate the probability based on energy, force, or both energy and force
-    if al_type == 'energy':
-        criteria_Uncert_E = get_criteria_uncert(
-            uncert_type, uncert_shift, uncert_grad,
-            UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
-            UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std
-            )
-    elif al_type == 'force' or al_type == 'force_max':
-        criteria_Uncert_F = get_criteria_uncert(
-            uncert_type, uncert_shift, uncert_grad,
-            UncertAbs_F, criteria_UncertAbs_F_avg, criteria_UncertAbs_F_std,
-            UncertRel_F, criteria_UncertRel_F_avg, criteria_UncertRel_F_std
-            )
-    elif al_type == 'sigma' or al_type == 'sigma_max':
-        criteria_Uncert_S = get_criteria_uncert(
-            uncert_type, uncert_shift, uncert_grad,
-            UncertAbs_S, criteria_UncertAbs_S_avg, criteria_UncertAbs_S_std,
-            UncertRel_S, criteria_UncertRel_S_avg, criteria_UncertRel_S_std
-            )
 
+    # Calculate the probability based on energy, force, or both energy and force
+    if inputs.al_type == 'energy':
+        criteria_Uncert_E = get_criteria_uncert(
+            inputs.uncert_type, inputs.uncert_shift, inputs.uncert_grad,
+            uncerts.UncertAbs_E, criteria.Un_Abs_E_avg_i, criteria.Un_Abs_E_std_i,
+            uncerts.UncertRel_E, criteria.Un_Rel_E_avg_i, criteria.Un_Rel_E_std_i
+            )
+    elif inputs.al_type == 'force' or inputs.al_type == 'force_max':
+        criteria_Uncert_F = get_criteria_uncert(
+            inputs.uncert_type, inputs.uncert_shift, inputs.uncert_grad,
+            uncerts.UncertAbs_F, criteria.Un_Abs_F_avg_i, criteria.Un_Abs_F_std_i,
+            uncerts.UncertRel_F, criteria.Un_Rel_F_avg_i, criteria.Un_Rel_F_std_i
+            )
+    elif inputs.al_type == 'sigma':
+        criteria_Uncert_S = get_criteria_uncert(
+            inputs.uncert_type, inputs.uncert_shift, inputs.uncert_grad,
+            uncerts.UncertAbs_S, criteria.Un_Abs_S_avg_i, criteria.Un_Abs_S_std_i,
+            uncerts.UncertRel_S, criteria.Un_Rel_S_avg_i, criteria.Un_Rel_S_std_i
+            )
     # elif al_type == 'force_max':
     #     # Follow the crietria proposed
     #     # in Y. Zhang et al. Comput. Phys. Commun. 253. 107206 (2020)
     #     criteria_Uncert_F = 1 if 0.05 < UncertAbs_F < 0.20 else 0
-
-    elif al_type == 'EandFmax' or al_type == 'EorFmax': ##!! Need to be fixed.
-        criteria_Uncert_E = get_criteria_uncert(
-            uncert_type, uncert_shift, uncert_grad,
-            UncertAbs_E, criteria_UncertAbs_E_avg, criteria_UncertAbs_E_std,
-            UncertRel_E, criteria_UncertRel_E_avg, criteria_UncertRel_E_std
-            )
-        criteria_Uncert_F = 1 if 0.05 < UncertAbs_F < 0.20 else 0
     else:
-        single_print('You need to assign al_type.')
+        sys.exit("You need to set al_type.")
+
+    beta = inputs.kB * inputs.temperature
 
     # Caculate the canonical ensemble propbability using the total energy
-    Prob = np.exp((-1) * (Epot_step / NumAtoms) / (kB * temperature))
+    Prob = np.exp((-1) * (Epot_step / inputs.NumAtoms) / beta)
     Prob_upper_limit = np.exp(
-        (-1) * (criteria_Epot_step_avg / NumAtoms) / 
-        (kB * temperature)
-        )
+        (-1) * (criteria.Epotential_avg / inputs.NumAtoms) / beta)
     Prob_lower_limit = np.exp(
-        (-1) * ((criteria_Epot_step_avg + criteria_Epot_step_std) / NumAtoms) /
-        (kB * temperature)
-        )
+        (-1) * ((criteria.Epotential_avg + criteria.Epotential_std) / inputs.NumAtoms) / beta)
 
     # Get relative probability of the canomical ensemble
     criteria_Prob_inter = Prob / Prob_upper_limit;
@@ -760,7 +681,7 @@ def get_criteria_prob(
     sys.stdout.flush()
 
     # Combine three parts of probabilities
-    if al_type == 'EorFmax':
+    if inputs.al_type == 'EorFmax':
         return 1 - (1-criteria_Uncert_E) * (1-criteria_Uncert_F) * criteria_Uncert_S * criteria_Prob
     else:
         return criteria_Uncert_E * criteria_Uncert_F * criteria_Uncert_S * criteria_Prob

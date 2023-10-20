@@ -1,7 +1,7 @@
 # Installation
-* ALmoMD requires a Python environment (>=3.7, tested with Python 3.9) with Message Passing Interface (MPI) settings implemented using [mpi4py](https://mpi4py.readthedocs.io/en/stable/).
-* NequIP (>=0.5.6) necessitates the implementation of PyTorch modules on GPU nodes (Check [details](https://github.com/mir-group/nequip)).
-* FHI-aims (newer than 200112_2) mandates a Fortran compiler with MPI settings (Check [FHI-aims](https://fhi-aims-club.gitlab.io/tutorials/basics-of-running-fhi-aims/preparations/) and [FHI-vibes](https://vibes-developers.gitlab.io/vibes/Installation/)).
+* __ALmoMD__ requires a Python environment (>=3.7, tested with Python 3.9) with Message Passing Interface (MPI) settings implemented using [mpi4py](https://mpi4py.readthedocs.io/en/stable/).
+* __NequIP__ (>=0.5.6) necessitates the implementation of PyTorch modules on GPU nodes (Check [details](https://github.com/mir-group/nequip)).
+* __FHI-aims__ (newer than 200112_2) mandates a Fortran compiler with MPI settings (Check [FHI-aims](https://fhi-aims-club.gitlab.io/tutorials/basics-of-running-fhi-aims/preparations/) and [FHI-vibes](https://vibes-developers.gitlab.io/vibes/Installation/)).
 
 ## Step-by-Step Setup
 To set up a Python environment, you can manually build your own environment. However, we recommend preparing Conda settings. All the steps are based on the implementation of Conda settings, which can be found here. If you already have your own Python environment, you just need to conduct step 4.
@@ -26,8 +26,10 @@ cd ALmoMD
 pip install .
 ```
 
+5. You need to install __FHI-vibes__. Check the install instructions [here](https://vibes-developers.gitlab.io/vibes/Installation/).
+
 # Contents
-- [Back to Home](READMD.md)
-- [Theoretical Background](docs/theory.md)
-- [User Manuals](docs/documentation.md)
-- [Tutorials](docs/tutorial.md)
+- [Back to Home](../READMD.md)
+- [Theoretical Background](theory.md)
+- [User Manuals](documentation.md)
+- [Tutorials](tutorial.md)

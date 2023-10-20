@@ -55,7 +55,7 @@ def termination(inputs):
             result_min = min(result_uncert[-3:])
 
             # Currently criteria is written by eV/atom
-            if np.absolute(result_max - result_min) < crtria_cnvg and \
+            if np.absolute(result_max - result_min) < inputs.crtria_cnvg and \
             result_max != result_min:
                 single_print(
                     f'[term]\t!!The predicted results of trained model are'

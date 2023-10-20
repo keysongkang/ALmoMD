@@ -76,9 +76,9 @@ class inputs:
         # num_calc: int
         #     The number of job scripts for DFT calculations
         self.num_calc = 16
-        # num_mld_calc: int
+        # num_mdl_calc: int
         #     The number of job scripts for MLIP training calculations
-        self.num_mld_calc = 6
+        self.num_mdl_calc = 6
         # random_index: int
         #     The number of iteration for DFT random sampling
         self.random_index = 1

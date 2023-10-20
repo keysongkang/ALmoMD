@@ -462,9 +462,9 @@ def get_criteria_prob(inputs, Epot_step, uncerts, criteria):
     # Caculate the canonical ensemble propbability using the total energy
     Prob = np.exp((-1) * (Epot_step / inputs.NumAtoms) / beta)
     Prob_upper_limit = np.exp(
-        (-1) * (criteria.Epotential_avg / inputs.NumAtoms) / beta)
-    Prob_lower_limit = np.exp(
         (-1) * ((criteria.Epotential_avg + criteria.Epotential_std) / inputs.NumAtoms) / beta)
+    Prob_lower_limit = np.exp(
+        (-1) * ((criteria.Epotential_avg + criteria.Epotential_std*1.8) / inputs.NumAtoms) / beta)
 
     # Get relative probability of the canomical ensemble
     criteria_Prob_inter = Prob / Prob_upper_limit;

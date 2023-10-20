@@ -5,6 +5,8 @@
 </div>
 <br>
 Active-learning machine-operated molecular dynamics (ALmoMD) is a Python code package designed for the effective training of machine learned interatomic potential (MLIP) through active learning based on uncertainty evaluation. It also facilitates the implementation of molecular dynamics (MD) using trained MLIPs with uncertainty evaluation.
+
+The primary goal of ALmoMD is to efficiently train the MLIP without posing a challenge to _ab initio_ molecular dynamics, while effectively capturing rare dynamical events, leading to a more reliable MLIP. Additionally, ALmoMD includes the implementation of MD with uncertainty evaluation, providing an indication of its reliability.
 <br>
 
 - [Installation Guide](docs/installation.md)

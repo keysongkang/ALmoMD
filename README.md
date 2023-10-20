@@ -6,11 +6,30 @@
 
 Active-learning machine-operated molecular dynamics (ALmoMD) is a Python code package designed for the effective training of machine learning interatomic potential (MLIP) through active learning based on uncertainty evaluation. It also facilitates the implementation of molecular dynamics (MD) using trained MLIPs with uncertainty evaluation.
 
-- [How to install?](docs/installation.md)
-- [Manual](docs/documentation.md)
-- [Tutorial](docs/tutorial.md)
+- [Installation Guide](docs/installation.md)
+- [Theoretical Background](docs/theory.md)
+- [User Manuals](docs/documentation.md)
+- [Tutorials](docs/tutorial.md)
 
-# ALmoMD
-## hihi
-### hihihihihihihih
-asdfjaoiewjfioawjefoi
+## Code integration
+ALmoMD utilizes multiple code packages to implement the active learning scheme for MLIP and MLIP-MD, with plans to introduce additional interfaces in the future.
+
+- Atomic Simulation Environment ([ASE](https://wiki.fysik.dtu.dk/ase/))
+- MLIP ([NequIP](https://github.com/mir-group/nequip))
+- Density Functional Theory ([FHI-aims](https://fhi-aims.org/))
+- *ab initio* Molecular dynamics and anharmonicity evalulation ([FHI-vibes](https://vibes-developers.gitlab.io/vibes/))
+
+
+## Licence
+<div style="border: 1px solid #000; padding: 10px; background-color: #f0f0f0;">
+	
+	MIT License
+
+	Copyright (c) [2023] [Kisung Kang]
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+</div>

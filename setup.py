@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='almomd',
-    version='1.0.0',
+    version='0.1.0',
     author='Your Name',
     description='Your package description',
     packages=find_packages(),

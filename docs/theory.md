@@ -2,7 +2,7 @@
 
 Active-learning machine-operated molecular dynamics (ALmoMD) is a Python code package designed for the effective training of machine learned interatomic potential (MLIP) through active learning based on uncertainty evaluation. It also facilitates the implementation of molecular dynamics (MD) using trained MLIPs with uncertainty evaluation.
 
-## Uncertainty evaluation
+## Uncertainty Evaluation
 
 <br>
 <figure style="text-align:center;">
@@ -15,12 +15,15 @@ In ALmoMD, __uncertainty__ refers to the prediction uncertainty of a group of tr
 
 <br>
 <figure style="text-align:center;">
-  <img src="fig_al.png" alt="Active learning scheme" width="800"/>
+  <img src="fig_CuI.png" alt="CuI exmaple" width="800"/>
   <figcaption>Figure 2. (Left) The anharmonicity trajectory of CuI from _ab initio_ MD. Defect creation happens around 38 ps, which yields a jump of anharmonicity. This figure is utilized with acknowledgment from [2]. (Right) When MLIP is only trained with data less than 30 ps (green trajectory), MLIP cannot be trained with states with a defect in purple trajectory, which makes large spikes in errors and uncertainties of forces.</figcaption>
 </figure>
 <br>
 
 We note that there are significant concerns regarding the use of uncertainty in global phase predictions, as raised by both the Zipoli group [1] and Scheffler group [3]. However, in ALmoMD, we utilize uncertainty to qualitatively identify cases when the models go beyond their trained domain, enabling us to determine where additional model training is necessary. For instance, consider CuI, which exhibits a rare dynamical event involving defect creation, as illustrated in Fig. 2. Due to the challenging nature of _ab initio_ MD, there's a possibility of terminating it before experiencing this event, for example, at 30 ps. In such cases, we train the MLIP using only the green trajectory shown in Fig. 2. When we subsequently test these trained models with the purple trajectory, which includes states with defects, it results in significant spikes in errors and uncertainties (as seen in the forces in Fig. 2). Therefore, we can qualitatively employ uncertainty as a means of identifying when MD departs from its trained regime.
+
+
+## Active Learning Scheme
 
 <br>
 <figure style="text-align:center;">
@@ -29,7 +32,9 @@ We note that there are significant concerns regarding the use of uncertainty in 
 </figure>
 <br>
 
-Active learning scheme is implemented based on previously defined uncertainty. 
+In ALmoMD, active learning scheme is implemented based on previously defined uncertainty. 
+
+
 
 # References
 [1] L. Kahle and F. Zipoli, _Phys. Rev. E_ __105__, 015311 (2022).

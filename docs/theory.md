@@ -50,7 +50,7 @@ ALmoMD facilitates this qualitative identification of uncertainty to sample next
 [4] F. Knoop. T. A. R. Purcell, M. Scheffler, and C. Carbogno, _Phys. Rev. Materials_ __4__, 083809 (2020)
 
 # Contents
-- [Back to Home](../README.md)
+- [Back to Home](https://keysongkang.github.io/ALmoMD/)
 - [Installation Guide](installation.md)
 - [User Manuals](documentation.md)
 - [Tutorials](tutorial.md)

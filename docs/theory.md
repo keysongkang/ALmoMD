@@ -33,7 +33,7 @@ We note that there are significant concerns regarding the use of uncertainty in 
 <br>
 
 ALmoMD facilitates this qualitative identification of uncertainty to sample next round of training data. Uncertainty can be evaluated in terms of potential energy, forces on atoms, and degree of anharmonicity. Particularly for forces, uncertainty can be picked as its average or its maximum value. On the other hand, ALmoMD rejects candidate data when it has too large potential energy, which is unphysical. This can happen because MD with MLIP might be a flawed trajectory. In details, ALmoMD uses two soft criteria regarding uncertainty and potential energy. First, probability criteria for uncertainty is defined as below.
-$$P_{\mathrm{U}} = \frac{1}{2}\left [ 1 + \mathrm{erf}\left ( \frac{x -\bar{U} - 2\sigma^{U}}{\sigma^{U}\sqrt{0.2}} \right ) \right ]$$
+$P_{\mathrm{U}} = \frac{1}{2}\left [ 1 + \mathrm{erf}\left ( \frac{x -\bar{U} - 2\sigma^{U}}{\sigma^{U}\sqrt{0.2}} \right ) \right ]$
 
 
 <br>
@@ -47,8 +47,8 @@ $$P_{\mathrm{U}} = \frac{1}{2}\left [ 1 + \mathrm{erf}\left ( \frac{x -\bar{U} -
 # References
 * [1] L. Kahle and F. Zipoli, _Phys. Rev. E_ __105__, 015311 (2022).
 * [2] S. Lu, L.M. Ghringhelli, C. Carbogno, J. Wang, and M. Scheffler, arXiv:2309.00195 (2023).
-* [3] F. Knoop, T. A. R. Purcell, M. Scheffler, and C. Carbogno, _Phys. Rev. Lett._ __130__, 236301 (2023)
-* [4] F. Knoop. T. A. R. Purcell, M. Scheffler, and C. Carbogno, _Phys. Rev. Materials_ __4__, 083809 (2020)
+* [3] F. Knoop, T. A. R. Purcell, M. Scheffler, and C. Carbogno, _Phys. Rev. Lett._ __130__, 236301 (2023).
+* [4] F. Knoop. T. A. R. Purcell, M. Scheffler, and C. Carbogno, _Phys. Rev. Materials_ __4__, 083809 (2020).
 
 # Contents
 - [Back to Home](https://keysongkang.github.io/ALmoMD/)

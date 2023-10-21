@@ -51,6 +51,7 @@ where $\bar{E}$ and $\sigma^{E}$ represent the average and standard deviation of
 
 Once next round of training data with high uncertainty are sampled, they go through DFT calculations and they are added to previous list of training data. Then, prediction of newly trained model will provide corrected potential energy surface. This active learning is implemented iteratively, and each iterative step will give more reliable prediction.
 
+## Key Summary
 The key advantage of ALmoMD is
 * train the MLIP model without implementation of challanging _ab initio_ molecular dynamics,
 * pinpoint next round of training data qualitatively based on high uncertainty of prediction,

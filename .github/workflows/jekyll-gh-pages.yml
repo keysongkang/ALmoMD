@@ -1,5 +1,5 @@
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
-name: Deploy Jekyll with GitHub Pages dependencies preinstalled
+# Sample workflow for building and deploying a Jekyll site with LaTeX processing to GitHub Pages
+name: Deploy Jekyll with LaTeX to GitHub Pages
 
 on:
   # Runs on pushes targeting the default branch
@@ -27,16 +27,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
-      - name: Setup Pages
-        uses: actions/configure-pages@v3
-      - name: Build with Jekyll
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./
-          destination: ./_site
+        uses: actions/checkout@v2
+      - name: Setup LaTeX Environment
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -q -y texlive-xetex
+      - name: Build with Jekyll and LaTeX
+        run: |
+          # Run any necessary LaTeX rendering commands here
+          bundle install
+          bundle exec jekyll build
+        working-directory: ./  # Change this to the directory where your Jekyll site is located
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-artifact@v2
+        with:
+          name: jekyll-site
+          path: _site  # Change this to the directory where your Jekyll site is generated
 
   # Deployment job
   deploy:

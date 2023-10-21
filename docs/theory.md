@@ -32,12 +32,15 @@ We note that there are significant concerns regarding the use of uncertainty in 
 </figure>
 <br>
 
-ALmoMD facilitates this qualitative identification of uncertainty to sample next round of training data. Uncertainty can be evaluated in terms of potential energy, forces on atoms, and degree of anharmonicity. Particularly for forces, uncertainty can be picked as its average or its maximum value. On the other hand, ALmoMD rejects candidate data when it has too large potential energy, which is unphysical. This can happen because MD with MLIP might be a flawed trajectory. In details, ALmoMD uses two soft criteria regarding uncertainty and potential energy. First, probability criteria for uncertainty is defined as below.
+ALmoMD facilitates the qualitative identification of uncertainty to sample the next round of training data. Uncertainty can be evaluated in terms of potential energy, forces on atoms, and the degree of anharmonicity. Particularly for forces, uncertainty can be determined as either its average or its maximum value. On the other hand, ALmoMD rejects candidate data when it exhibits excessive potential energy, which is unphysical. This can occur when using molecular dynamics with poorly trained MLIP, leading to a flawed trajectory. In detail, ALmoMD employs two soft criteria concerning uncertainty and potential energy. First, the probability criterion for uncertainty is defined as follows:
 <figure style="text-align:center;">
-  <img src="fig_eq1.png" alt="Uncertainty equation" width="600"/>
+  <img src="fig_eq1.png" alt="Uncertainty equation" width="300"/>
 </figure>
-where &macr;U is $\bar{U}$
-
+where $\bar{U}$ and $\sigma^{U}$ represent the average and standard deviation of the uncertainty in the testing data. This equation is based on an accumulated Gaussian distribution. Second, the probability criterion for potential energy is defined as follows:
+<figure style="text-align:center;">
+  <img src="fig_eq2.png" alt="Potential energy equation" width="300"/>
+</figure>
+where $\bar{E}$ and $\sigma^{E}$ represent the average and standard deviation of the potential energy in the testing data. This equation originates from the probability of the canonical ensemble.
 
 <br>
 <figure style="text-align:center;">
@@ -45,6 +48,13 @@ where &macr;U is $\bar{U}$
   <figcaption>Figure 4. (Left) New data (light blue and purple points) are obtained from molecular dynamics using MLIP. The error bars indicate their uncertainty. Since the purple points exhibit high uncertainty, they are selected for the next round of training data, and their energies are subsequently corrected through DFT calculations (pink points). (Right) Retraining with additional samples from the active learning process will yield a more reliable MLIP, which can be iteratively improved.</figcaption>
 </figure>
 <br>
+
+Once next round of training data with high uncertainty are sampled, they go through DFT calculations and they are added to previous list of training data. Then, prediction of newly trained model will provide corrected potential energy surface. This active learning is implemented iteratively, and each iterative step will give more reliable prediction.
+
+The key advantage of ALmoMD is
+* train the MLIP model without implementation of challanging _ab initio_ molecular dynamics,
+* pinpoint next round of training data qualitatively based on high uncertainty of prediction,
+* and effectively explore the potential energy surface using MD with MLIP, which enabling the capture of rare dynamical events.
 
 
 # References

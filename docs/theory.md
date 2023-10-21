@@ -33,7 +33,11 @@ We note that there are significant concerns regarding the use of uncertainty in 
 <br>
 
 ALmoMD facilitates this qualitative identification of uncertainty to sample next round of training data. Uncertainty can be evaluated in terms of potential energy, forces on atoms, and degree of anharmonicity. Particularly for forces, uncertainty can be picked as its average or its maximum value. On the other hand, ALmoMD rejects candidate data when it has too large potential energy, which is unphysical. This can happen because MD with MLIP might be a flawed trajectory. In details, ALmoMD uses two soft criteria regarding uncertainty and potential energy. First, probability criteria for uncertainty is defined as below.
-$P_{\mathrm{U}} = \frac{1}{2}\left [ 1 + \mathrm{erf}\left ( \frac{x -\bar{U} - 2\sigma^{U}}{\sigma^{U}\sqrt{0.2}} \right ) \right ]$
+<figure style="text-align:center;">
+  <img src="fig_eq1.png" alt="Uncertainty equation" width="600"/>
+</figure>
+
+&macr;U
 
 
 <br>

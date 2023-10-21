@@ -36,8 +36,7 @@ ALmoMD facilitates this qualitative identification of uncertainty to sample next
 <figure style="text-align:center;">
   <img src="fig_eq1.png" alt="Uncertainty equation" width="600"/>
 </figure>
-
-&macr;U
+where &macr;U is $\bar{U}$
 
 
 <br>

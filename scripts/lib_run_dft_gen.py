@@ -44,7 +44,7 @@ def run_dft_gen(inputs):
     ## For active learning sampling,
     if inputs.calc_type == 'active' or inputs.calc_type == 'period':
         # Open the uncertainty output file
-        MD_index, MD_step_index, inputs.index, signal = check_progress(inputs)
+        MD_index, MD_step_index, inputs.index, signal = check_progress(inputs, 'gen')
     ## For random sampling,
     elif inputs.calc_type == 'random':
         # Open the uncertainty output file

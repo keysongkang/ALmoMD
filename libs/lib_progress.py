@@ -10,7 +10,7 @@ from libs.lib_train       import get_train_job
 from libs.lib_termination import get_testerror
 
 
-def check_progress(inputs):
+def check_progress(inputs, calc_step='cont'):
     """Function [check_progress]
     Check the progress of previous calculations.
     Prepare the recording files if necessary.
@@ -120,7 +120,7 @@ def check_progress(inputs):
                 del uncert_data
 
                 # If it reaches total number of the sampling data
-                if uncert_check >= inputs.ntotal and (MD_step_index >= inputs.nperiod if inputs.calc_type == 'period' else True):
+                if uncert_check >= inputs.ntotal and (MD_step_index >= inputs.nperiod if inputs.calc_type == 'period' or calc_step == 'gen' else True):
 
                     if os.path.exists('result.txt'):
                         result_msg = generate_msg(inputs.al_type)

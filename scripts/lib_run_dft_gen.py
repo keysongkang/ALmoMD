@@ -31,7 +31,7 @@ def run_dft_gen(inputs):
     ##!! We need to check whether this one is needed or not.
     # Get total_index to resume the MLMD calculation
     if inputs.rank == 0:
-        inputs.index = check_index()
+        inputs.index = check_index(inputs, 'gen')
     inputs.index = inputs.comm.bcast(inputs.index, root=0)
 
     # mpi_print(f'[gen]\tLoad trained models: {inputs.temperature}K-{inputs.pressure}bar_{inputs.index}', inputs.rank)

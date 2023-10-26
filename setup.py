@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='ALmoMD',
-    version='0.1.0',
+    version='0.1.1',
     author='Kisung Kang',
     description='Active-learning machine-operated molecular dynamics (ALmoMD) is a Python code package designed for the effective training of machine learned interatomic potential (MLIP) through active learning based on uncertainty evaluation. It also facilitates the implementation of molecular dynamics (MD) using trained MLIPs with uncertainty evaluation.',
     packages=find_packages(),

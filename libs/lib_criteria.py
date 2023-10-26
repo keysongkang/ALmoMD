@@ -259,7 +259,7 @@ def get_criteria(
     return criteria
 
 
-def get_result(inputs):
+def get_result(inputs, get_type):
     """Function [get_result]
     Get average and standard deviation of absolute and relative undertainty
     of energies and forces and also those of total energy for all steps
@@ -276,9 +276,14 @@ def get_result(inputs):
         Initialize MD steps to get averaged uncertainties and energies
     """
 
+    if get_type == 'progress':
+        get_index = inputs.index-1
+    else:
+        get_index = inputs.index
+
     # Read all uncertainty results
     uncert_data = pd.read_csv(
-        f'UNCERT/uncertainty-{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}.txt',
+        f'UNCERT/uncertainty-{inputs.temperature}K-{inputs.pressure}bar_{get_index}.txt',
         index_col=False, delimiter='\t'
         )
 

@@ -91,7 +91,18 @@ def check_progress(inputs, calc_step='cont'):
             if get_criteria_index == 0:
                 # Get the test errors using data-test.npz
                 get_testerror(inputs)
-    
+    else:
+        result_data = \
+        pd.read_csv('result.txt', index_col=False, delimiter='\t')
+        get_criteria_index = np.array(result_data.loc[:,'Iteration'])[-1]
+        if inputs.index == (get_criteria_index if calc_step == 'gen' else get_criteria_index + 1):
+            get_testerror(inputs)
+        result_msg = generate_msg(inputs.al_type)
+        get_criteria_index = result_data.loc[:,result_msg[-14:]].isnull().values.any();
+        if get_criteria_index:
+            # Get the test errors using data-test.npz
+            get_result(inputs, 'progress')
+
     # Go through the while loop until a breaking command
     while True:
         # Uncertainty file
@@ -99,10 +110,12 @@ def check_progress(inputs, calc_step='cont'):
 
         # Check the existence of uncertainty file
         if os.path.exists(f'./{uncert_file}'):
+            mpi_print(f'\t[prog]\tFound {uncert_file}', inputs.rank)
             uncert_data = pd.read_csv(uncert_file,\
                                       index_col=False, delimiter='\t')
 
             if len(uncert_data) == 0: # If it is empty,
+                mpi_print(f'\t[prog]\t{uncert_file} is empty. So, create it.', inputs.rank)
                 if inputs.rank == 0:
                     check_mkdir('UNCERT')
                     trajfile = open(uncert_file, 'w')
@@ -114,6 +127,7 @@ def check_progress(inputs, calc_step='cont'):
                     trajfile.close()
                 break
             else: # If it is not empty,
+                mpi_print(f'\t[prog]\tRead {uncert_file}', inputs.rank)
                 # Check the last entry in the 'Couting' column
                 uncert_check = np.array(uncert_data.loc[:,'Counting'])[-1]
                 MD_step_index = len(uncert_data.loc[:, 'Counting'])
@@ -122,6 +136,7 @@ def check_progress(inputs, calc_step='cont'):
                 # If it reaches total number of the sampling data
                 if uncert_check >= inputs.ntotal and (MD_step_index >= inputs.nperiod if inputs.calc_type == 'period' or calc_step == 'gen' else True):
 
+                    mpi_print(f'\t[prog]\tThe calculation of {uncert_file} is done', inputs.rank)
                     if os.path.exists('result.txt'):
                         result_msg = generate_msg(inputs.al_type)
 
@@ -129,15 +144,20 @@ def check_progress(inputs, calc_step='cont'):
                         pd.read_csv('result.txt', index_col=False, delimiter='\t')
                         get_criteria_index = result_data.loc[:,result_msg[-14:]].isnull().values.any();
 
+                    mpi_print(f'\t[prog]\tWrite uncertainty results of {uncert_file} into result.txt', inputs.rank)
                     # Print the test errors
                     if get_criteria_index:
                         # Get the test errors using data-test.npz
-                        get_result(inputs)
+                        get_result(inputs, 'progress')
                     
                     # Check the FHI-vibes calculations
                     aims_check = ['Have a nice day.' in open(f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}/{jndex}/aims/calculations/aims.out').read()\
                                    if os.path.exists(f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}/{jndex}/aims/calculations/aims.out') else False for jndex in range(inputs.ntotal)];
-                    
+                    if False in aims_check:
+                        mpi_print(f'\t[prog]\tDFT calculations have not been finished', inputs.rank)
+                    else:
+                        mpi_print(f'\t[prog]\tDFT calculations are done', inputs.rank)
+
                     if all(aims_check) == True: # If all FHI-vibes calcs are finished,
                         gen_check = [
                         os.path.exists(f'MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}/deployed-model_{index_nmodel}_{index_nstep}.pth')
@@ -158,9 +178,11 @@ def check_progress(inputs, calc_step='cont'):
                         signal = 1
                         break
                 else: # Otherwise, get the index of MLMD_main
+                    mpi_print(f'\t[prog]\tThe calculation of {uncert_file} has not been finished', inputs.rank)
                     MD_index = int(uncert_check)
                     break
         else: # If there is no uncertainty file, create it
+            mpi_print(f'\t[prog]\tCannot found {uncert_file}', inputs.rank)
             if inputs.rank == 0:
                 check_mkdir('UNCERT')
                 trajfile = open(uncert_file, 'w')
@@ -281,7 +303,7 @@ def check_progress_rand(inputs, calc_step='cont'):
 
 
 
-def check_index():
+def check_index(inputs, calc_step='cont'):
     """Function [check_index]
     Check the progress of previous calculations
     and return the index of AL interactive steps.
@@ -297,17 +319,53 @@ def check_index():
         The index of AL interactive steps from recorded file
     """
 
-    # Open 'result.txt'
-    if os.path.exists('result.txt'):
-        result_data = \
-        pd.read_csv('result.txt', index_col=False, delimiter='\t')
-        result_index = len(result_data.loc[:,'Iteration']); del result_data
-        if result_index > 0:
-            total_index = result_index - 1
-        else:
-            total_index = result_index
-    else:
-        total_index = 0
-  
+    # Check the list of directories for trained models
+    dir_path = 'MODEL'
+    contents = os.listdir(dir_path)
+
+    total_index = 0 # Initialize with a low value
+    for item in contents:
+        if os.path.isdir(os.path.join(dir_path, item)):
+            parts = item.split('_')
+            if len(parts) >= 2:
+                try:
+                    number = int(parts[1])
+                    total_index = max(total_index, number)
+                except ValueError:
+                    pass
+
+    if calc_step == 'gen':
+        total_index += 1
+
     return total_index
-    
+
+# def check_index():
+#     """Function [check_index]
+#     Check the progress of previous calculations
+#     and return the index of AL interactive steps.
+
+#     Parameters:
+
+#     index: int
+#         The index of AL interactive steps
+
+#     Returns:
+
+#     index: int
+#         The index of AL interactive steps from recorded file
+#     """
+
+#     # Open 'result.txt'
+#     if os.path.exists('result.txt'):
+#         result_data = \
+#         pd.read_csv('result.txt', index_col=False, delimiter='\t')
+#         result_index = len(result_data.loc[:,'Iteration']); del result_data
+#         if result_index > 0:
+#             total_index = result_index - 1
+#         else:
+#             total_index = result_index
+#     else:
+#         total_index = 0
+  
+#     return total_index
+#     

@@ -19,7 +19,7 @@ class inputs:
         """
 
         ### Version
-        self.version = '0.1.0'
+        self.version = '0.1.1'
 
         ### Default setting for inputs
         ##[Active learning types]

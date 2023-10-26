@@ -39,7 +39,7 @@ def run_dft_cont(inputs):
     # Get total_index to resume the MLMD calculation
     if inputs.rank == 0:
         # Open the result.txt file
-        inputs.index = check_index()
+        inputs.index = check_index(inputs, 'cont')
     inputs.index = inputs.comm.bcast(inputs.index, root=0)
     inputs.comm.Barrier()
 
@@ -111,7 +111,7 @@ def run_dft_cont(inputs):
     if inputs.calc_type == 'active' or inputs.calc_type == 'period':
         mpi_print(f'[cont]\tRecord the results: result.txt', inputs.rank)
         # Record uncertainty results at the current step
-        get_result(inputs)
+        get_result(inputs, 'cont')
     inputs.comm.Barrier()
 
     mpi_print(f'[cont]\tSubmit the DFT calculations for sampled configurations', inputs.rank)

@@ -18,7 +18,7 @@ from libs.lib_train import get_train_job, execute_train_job
 from libs.lib_dft import run_DFT
 from libs.lib_progress    import check_progress, check_progress_period, check_progress_rand, check_index
 from libs.lib_mainloop    import MLMD_initial, MLMD_main, MLMD_main_period, MLMD_random
-from libs.lib_criteria    import get_result, get_criteria
+from libs.lib_criteria    import get_result
 from libs.lib_termination import termination
 
 import pandas as pd

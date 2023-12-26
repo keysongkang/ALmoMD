@@ -9,6 +9,7 @@ from ase import Atoms
 from ase.build import make_supercell
 from ase.data   import atomic_numbers
 from ase.io import read as atoms_read
+from ase.io.trajectory import Trajectory
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
 from libs.lib_md import runMD
@@ -39,6 +40,16 @@ def run_dft_runmd(inputs):
         # Make it supercell
         struc = make_supercell(struc_init, inputs.supercell_init)
         MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
+    elif os.path.exists('start.traj'):
+        mpi_print(f'[runMD]\tFound the start.traj file. MD starts from this.', inputs.rank)
+        # Read the ground state structure with the primitive cell
+        struc_init = Trajectory('start.traj')[-1]
+        struc = make_supercell(struc_init, inputs.supercell_init)
+        del struc_init
+        try:
+            struc.get_velocities()
+        except AttributeError:
+            MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
     else:
         mpi_print(f'[runMD]\tMD starts from the last entry of the trajectory.son file', inputs.rank)
         # Read all structural configurations in SON file
@@ -102,10 +113,41 @@ def run_dft_runmd(inputs):
     inputs.comm.Barrier()
 
     mpi_print(f'[runMD]\tInitiate MD with trained models', inputs.rank)
-    runMD(
-        inputs, struc, inputs.steps,
-        inputs.logfile, inputs.trajectory, calc_MLIP,
-        signal_uncert=True, signal_append=True
-        )
+
+    if inputs.MD_search == 'restart':
+        sigma = 0.0
+        stepss = 300
+        while sigma < 1.0:
+            mpi_print(f'[runMD]\tFound the start.traj file. MD starts from this.', inputs.rank)
+            # Read the ground state structure with the primitive cell
+            struc_init = Trajectory('start.traj')[0]
+            struc = make_supercell(struc_init, inputs.supercell_init)
+            try:
+                struc.get_velocities()
+            except AttributeError:
+                MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
+
+            runMD(
+                inputs, struc, stepss,
+                inputs.logfile, inputs.trajectory, calc_MLIP,
+                signal_uncert=inputs.signal_uncert, signal_append=False
+                )
+
+            import pandas as pd
+            data = pd.read_csv('md.log', sep='\t')
+            sigma = np.array(data['S_average'])[-1]
+
+    else:
+        runMD(
+            inputs, struc, inputs.steps,
+            inputs.logfile, inputs.trajectory, calc_MLIP,
+            signal_uncert=inputs.signal_uncert, signal_append=True
+            )
+
+    # runMD(
+    #     inputs, struc, inputs.steps,
+    #     inputs.logfile, inputs.trajectory, calc_MLIP,
+    #     signal_uncert=True, signal_append=True
+    #     )
 
     mpi_print(f'[runMD]\t!! Finish MD calculations', inputs.rank)

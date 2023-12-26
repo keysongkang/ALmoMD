@@ -5,6 +5,8 @@ import pandas as pd
 
 from libs.lib_util import mpi_print
 from libs.lib_nvtlangevin import NVTLangevin
+from libs.lib_nvtlangevin_meta import NVTLangevin_meta
+from libs.lib_nptisoiso import NPTisoiso
 
 def runMD(
     inputs, struc, steps,
@@ -63,6 +65,50 @@ def runMD(
             timestep = inputs.timestep * units.fs,
             temperature = inputs.temperature * units.kB,
             friction = inputs.friction,
+            steps = steps,
+            loginterval = inputs.loginterval,
+            nstep = inputs.nstep,
+            nmodel = inputs.nmodel,
+            calculator = calculator,
+            E_ref = 0.0,
+            al_type = inputs.al_type,
+            trajectory = trajectory,
+            harmonic_F = inputs.harmonic_F,
+            anharmonic_F = inputs.anharmonic_F,
+            logfile = logfile,
+            signal_uncert = signal_uncert,
+            signal_append = signal_append
+        )
+    elif inputs.ensemble == 'NVTLangevin_meta':
+        NVTLangevin_meta(
+            struc = struc,
+            timestep = inputs.timestep * units.fs,
+            temperature = inputs.temperature * units.kB,
+            friction = inputs.friction,
+            steps = steps,
+            loginterval = inputs.loginterval,
+            nstep = inputs.nstep,
+            nmodel = inputs.nmodel,
+            calculator = calculator,
+            E_ref = 0.0,
+            al_type = inputs.al_type,
+            trajectory = trajectory,
+            meta_Ediff = inputs.meta_Ediff,
+            harmonic_F = inputs.harmonic_F,
+            anharmonic_F = inputs.anharmonic_F,
+            logfile = logfile,
+            signal_uncert = signal_uncert,
+            signal_append = signal_append
+        )
+    elif inputs.ensemble == 'NPTisoiso':
+        NPTisoiso(
+            struc = struc,
+            timestep = inputs.timestep * units.fs,
+            temperature = inputs.temperature * units.kB,
+            pressure = inputs.pressure * units.GPa,
+            ttime = inputs.ttime * units.fs,
+            pfactor = inputs.pfactor,
+            mask = inputs.mask,
             steps = steps,
             loginterval = inputs.loginterval,
             nstep = inputs.nstep,

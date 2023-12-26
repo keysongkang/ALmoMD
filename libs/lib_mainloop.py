@@ -112,7 +112,16 @@ def MLMD_main(
             # Check the existence of the file
             if os.path.exists(uncert_file):
                 # Start from the configuration with the largest real error
-                struc_step = traj_fromRealE(inputs.temperature, inputs.pressure, E_ref, inputs.E_gs, inputs.uncert_type, inputs.al_type, inputs.ntotal, inputs.index)
+                if inputs.output_format == 'nequip':
+                    traj_temp     = f'TRAJ/traj-{condition}_{inputs.index}.traj'
+                    mpi_print(f'[MLMD] Read a configuration from traj file', inputs.rank)
+                    # Read the trajectory from previous trajectory file
+                    traj_previous = Trajectory(traj_temp, properties=\
+                                               ['forces', 'velocities', 'temperature'])
+                    # Resume the MD calculation from last configuration in the trajectory file
+                    struc_step    = traj_previous[-1]; del traj_previous;
+                else:
+                    struc_step = traj_fromRealE(inputs.temperature, inputs.pressure, E_ref, inputs.E_gs, inputs.uncert_type, inputs.al_type, inputs.ntotal, inputs.index)
                 
                 # Open the uncertainty file for current step
                 if inputs.rank == 0:
@@ -138,10 +147,21 @@ def MLMD_main(
         elif os.path.exists('start.in'):
             mpi_print(f'[MLMD] Read a configuration from start.in', inputs.rank)
             # Read the ground state structure with the primitive cell
-            struc_init = atoms_read(inputs.MD_input, format='aims')
+            struc_init = atoms_read('start.in', format='aims')
             # Make it supercell
             struc_step = make_supercell(struc_init, inputs.supercell_init)
-            MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
+            MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
+
+        elif os.path.exists('start.traj'):
+            mpi_print(f'[runMD]\tFound the start.traj file. MD starts from this.', inputs.rank)
+            # Read the ground state structure with the primitive cell
+            struc_init = Trajectory('start.traj')[-1]
+            struc_step = make_supercell(struc_init, inputs.supercell_init)
+            del struc_init
+            try:
+                struc_step.get_velocities()
+            except AttributeError:
+                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
 
         else:
             mpi_print(f'[MLMD] Read a configuration from trajectory_train.son', inputs.rank)
@@ -169,9 +189,31 @@ def MLMD_main(
         # Resume the MD calculatio nfrom last configuration
         struc_step = inputs.comm.bcast(struc_step, root=0)
 
+    if os.path.exists('start.in') and inputs.ensemble == 'NVTLangevin_meta' and MD_index == 0:
+        mpi_print(f'[MLMD] Read a configuration from start.in', inputs.rank)
+        # Read the ground state structure with the primitive cell
+        struc_init = atoms_read('start.in', format='aims')
+        # Make it supercell
+        struc_step = make_supercell(struc_init, inputs.supercell_init)
+        MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature*1.5, force_temp=True)
+
     # Initiate the MD run starting from MD_index until reaching ntotal
     # MD_index also indicates the number of sampled configurations
     while (MD_index < inputs.ntotal) or (inputs.calc_type == 'period' and MD_step_index < inputs.nperiod):
+
+        if inputs.meta_restart == True:
+            if os.path.exists('start.in') and inputs.ensemble == 'NVTLangevin_meta' and MD_index != 0:
+                uncert_file = f'UNCERT/uncertainty-{condition}_{inputs.index}.txt'
+                uncert_data = pd.read_csv(uncert_file, index_col=False, delimiter='\t')
+
+                if np.array(uncert_data.loc[:,'S_average'])[-1] > inputs.meta_r_crtria:
+                    mpi_print(f'[MLMD] Read a configuration from start.in', inputs.rank)
+                    # Read the ground state structure with the primitive cell
+                    struc_init = atoms_read('start.in', format='aims')
+                    # Make it supercell
+                    struc_step = make_supercell(struc_init, inputs.supercell_init)
+                    MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature*1.5, force_temp=True)
+
         accept = '--         '
 
         # MD information for temporary steps
@@ -207,7 +249,7 @@ def MLMD_main(
             MD_step_index += 1
             # Acceptance check with criteria
             ##!! Epot_step should be rechecked.
-            if random.random() < criteria and Epot_step > 0.1:
+            if random.random() < criteria: # and Epot_step > 0.1:
                 accept = 'Accepted'
                 MD_index += 1
                 write_traj.write(atoms=struc_step)
@@ -385,7 +427,7 @@ def MLMD_random(
             traj_ther = traj[-1]
             # Convert 'trajectory.son' format to ASE atoms
             struc_step = Atoms(
-                [atomic_numbers[item[1]] for item in traj[-1]['atoms']['symbols'] for inputs.index in range(item[0])],
+                [atomic_numbers[item[1]] for item in traj[-1]['atoms']['symbols'] for jdx in range(item[0])],
                 positions = traj[-1]['atoms']['positions'],
                 cell = traj[-1]['atoms']['cell'],
                 pbc = traj[-1]['atoms']['pbc'],

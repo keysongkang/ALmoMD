@@ -45,9 +45,9 @@ def run_dft_init(inputs):
 
     # Submit a job-dependence to execute run_dft_cont after the NequIP training
     # For 'converge' setting, we don't need to submit it.
-    if not inputs.calc_type == 'converge':
-        if inputs.rank == 0:
-            job_dependency('cont', inputs.nmodel)
+    # if not inputs.calc_type == 'converge':
+    #     if inputs.rank == 0:
+    #         job_dependency('cont', inputs.nmodel)
 
     inputs.comm.Barrier()
     mpi_print(f'[init]\t!! Finish the initialization', inputs.rank)

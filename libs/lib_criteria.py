@@ -219,7 +219,12 @@ def get_criteria(
         index_col=False, delimiter='\t'
         )
 
-    # Get their average and standard deviation
+    # if ensemble == 'NVTLangevin_meta':
+    #     # Get their average and standard deviation
+    #     criteria.Epotential_avg = result_data.loc[:, 'E_potent_avg_i'].to_numpy()[0]
+    #     criteria.Epotential_std = result_data.loc[:, 'E_potent_std_i'].to_numpy()[0]
+    # else:
+    #     # Get their average and standard deviation
     criteria.Epotential_avg = result_data.loc[:, 'E_potent_avg_i'].to_numpy()[-1]
     criteria.Epotential_std = result_data.loc[:, 'E_potent_std_i'].to_numpy()[-1]
     
@@ -464,21 +469,24 @@ def get_criteria_prob(inputs, Epot_step, uncerts, criteria):
 
     beta = inputs.kB * inputs.temperature
 
-    # Caculate the canonical ensemble propbability using the total energy
-    Prob = np.exp((-1) * (Epot_step / inputs.NumAtoms) / beta)
-    Prob_upper_limit = np.exp(
-        (-1) * ((criteria.Epotential_avg + criteria.Epotential_std) / inputs.NumAtoms) / beta)
-    Prob_lower_limit = np.exp(
-        (-1) * ((criteria.Epotential_avg + criteria.Epotential_std*1.8) / inputs.NumAtoms) / beta)
+    if inputs.ensemble == 'NVTLangevin_meta' or inputs.ensemble == 'NPTisoiso' :
+        criteria_Prob = 1
+    else:
+        # Caculate the canonical ensemble propbability using the total energy
+        Prob = np.exp((-1) * (Epot_step / inputs.NumAtoms) / beta)
+        Prob_upper_limit = np.exp(
+            (-1) * ((criteria.Epotential_avg + criteria.Epotential_std) / inputs.NumAtoms) / beta)
+        Prob_lower_limit = np.exp(
+            (-1) * ((criteria.Epotential_avg + criteria.Epotential_std*1.8) / inputs.NumAtoms) / beta)
 
-    # Get relative probability of the canomical ensemble
-    criteria_Prob_inter = Prob / Prob_upper_limit;
-    criteria_Prob = criteria_Prob_inter ** (
-        np.log(0.2) / np.log(Prob_lower_limit / Prob_upper_limit)
-        )
-    # It can go beyond 1, adjust the value.
-    if criteria_Prob > 1: criteria_Prob = 1;
-    sys.stdout.flush()
+        # Get relative probability of the canomical ensemble
+        criteria_Prob_inter = Prob / Prob_upper_limit;
+        criteria_Prob = criteria_Prob_inter ** (
+            np.log(0.2) / np.log(Prob_lower_limit / Prob_upper_limit)
+            )
+        # It can go beyond 1, adjust the value.
+        if criteria_Prob > 1: criteria_Prob = 1;
+        sys.stdout.flush()
 
     # Combine three parts of probabilities
     if inputs.al_type == 'EorFmax':

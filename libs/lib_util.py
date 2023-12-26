@@ -361,14 +361,14 @@ def read_input_file(file_path):
                 value = value.strip()
 
                 # Perform type conversions for specific variables
-                if name in ['supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F']:
+                if name in ['supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart', 'signal_uncert']:
                     value = eval(value)
-                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad']:
+                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad', 'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep']:
                     value = float(value)
                 elif name in [
                 'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature', 'taut',
                 'pressure', 'taup', 'steps_ther', 'steps_init', 'steps_random',
-                'timestep', 'cutoff_ther', 'lmax', 'nfeatures', 'random_index',
+                'cutoff_ther', 'lmax', 'nfeatures', 'random_index',
                 'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc', 'printinterval'
                 ]:
                     value = int(value)

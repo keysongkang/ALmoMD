@@ -102,8 +102,17 @@ class inputs:
         #     The desired temperature in units of Kelvin (K)
         self.temperature = 2000
         # pressure: float
-        #     The desired pressure in units of eV/Angstrom**3
+        #     The desired pressure in units of eV/Angstrom**3 (atomic unit)
         self.pressure = 0
+
+        self.ttime = 500   # [fs]
+        self.pfactor = None
+
+        self.signal_uncert = True
+
+        self.meta_Ediff = 0.0
+        self.meta_restart = False
+        self.meta_r_crtria = 100.0
 
         ##[runMD default inputs]
         # workpath: str
@@ -122,6 +131,8 @@ class inputs:
         #     Tensor shape of supercell for runMD calculations
         #     compared to primitive cell.
         self.supercell_init = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+
+        self.MD_search = 'continue'
 
         ##[NVTLangevin setting]
         # friction: float

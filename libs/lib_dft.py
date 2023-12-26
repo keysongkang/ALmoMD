@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from decimal import Decimal
 
-from libs.lib_util   import check_mkdir
+from libs.lib_util   import check_mkdir, single_print
 
 
 def run_DFT(inputs):
@@ -38,6 +38,21 @@ def run_DFT(inputs):
         properties='energy, forces'
         )
     
+    if inputs.output_format == 'nequip':
+        from nequip.ase import nequip_calculator
+        if inputs.rank == 0:
+            dply_model = f'deployed-model_0_0.pth'
+            if os.path.exists(f'REFER/{dply_model}'):
+                single_print(f'\t\tFound the deployed model: {dply_model}')
+                refer_MLIP = nequip_calculator.NequIPCalculator.from_deployed_model(
+                    f'REFER/{dply_model}', device=inputs.device
+                    )
+        else:
+            # If there is no model, turn on the termination signal
+            single_print(f'\t\tCannot find the model: {dply_model}')
+            signal = 1
+            signal = inputs.comm.bcast(inputs.signal, root=inputs.rank)
+
     # Set the path to folders implementing DFT calculations
     calcpath = f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}'
     # Create these folders
@@ -59,22 +74,25 @@ def run_DFT(inputs):
     # Prepare an empty list for the calculation paths
     execute_cwd = []
 
-    if inputs.uncert_type == 'absolute':
-        uncert_piece = 'Abs'
-    elif inputs.uncert_type == 'relative':
-        uncert_piece = 'Rel'
+    if inputs.calc_type == 'random':
+        smapled_indices = random.sample(range(inputs.steps_random), inputs.ntotal)
+    else:
+        if inputs.uncert_type == 'absolute':
+            uncert_piece = 'Abs'
+        elif inputs.uncert_type == 'relative':
+            uncert_piece = 'Rel'
 
-    if inputs.al_type == 'energy':
-        al_piece = 'E'
-    elif inputs.al_type == 'force' or 'force_max':
-        al_piece = 'F'
-    elif inputs.al_type == 'sigma' or 'sigma_max':
-        al_piece = 'S'
+        if inputs.al_type == 'energy':
+            al_piece = 'E'
+        elif inputs.al_type == 'force' or 'force_max':
+            al_piece = 'F'
+        elif inputs.al_type == 'sigma' or 'sigma_max':
+            al_piece = 'S'
 
-    data = pd.read_csv(f'./../../UNCERT/uncertainty-{condition}_{inputs.index}.txt', sep='\t')
-    uncert_result = np.array(data[data['Acceptance'] == 'Accepted   ']['Uncert'+uncert_piece+'_'+al_piece])
-    sorted_indices = np.argsort(uncert_result)
-    smapled_indices = sorted_indices[inputs.ntotal*(-1):][::-1]
+        data = pd.read_csv(f'./../../UNCERT/uncertainty-{condition}_{inputs.index}.txt', sep='\t')
+        uncert_result = np.array(data[data['Acceptance'] == 'Accepted   ']['Uncert'+uncert_piece+'_'+al_piece])
+        sorted_indices = np.argsort(uncert_result)
+        smapled_indices = sorted_indices[inputs.ntotal*(-1):][::-1]
 
     # Go through all sampled structral configurations
     # Collect the calculations and deploy all inputs for FHI-vibes
@@ -86,24 +104,36 @@ def run_DFT(inputs):
             # Move to that folder
             os.chdir(f'{jndex}')
         
-            # Check if a previous calculation exists
-            if os.path.exists(f'aims/calculations/aims.out'):
-                # Check whether calculation is finished
-                if 'Have a nice day.' in open('aims/calculations/aims.out').read():
+            if inputs.output_format == 'nequip':
+                if inputs.rank == 0:
+                    from ase.io.trajectory import TrajectoryWriter
+                    write_geo = TrajectoryWriter('geometry.traj', mode='w')
+                    refer_atom = traj_DFT[jtem]
+                    refer_atom.calc = refer_MLIP
+                    refer_E = refer_atom.get_potential_energy()
+                    refer_F = refer_atom.get_forces()
+                    write_geo.write(refer_atom)
+                    write_geo.close()
                     os.chdir(calcpath_cwd)
+            else:
+                # Check if a previous calculation exists
+                if os.path.exists(f'aims/calculations/aims.out'):
+                    # Check whether calculation is finished
+                    if 'Have a nice day.' in open('aims/calculations/aims.out').read():
+                        os.chdir(calcpath_cwd)
+                    else:
+                        # Collect the current calculation path
+                        execute_cwd.append(os.getcwd())
+                        # Move back to 'calc' folder
+                        os.chdir(calcpath_cwd)
                 else:
+                    # Get FHI-aims inputs from the template folder
+                    aims_write('geometry.in', traj_DFT[jtem])
+                    subprocess.run(['cp', '../../../DFT_INPUTS/aims.in', '.'])
                     # Collect the current calculation path
                     execute_cwd.append(os.getcwd())
                     # Move back to 'calc' folder
                     os.chdir(calcpath_cwd)
-            else:
-                # Get FHI-aims inputs from the template folder
-                aims_write('geometry.in', traj_DFT[jtem])
-                subprocess.run(['cp', '../../../DFT_INPUTS/aims.in', '.'])
-                # Collect the current calculation path
-                execute_cwd.append(os.getcwd())
-                # Move back to 'calc' folder
-                os.chdir(calcpath_cwd)
     
     # Create job scripts and submit them
     for index_calc in range(inputs.num_calc):

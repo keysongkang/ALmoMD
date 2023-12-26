@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 
 from libs.lib_util        import check_mkdir, mpi_print, single_print, generate_msg
-from libs.lib_criteria    import get_result, get_criteria
+from libs.lib_criteria    import get_result
 from libs.lib_train       import get_train_job
 from libs.lib_termination import get_testerror
 
@@ -146,9 +146,9 @@ def check_progress(inputs, calc_step='cont'):
 
                     mpi_print(f'\t[prog]\tWrite uncertainty results of {uncert_file} into result.txt', inputs.rank)
                     # Print the test errors
-                    if get_criteria_index:
+                    # if get_criteria_index:
                         # Get the test errors using data-test.npz
-                        get_result(inputs, 'progress')
+                        # get_result(inputs, 'progress')
                     
                     # Check the FHI-vibes calculations
                     aims_check = ['Have a nice day.' in open(f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}/{jndex}/aims/calculations/aims.out').read()\
@@ -247,9 +247,6 @@ def check_progress_rand(inputs, calc_step='cont'):
     # Initialization
     MD_index = 0
     signal = 0
-
-    if calc_step == 'gen':
-        inputs.index += 1
     
     if inputs.index == 0: # When calculation is just initiated
         # When there is no 'result.txt'
@@ -334,7 +331,7 @@ def check_index(inputs, calc_step='cont'):
                 except ValueError:
                     pass
 
-    if calc_step == 'gen':
+    if calc_step == 'gen' or calc_step == 'dft_rand':
         total_index += 1
 
     return total_index

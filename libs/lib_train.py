@@ -98,7 +98,7 @@ def get_train_job(
                         writing_input.write(job_item)
 
                 # Submit the job scripts
-                subprocess.run(['sbatch', job_script])
+                subprocess.run([inputs.job_command, job_script])
                 os.chdir(currentpath)
 
     # Temination check 
@@ -173,7 +173,7 @@ def nequip_train_job(
         + f'workdir: train\n'
         + f'dataset_file_name: ./data-train_{index_nstep}.npz\n'
         + f'n_train: {ntrain}\n'
-        + f'n_val: {inputs.nval}\n'
+        + f'n_val: {nval}\n'
         + f'r_max: {inputs.rmax}\n'
         + f'l_max: {inputs.lmax}\n'
         + f'num_features: {inputs.nfeatures}\n\n'
@@ -261,5 +261,5 @@ def execute_train_job(
                         writing_input.write(job_item)
 
             # Submit the job scripts
-            subprocess.run([inputs.job_command, job_script]);
+            # subprocess.run([inputs.job_command, job_script]);
             os.chdir(currentpath)

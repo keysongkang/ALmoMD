@@ -91,9 +91,9 @@ def run_dft_gen(inputs):
     inputs.comm.Barrier()
 
     # Submit a job-dependence to execute run_dft_cont after the NequIP training
-    mpi_print(f'[gen]\tSubmit a job for cont with dependency', inputs.rank)
-    if inputs.rank == 0:
-        job_dependency('cont', inputs.num_mdl_calc)
-    inputs.comm.Barrier()
+    # mpi_print(f'[gen]\tSubmit a job for cont with dependency', inputs.rank)
+    # if inputs.rank == 0:
+    #     job_dependency('cont', inputs.num_mdl_calc)
+    # inputs.comm.Barrier()
 
     mpi_print(f'[gen]\t!! Finish the training data generation: Iteration {inputs.index}', inputs.rank)

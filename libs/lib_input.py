@@ -133,6 +133,7 @@ class inputs:
         self.supercell_init = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
         self.MD_search = 'continue'
+        self.cell_factor = 1.0
 
         ##[NVTLangevin setting]
         # friction: float

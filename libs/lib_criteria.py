@@ -469,7 +469,7 @@ def get_criteria_prob(inputs, Epot_step, uncerts, criteria):
 
     beta = inputs.kB * inputs.temperature
 
-    if inputs.ensemble == 'NVTLangevin_meta' or inputs.ensemble == 'NPTisoiso' :
+    if inputs.ensemble == 'NVTLangevin_meta' or inputs.ensemble == 'NVTLangevin_bias' or inputs.ensemble == 'NPTisoiso' :
         criteria_Prob = 1
     else:
         # Caculate the canonical ensemble propbability using the total energy

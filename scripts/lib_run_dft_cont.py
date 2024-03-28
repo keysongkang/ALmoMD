@@ -7,7 +7,7 @@ from libs.lib_util  import output_init, mpi_print, check_mkdir
 from libs.lib_train import get_train_job
 from libs.lib_load_model  import load_model
 from libs.lib_criteria    import get_result
-from libs.lib_mainloop    import MLMD_main, MLMD_random
+from libs.lib_mainloop_new    import MLMD_main, MLMD_random
 from libs.lib_progress    import check_progress, check_progress_rand, check_index
 from libs.lib_termination     import termination
 

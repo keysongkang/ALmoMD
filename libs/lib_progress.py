@@ -119,11 +119,13 @@ def check_progress(inputs, calc_step='cont'):
                 if inputs.rank == 0:
                     check_mkdir('UNCERT')
                     trajfile = open(uncert_file, 'w')
-                    trajfile.write(
-                        'Temperature[K]\tUncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'
-                        +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'
-                        +'\tCounting\tProbability\tAcceptance\n'
-                    )
+                    title = 'Temperature[K]\t'
+                    if inputs.ensemble[:3] == 'NPT':
+                        title += 'Pressure[GPa]\t'
+                    title += 'UncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'\
+                            +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'\
+                            +'\tCounting\tProbability\tAcceptance\n'
+                    trajfile.write(title)
                     trajfile.close()
                 break
             else: # If it is not empty,
@@ -186,11 +188,13 @@ def check_progress(inputs, calc_step='cont'):
             if inputs.rank == 0:
                 check_mkdir('UNCERT')
                 trajfile = open(uncert_file, 'w')
-                trajfile.write(
-                    'Temperature[K]\tUncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'
-                    +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'
-                    +'\tCounting\tProbability\tAcceptance\n'
-                )
+                title = 'Temperature[K]\t'
+                if inputs.ensemble[:3] == 'NPT':
+                    title += 'Pressure[GPa]\t'
+                title += 'UncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'\
+                        +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'\
+                        +'\tCounting\tProbability\tAcceptance\n'
+                trajfile.write(title)
                 trajfile.close()
             break
             

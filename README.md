@@ -1,7 +1,7 @@
 # Active-Learning Machine Operated Molecular Dynamics (ALmoMD)
 <!-- <br>
 <div style="text-align:center">
-	<img src="docs/logo.png" alt="ALmoMD logo" width="800"/>
+    <img src="docs/logo.png" alt="ALmoMD logo" width="800"/>
 </div>
 <br> -->
 

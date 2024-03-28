@@ -5,21 +5,25 @@ from ase.io.cif        import write_cif
 
 import time
 import os
+import random
 import numpy as np
+import pandas as pd
 from mpi4py import MPI
 from decimal import Decimal
+from ase.build import make_supercell
+from ase.io import read as atoms_read
+from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
 from libs.lib_util    import single_print, mpi_print
-from libs.lib_MD_util import get_MDinfo_temp, get_masses
-from libs.lib_criteria import eval_uncert, uncert_strconvter, get_criteria
+from libs.lib_MD_util import get_forces, get_MDinfo_temp, get_masses
+from libs.lib_criteria import eval_uncert, uncert_strconvter, get_criteria, get_criteria_prob
 
 import torch
 torch.set_default_dtype(torch.float64)
 
-def NVTLangevin_meta(
-    struc, timestep, temperature, friction, steps, loginterval,
-    nstep, nmodel, calculator, E_ref, al_type, trajectory, meta_Ediff, harmonic_F=False,
-    anharmonic_F=False, logfile=None, signal_uncert=False, signal_append=True, fix_com=True,
+def cont_NVTLangevin_meta(
+    inputs, struc, timestep, temperature, calculator, E_ref,
+    MD_index, MD_step_index, signal_uncert=False, signal_append=True, fix_com=True,
 ):
     """Function [NVTLangevin]
     Evalulate the absolute and relative uncertainties of
@@ -73,21 +77,22 @@ def NVTLangevin_meta(
     rank = comm.Get_rank()
 
     # Initialization of index
-    Langevin_idx = 0
+    condition = f'{inputs.temperature}K-{inputs.pressure}bar'
+
+    trajectory = f'TEMPORARY/temp-{condition}_{inputs.index}.traj'
+    logfile = f'TEMPORARY/temp-{condition}_{inputs.index}.log'
+
+    # Extract the criteria information from the initialization step
+    criteria_collected = get_criteria(inputs.temperature, inputs.pressure, inputs.index, inputs.steps_init, inputs.al_type)
+
+    if os.path.exists(trajectory):
+        traj_temp = Trajectory(trajectory)
+        struc = traj_temp[-1]
+        MD_step_index = len(traj_temp)
+        del traj_temp
 
     # mpi_print(f'Step 1: {time.time()-time_init}', rank)
-    if signal_append and os.path.exists(trajectory) and os.path.getsize(trajectory) != 0: # If appending and the file exists,
-        # Read the previous trajectory
-        traj_old = Trajectory(
-            trajectory,
-            properties=['forces', 'velocities', 'temperature']
-            )
-        # Get the index
-        Langevin_idx = len(traj_old) * loginterval
-        # Get the last structure
-        struc = traj_old[-1]
-        file_traj = TrajectoryWriter(filename=trajectory, mode='a')
-    else: # New start
+    if MD_step_index == 0: # If appending and the file exists,
         file_traj = TrajectoryWriter(filename=trajectory, mode='w')
         # Add new configuration to the trajectory file
         if rank == 0:
@@ -112,14 +117,14 @@ def NVTLangevin_meta(
         
             # Get MD information at the current step
             info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-                struc, nstep, nmodel, calculator, harmonic_F
+                struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F
                 )
 
             if signal_uncert:
                 # Get absolute and relative uncertainties of energy and force
                 # and also total energy
                 uncerts, Epot_step, S_step =\
-                eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
+                eval_uncert(struc, inputs.nstep, inputs.nmodel, E_ref, calculator, inputs.al_type, inputs.harmonic_F)
 
             # Log MD information at the current step in the log file
             if rank == 0:
@@ -145,43 +150,58 @@ def NVTLangevin_meta(
                 else:
                     file_log.write('\n')
                 file_log.close()
+    else:
+        file_traj = TrajectoryWriter(filename=trajectory, mode='a')
 
-    # Put random 0 and 300
-    criteria = get_criteria(temperature, 0, 0, 300, al_type)
-
-    # mpi_print(f'Step 2: {time.time()-time_init}', rank)
+    write_traj = TrajectoryWriter(
+        filename=f'TRAJ/traj-{condition}_{inputs.index+1}.traj',
+        mode='a'
+        )
 
     # Get averaged force from trained models
     # try:
     #     forces = struc.get_forces()
     # except Exception as e:
-    #     forces = get_forces_meta(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, meta_Ediff)
-
-    forces = get_forces_meta(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, meta_Ediff)
+    forces = get_forces_meta(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.meta_Ediff)
 
     # mpi_print(f'Step 3: {time.time()-time_init}', rank)
     # Go trough steps until the requested number of steps
     # If appending, it starts from Langevin_idx. Otherwise, Langevin_idx = 0
-    for idx in range(Langevin_idx, steps):
+    while (MD_index < inputs.ntotal) or (inputs.calc_type == 'period' and MD_step_index < inputs.nperiod*inputs.loginterval):
+
+        if inputs.meta_restart == True:
+            if os.path.exists('start.in') and inputs.ensemble == 'NVTLangevin_meta' and MD_index != 0:
+                uncert_file = f'UNCERT/uncertainty-{condition}_{inputs.index}.txt'
+                uncert_data = pd.read_csv(uncert_file, index_col=False, delimiter='\t')
+
+                if np.array(uncert_data.loc[:,'S_average'])[-1] > inputs.meta_r_crtria:
+                    mpi_print(f'[MLMD] Read a configuration from start.in', inputs.rank)
+                    # Read the ground state structure with the primitive cell
+                    struc_init = atoms_read('start.in', format='aims')
+                    # Make it supercell
+                    struc = make_supercell(struc_init, inputs.supercell_init)
+                    MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature*1.5, force_temp=True)
+
+        accept = '--         '
 
         # mpi_print(f'Step 4: {time.time()-time_init}', rank)
         # Get essential properties
         natoms = len(struc)
         masses = get_masses(struc.get_masses(), natoms)
-        sigma = np.sqrt(2 * temperature * friction / masses)
+        sigma = np.sqrt(2 * temperature * inputs.friction / masses)
 
         # mpi_print(f'Step 5: {time.time()-time_init}', rank)
         # Get Langevin coefficients
-        c1 = timestep / 2. - timestep * timestep * friction / 8.
-        c2 = timestep * friction / 2 - timestep * timestep * friction * friction / 8.
-        c3 = np.sqrt(timestep) * sigma / 2. - timestep**1.5 * friction * sigma / 8.
+        c1 = timestep / 2. - timestep * timestep * inputs.friction / 8.
+        c2 = timestep * inputs.friction / 2 - timestep * timestep * inputs.friction * inputs.friction / 8.
+        c3 = np.sqrt(timestep) * sigma / 2. - timestep**1.5 * inputs.friction * sigma / 8.
         c5 = timestep**1.5 * sigma / (2 * np.sqrt(3))
-        c4 = friction / 2. * c5
+        c4 = inputs.friction / 2. * c5
 
         # mpi_print(f'Step 6: {time.time()-time_init}', rank)
         # Get averaged forces and velocities
         if forces is None:
-            forces = get_forces_meta(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, meta_Ediff)
+            forces = get_forces_meta(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.meta_Ediff)
         # Velocity is already calculated based on averaged forces
         # in the previous step
         velocity = struc.get_velocities()
@@ -221,7 +241,7 @@ def NVTLangevin_meta(
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
         comm.Barrier()
         # mpi_print(f'Step 10-1: {time.time()-time_init}', rank)
-        forces = get_forces_meta(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, meta_Ediff)
+        forces = get_forces_meta(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.meta_Ediff)
         comm.Barrier()
         
         # mpi_print(f'Step 10-2: {time.time()-time_init}', rank)
@@ -234,24 +254,54 @@ def NVTLangevin_meta(
         
         # mpi_print(f'Step 11: {time.time()-time_init}', rank)
         # Log MD information at regular intervals
-        if (idx+1) % loginterval == 0:
+        if (MD_step_index+1) % inputs.loginterval == 0:
+
+            # Get absolute and relative uncertainties of energy and force
+            # and also total energy
+            uncerts, Epot_step, S_step =\
+            eval_uncert(struc, inputs.nstep, inputs.nmodel, 0.0, calculator, inputs.al_type, inputs.harmonic_F)
+
+            # Get a criteria probability from uncertainty and energy informations
+            criteria = get_criteria_prob(inputs, Epot_step, uncerts, criteria_collected)
+
+            if inputs.rank == 0:
+                # Acceptance check with criteria
+                ##!! Epot_step should be rechecked.
+                if random.random() < criteria: # and Epot_step > 0.1:
+                    accept = 'Accepted'
+                    MD_index += 1
+                    write_traj.write(atoms=struc)
+                else:
+                    accept = 'Vetoed'
+
+                # Record the MD results at the current step
+                trajfile = open(f'UNCERT/uncertainty-{condition}_{inputs.index}.txt', 'a')
+                trajfile.write(
+                    '{:.5e}'.format(Decimal(str(struc.get_temperature()))) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_S) + '\t' +
+                    uncert_strconvter(Epot_step) + '\t' +
+                    uncert_strconvter(S_step) + '\t' +
+                    str(MD_index) + '          \t' +
+                    '{:.5e}'.format(Decimal(str(criteria))) + '\t' +
+                    str(accept) + '   \n'
+                )
+                trajfile.close()
+
             if isinstance(logfile, str):
                 # mpi_print(f'Step 12: {time.time()-time_init}', rank)
                 info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-                    struc, nstep, nmodel, calculator, harmonic_F
+                    struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F
                     )
 
-                # mpi_print(f'Step 13: {time.time()-time_init}', rank)
-                if signal_uncert:
-                    # Get absolute and relative uncertainties of energy and force
-                    # and also total energy
-                    uncerts, Epot_step, S_step =\
-                    eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
-
                 # mpi_print(f'Step 14: {time.time()-time_init}', rank)
-                if rank == 0:
+                if inputs.rank == 0:
                     file_log = open(logfile, 'a')
-                    simtime = timestep*(idx+loginterval)/units.fs/1000
+                    simtime = timestep*(MD_step_index+inputs.loginterval)/units.fs/1000
                     file_log.write(
                         '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
                         '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
@@ -276,11 +326,13 @@ def NVTLangevin_meta(
                 # mpi_print(f'Step 15: {time.time()-time_init}', rank)
             if rank == 0:
                 file_traj.write(atoms=struc)
+            MD_index = inputs.comm.bcast(MD_index, root=0)
+
+        MD_step_index += 1
+        MD_step_index = inputs.comm.bcast(MD_step_index, root=0)
+        # mpi_print(f'Step 16: {time.time()-time_init}', rank)
 
 
-            # mpi_print(f'Step 16: {time.time()-time_init}', rank)
-
-                
 def get_forces_meta(
     struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, meta_Ediff
 ):
@@ -466,105 +518,3 @@ def get_forces_meta(
     # mpi_print(f'Step 10-d: {time.time()-time_init}', rank)
 
     return force_avg
-
-
-# def get_MDinfo_temp(
-#     struc, nstep, nmodel, calculator, harmonic_F
-# ):
-#     """Function [get_MDinfo_temp]
-#     Extract the average of total, potential, and kinetic energy of
-#     a structral configuration from the Molecular Dynamics
-
-#     Parameters:
-
-#     struc_step: ASE atoms
-#         A structral configuration at the current step
-#     nstep: int
-#         The number of subsampling sets
-#     nmodel: int
-#         The number of ensemble model sets with different initialization
-#     calculator: ASE calculator or list of ASE calculators
-#         Calculators from trained models
-
-#     Returns:
-
-#     info_TE_avg: float
-#         Averaged total energy across trained models
-#     info_PE_avg: float
-#         Averaged potential energy across trained models
-#     info_KE_avg: float
-#         Averaged kinetic energy across trained models
-#     info_T_avg: float
-#         Averaged temeprature across trained models
-#     """
-
-#     # Extract MPI infos
-#     comm = MPI.COMM_WORLD
-#     size = comm.Get_size()
-#     rank = comm.Get_rank()
-
-#     # Get calculators from trained models and corresponding predicted quantities
-#     info_TE, info_PE, info_KE, info_T = [], [], [], []
-#     zndex = 0
-#     for index_nmodel in range(nmodel):
-#         for index_nstep in range(nstep):
-#             if (index_nmodel*nstep + index_nstep) % size == rank:
-#                 struc.calc = calculator[zndex]
-#                 PE = struc.get_potential_energy()
-#                 KE = struc.get_kinetic_energy()
-#                 TE = PE + KE
-#                 info_TE.append(TE)
-#                 info_PE.append(PE)
-#                 info_KE.append(KE)
-#                 info_T.append(struc.get_temperature())
-#                 zndex += 1
-#     info_TE = comm.allgather(info_TE)
-#     info_PE = comm.allgather(info_PE)
-#     info_KE = comm.allgather(info_KE)
-#     info_T = comm.allgather(info_T)
-    
-#     # Get their average
-#     info_TE_avg =\
-#     np.average(np.array([i for items in info_TE for i in items]), axis=0)
-
-#     if harmonic_F:
-#         from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-#         displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
-#         F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-#         E_ha = get_E_ha(displacements, fc_ha)
-#         info_PE_avg =\
-#         np.average(np.array([i for items in info_PE for i in items]), axis=0) + E_ha
-#     else:
-#         info_PE_avg =\
-#         np.average(np.array([i for items in info_PE for i in items]), axis=0)
-
-#     info_KE_avg =\
-#     np.average(np.array([i for items in info_KE for i in items]), axis=0)
-#     info_T_avg =\
-#     np.average(np.array([i for items in info_T for i in items]), axis=0)
-                      
-#     return info_TE_avg, info_PE_avg, info_KE_avg, info_T_avg
-
-
-# def get_masses(get_masses, natoms):
-#     """Function [get_masses]
-#     Extract the list of atoms' mass
-
-#     Parameters:
-
-#     get_masses: np.array of float
-#         An array of masses of elements
-#     natoms: int
-#         The number of atoms in the simulation cell
-
-#     Returns:
-
-#     masses: float
-#         An array of atoms' masses in the simulation cell
-#     """
-
-#     masses = []
-#     for idx in range(natoms):
-#         masses.append([get_masses[idx]])
-
-#     return np.array(masses)

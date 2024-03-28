@@ -363,7 +363,7 @@ def read_input_file(file_path):
                 # Perform type conversions for specific variables
                 if name in ['supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart', 'signal_uncert']:
                     value = eval(value)
-                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad', 'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep']:
+                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad', 'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep', 'cell_factor', 'bias_A', 'bias_B']:
                     value = float(value)
                 elif name in [
                 'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature', 'taut',

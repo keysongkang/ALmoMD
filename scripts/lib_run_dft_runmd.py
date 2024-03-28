@@ -50,6 +50,18 @@ def run_dft_runmd(inputs):
             struc.get_velocities()
         except AttributeError:
             MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
+    elif os.path.exists('start.bundle'):
+        from ase.io.bundletrajectory import BundleTrajectory
+        mpi_print(f'[runMD]\tFound the start.bundle file. MD starts from this.', inputs.rank)
+        file_traj_read = BundleTrajectory(filename='start.bundle', mode='r')
+        file_traj_read[0]; #ASE bug
+        struc_init = file_traj_read[-1]
+        struc = make_supercell(struc_init, inputs.supercell_init)
+        del struc_init
+        try:
+            struc.get_velocities()
+        except AttributeError:
+            MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
     else:
         mpi_print(f'[runMD]\tMD starts from the last entry of the trajectory.son file', inputs.rank)
         # Read all structural configurations in SON file
@@ -74,6 +86,9 @@ def run_dft_runmd(inputs):
     struc_init = atoms_read('geometry.in.supercell', format='aims')
     mpi_print(f'[runMD]\tRead the reference structure: geometry.in.next_step', inputs.rank)
     inputs.comm.Barrier()
+
+    cell_new = struc.get_cell()
+    struc.set_cell(cell_new * inputs.cell_factor)
 
     mpi_print(f'[runMD]\tFind the trained models: {inputs.modelpath}', inputs.rank)
     # Prepare empty lists for potential and total energies

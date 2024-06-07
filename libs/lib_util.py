@@ -300,9 +300,13 @@ def generate_msg(al_type):
                  + 'TestError_E\tTestError_F\tTestError_S\t'\
                  + 'E_potent_avg_i\tE_potent_std_i'
 
-    if al_type == 'energy':
+    if al_type == 'energy' or al_type == 'energy_max':
         result_msg += '\tUn_Abs_E_avg_i\tUn_Abs_E_std_i'\
                       + '\tUn_Rel_E_avg_i\tUn_Rel_E_std_i'
+
+    if al_type == 'energy_max':
+        result_msg += '\tUn_Abs_Ea_avg_i\tUn_Abs_Ea_std_i'\
+                      + '\tUn_Rel_Ea_avg_i\tUn_Rel_Ea_std_i'
 
     if al_type == 'force' or al_type == 'force_max':
         result_msg += '\tUn_Abs_F_avg_i\tUn_Abs_F_std_i'\
@@ -312,7 +316,7 @@ def generate_msg(al_type):
         result_msg += '\tUn_Abs_S_avg_i\tUn_Abs_S_std_i'\
                       + '\tUn_Rel_S_avg_i\tUn_Rel_S_std_i'
 
-    if al_type == 'energy':
+    if al_type == 'energy' or al_type == 'energy_max':
         result_msg += '\tUn_Abs_E_avg_a\tUn_Rel_E_avg_a'
 
     if al_type == 'force' or al_type == 'force_max':
@@ -361,15 +365,15 @@ def read_input_file(file_path):
                 value = value.strip()
 
                 # Perform type conversions for specific variables
-                if name in ['supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart', 'signal_uncert']:
+                if name in ['supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart', 'signal_uncert', 'criteria_energy', 'train_stress']:
                     value = eval(value)
-                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad', 'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep', 'cell_factor', 'bias_A', 'bias_B']:
+                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad', 'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep', 'cell_factor', 'bias_A', 'bias_B', 'temp_factor']:
                     value = float(value)
                 elif name in [
                 'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature', 'taut',
                 'pressure', 'taup', 'steps_ther', 'steps_init', 'steps_random',
                 'cutoff_ther', 'lmax', 'nfeatures', 'random_index',
-                'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc', 'printinterval'
+                'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc', 'printinterval', 'idx_atom'
                 ]:
                     value = int(value)
                 else:

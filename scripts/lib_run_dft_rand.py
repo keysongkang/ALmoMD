@@ -1,5 +1,5 @@
 import os
-import son
+from vibes import son
 import numpy as np
 
 from libs.lib_util  import output_init, mpi_print, check_mkdir

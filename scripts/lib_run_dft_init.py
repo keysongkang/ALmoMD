@@ -1,4 +1,4 @@
-import son
+from vibes import son
 
 from libs.lib_util  import output_init, mpi_print, check_mkdir, job_dependency
 from libs.lib_npz   import generate_npz_DFT_init

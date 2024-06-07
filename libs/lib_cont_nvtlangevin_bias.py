@@ -159,7 +159,7 @@ def cont_NVTLangevin_bias(
         )
 
     # Get averaged force from trained models
-    forces = get_forces_bias(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.bias_A, inputs.bias_B)
+    forces = get_forces_bias(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.bias_A, inputs.bias_B, inputs.idx_atom)
 
     # mpi_print(f'Step 3: {time.time()-time_init}', rank)
     # Go trough steps until the requested number of steps
@@ -172,7 +172,7 @@ def cont_NVTLangevin_bias(
         # mpi_print(f'Step 6: {time.time()-time_init}', rank)
         # Get averaged forces and velocities
         if forces is None:
-            forces = get_forces_bias(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.bias_A, inputs.bias_B)
+            forces = get_forces_bias(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.bias_A, inputs.bias_B, inputs.idx_atom)
         # Velocity is already calculated based on averaged forces
         # in the previous step
         velocity = struc.get_velocities()
@@ -225,7 +225,7 @@ def cont_NVTLangevin_bias(
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
         comm.Barrier()
         # mpi_print(f'Step 10-1: {time.time()-time_init}', rank)
-        forces = get_forces_bias(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.bias_A, inputs.bias_B)
+        forces = get_forces_bias(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.bias_A, inputs.bias_B, inputs.idx_atom)
         comm.Barrier()
         
         # mpi_print(f'Step 10-2: {time.time()-time_init}', rank)
@@ -318,7 +318,7 @@ def cont_NVTLangevin_bias(
 
 
 def get_forces_bias(
-    struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, bias_A, bias_B
+    struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, bias_A, bias_B, idx_atom
 ):
     """Function [get_forces]
     Evalulate the average of forces from all different trained models.
@@ -406,7 +406,6 @@ def get_forces_bias(
         # print(f'Bias Ratio: {np.average(ratio_bias)}\n')
 
 
-        idx_atom = 0 # 120
         E_bias_deriv = E_step_std[idx_atom] / (bias_B ** 2) * bias_A * (np.exp((-1) * (E_step_std[idx_atom] ** 2) / (2 * bias_B ** 2)))
         F_bias_elem = np.array([0.0, 0.0, 0.0])
         for idx_E, idx_F in zip(np.array(E_step_filtered)[:,idx_atom], np.array(F_step_filtered)[:,idx_atom]):

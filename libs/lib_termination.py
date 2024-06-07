@@ -39,6 +39,8 @@ def termination(inputs):
             # Read the Uncertainty column
             if inputs.al_type == 'energy':
                 result_uncert = result_data.loc[:,'TestError_E']
+            elif inputs.al_type == 'energy_max':
+                result_uncert = result_data.loc[:,'Un_Abs_E_std_i']
             elif inputs.al_type == 'force':
                 result_uncert = result_data.loc[:,'TestError_F']
             elif inputs.al_type == 'force_max':
@@ -97,7 +99,10 @@ def get_testerror(inputs):
     from ase.io import read as atoms_read
 
     # Read testing data
-    npz_test = f'./MODEL/data-test.npz' # Path
+    if inputs.npz_test == 'train':
+        npz_test = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}/data-train_0.npz' # Path
+    else:
+        npz_test = f'./MODEL/data-test.npz' # Path
     data_test = np.load(npz_test)         # Load
 
     ## Prepare the ground state structure
@@ -123,6 +128,9 @@ def get_testerror(inputs):
     # Go through all configurations in the testing data
     prd_E_avg = []
     prd_E_std = []
+    if inputs.al_type == 'energy_max':
+        prd_E_atom_avg = []
+        prd_E_atom_std = []
     prd_F_avg = []
     prd_F_std = []
     prd_F_all_avg = []
@@ -131,7 +139,7 @@ def get_testerror(inputs):
     prd_sigma_max_avg = []
     prd_sigma_max_std = []
     real_E_list = []
-    real_F_list = []
+    real_F_list = []    
     for id_step, (id_R, id_z, id_CELL, id_PBC, id_E, id_F) in enumerate(zip(
         data_test['R'], data_test['z'], data_test['CELL'], data_test['PBC'], data_test['E'], data_test['F']
         )):
@@ -142,6 +150,7 @@ def get_testerror(inputs):
         prd_F = []
         prd_R = []
         zndex = 0
+        natoms = len(struc)
         
         if id_step % inputs.printinterval == 0:
             mpi_print(f'[Termi]\tTesting: sample {id_step}', inputs.rank)
@@ -152,7 +161,11 @@ def get_testerror(inputs):
                 if (index_nmodel * inputs.nstep + index_nstep) % inputs.size == inputs.rank:
                     struc.calc = inputs.calc_MLIP[zndex]
                     # Predicted energy is shifted E_gs back, but the E_gs defualt is zero
-                    prd_E.append(struc.get_potential_energy())
+
+                    if inputs.al_type == 'energy_max':
+                        prd_E.append(struc.get_potential_energies())
+                    else:
+                        prd_E.append(struc.get_potential_energy())
                     prd_F.append(struc.get_forces(md=True))
                     prd_R.append(struc.get_positions())
                     zndex += 1
@@ -176,11 +189,21 @@ def get_testerror(inputs):
             prd_E = np.array(prd_E) + E_ha
             # id_E = id_E - E_ha
 
-        prd_E_avg.append(np.average(prd_E, axis=0))
+
+        if inputs.al_type == 'energy_max':
+            # mpi_print(prd_E, inputs.rank)
+            prd_E_atom = np.average(prd_E, axis=0)
+            prd_E_atom_avg.append(prd_E_atom)
+            prd_E_avg.append(np.sum(prd_E_atom, axis=0))
+        else:
+            prd_E_avg.append(np.average(prd_E, axis=0))
+
         real_E_list.append(id_E)
 
         if inputs.al_type == 'energy':
             prd_E_std.append(np.std(prd_E, axis=0))
+        elif inputs.al_type == 'energy_max':
+            prd_E_atom_std.append(np.std(prd_E, axis=0))
 
         prd_F_step_avg = np.average(prd_F, axis=0)
         prd_F_all_avg.append(prd_F_step_avg)
@@ -232,6 +255,23 @@ def get_testerror(inputs):
         UncertAbs_E_std = np.std(prd_E_std)
         UncertRel_E_avg = np.average(prd_E_std/prd_E_avg)
         UncertRel_E_std = np.std(prd_E_std/prd_E_avg)
+    elif inputs.al_type == 'energy_max':
+        prd_E_atom_std = np.array(prd_E_atom_std)
+        UncertAbs_E_max = [max(prd_E_std_step) for prd_E_std_step in prd_E_atom_std]
+        UncertAbs_E_avg = np.average(UncertAbs_E_max)
+        UncertAbs_E_std = np.std(UncertAbs_E_max)
+
+        UncertRel_E_max = [max(prd_E_std_step/prd_E_avg_step) for prd_E_std_step, prd_E_avg_step in zip(prd_E_atom_std, prd_E_atom_avg)]
+        UncertRel_E_avg = np.average(UncertRel_E_max)
+        UncertRel_E_std = np.std(UncertRel_E_max)
+
+        UncertAbs_E_atom = [prd_E_std_step[inputs.idx_atom] for prd_E_std_step in prd_E_atom_std]
+        UncertAbs_E_atom_avg = np.average(UncertAbs_E_atom)
+        UncertAbs_E_atom_std = np.std(UncertAbs_E_atom)
+
+        UncertRel_E_atom = [prd_E_std_step[inputs.idx_atom]/np.absolute(prd_E_avg_step[inputs.idx_atom]) for prd_E_std_step, prd_E_avg_step in zip(prd_E_atom_std, prd_E_atom_avg)]
+        UncertRel_E_atom_avg = np.average(UncertRel_E_atom)
+        UncertRel_E_atom_std = np.std(UncertRel_E_atom)
     else:
         UncertAbs_E_avg = '----          '
         UncertAbs_E_std = '----          '
@@ -291,11 +331,17 @@ def get_testerror(inputs):
                            + '\t' + uncert_strconvter(np.average(prd_E_avg))\
                            + '\t' + uncert_strconvter(np.std(prd_E_avg))
 
-            if inputs.al_type == 'energy':
+            if inputs.al_type == 'energy' or inputs.al_type == 'energy_max':
                 result_print +=   '\t' + uncert_strconvter(UncertAbs_E_avg)\
                                 + '\t' + uncert_strconvter(UncertAbs_E_std)\
                                 + '\t' + uncert_strconvter(UncertRel_E_avg)\
                                 + '\t' + uncert_strconvter(UncertRel_E_std)
+
+            if inputs.al_type == 'energy_max':
+                result_print +=   '\t' + uncert_strconvter(UncertAbs_E_atom_avg)\
+                                + '\t' + uncert_strconvter(UncertAbs_E_atom_std)\
+                                + '\t' + uncert_strconvter(UncertRel_E_atom_avg)\
+                                + '\t' + uncert_strconvter(UncertRel_E_atom_std)
 
             if inputs.al_type == 'force' or inputs.al_type == 'force_max':
                 result_print +=   '\t' + uncert_strconvter(UncertAbs_F_avg)\

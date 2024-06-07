@@ -83,6 +83,8 @@ class inputs:
         #     The number of iteration for DFT random sampling
         self.random_index = 1
 
+        self.train_stress = False
+
         ##[Molecular dynamics setting]
         # ensemble: str
         #     Type of MD ensembles; 'NVTLangevin'
@@ -113,6 +115,15 @@ class inputs:
         self.meta_Ediff = 0.0
         self.meta_restart = False
         self.meta_r_crtria = 100.0
+
+        self.idx_atom = 0
+        self.bias_A = 0.0
+        self.bias_B = 999
+
+        self.temp_factor = 0.0
+
+        self.npz_test = 'test'
+        self.criteria_energy = True
 
         ##[runMD default inputs]
         # workpath: str

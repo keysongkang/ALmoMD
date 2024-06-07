@@ -156,7 +156,7 @@ def MLMD_main(
             struc_init = atoms_read('start.in', format='aims')
             # Make it supercell
             struc_step = make_supercell(struc_init, inputs.supercell_init)
-            MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
+            MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature*1.5, force_temp=True)
 
         elif os.path.exists('start.traj'):
             mpi_print(f'[runMD]\tFound the start.traj file. MD starts from this.', inputs.rank)
@@ -167,7 +167,7 @@ def MLMD_main(
             try:
                 struc_step.get_velocities()
             except AttributeError:
-                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
+                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature*1.5, force_temp=True)
 
         elif os.path.exists('start.bundle'):
             from ase.io.bundletrajectory import BundleTrajectory
@@ -180,7 +180,7 @@ def MLMD_main(
             try:
                 struc_step.get_velocities()
             except AttributeError:
-                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
+                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature*1.5, force_temp=True)
 
         else:
             mpi_print(f'[MLMD] Read a configuration from trajectory_train.son', inputs.rank)
@@ -207,7 +207,7 @@ def MLMD_main(
             traj_previous = Trajectory(traj_temp)
         struc_step = traj_previous[-1]; del traj_previous;
 
-    if os.path.exists('start.in') and (inputs.ensemble == 'NVTLangevin_meta' or inputs.ensemble == 'NVTLangevin_temp' or inputs.ensemble == 'NVTLangevin_bias') and MD_index == 0:
+    if os.path.exists('start.in') and (inputs.ensemble == 'NVTLangevin_meta' or inputs.ensemble == 'NVTLangevin_temp' or inputs.ensemble == 'NVTLangevin_bias' or inputs.ensemble == 'NVTLangevin_bias_temp') and MD_index == 0:
         mpi_print(f'[MLMD] Read a configuration from start.in', inputs.rank)
         # Read the ground state structure with the primitive cell
         struc_init = atoms_read('start.in', format='aims')
@@ -257,7 +257,7 @@ def traj_fromRealE(temperature, pressure, E_ref, E_gs, uncert_type, al_type, nto
     elif uncert_type == 'relative':
         uncert_piece = 'Rel'
 
-    if al_type == 'energy':
+    if al_type == 'energy' or 'energy_max':
         al_piece = 'E'
     elif al_type == 'force' or 'force_max':
         al_piece = 'F'

@@ -21,7 +21,7 @@ from libs.lib_criteria import eval_uncert, uncert_strconvter, get_criteria, get_
 import torch
 torch.set_default_dtype(torch.float64)
 
-def cont_NVTLangevin_temp(
+def cont_NVTLangevin_bias_temp(
     inputs, struc, timestep, temperature, calculator, E_ref,
     MD_index, MD_step_index, signal_uncert=False, signal_append=True, fix_com=True,
 ):
@@ -159,7 +159,7 @@ def cont_NVTLangevin_temp(
         )
 
     # Get averaged force from trained models
-    forces, step_std = get_forces_temp(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.al_type)
+    forces, step_std = get_forces_bias_temp(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.al_type, inputs.bias_A, inputs.bias_B, inputs.idx_atom)
 
     # mpi_print(f'Step 3: {time.time()-time_init}', rank)
     # Go trough steps until the requested number of steps
@@ -172,7 +172,7 @@ def cont_NVTLangevin_temp(
         # mpi_print(f'Step 6: {time.time()-time_init}', rank)
         # Get averaged forces and velocities
         if forces is None:
-            forces, step_std = get_forces_temp(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.al_type)
+            forces, step_std = get_forces_bias_temp(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.al_type, inputs.bias_A, inputs.bias_B, inputs.idx_atom)
         # Velocity is already calculated based on averaged forces
         # in the previous step
         velocity = struc.get_velocities()
@@ -207,11 +207,15 @@ def cont_NVTLangevin_temp(
             else:
                 temp_ratio = np.exp( (-1/2) * (uncert_ratio)**2 )
         elif inputs.al_type == 'energy_max':
-            uncert_ratio = (step_std[inputs.idx_atom] - criteria_collected.Un_Abs_E_avg_i) / (criteria_collected.Un_Abs_E_std_i)
-            if step_std[inputs.idx_atom] - criteria_collected.Un_Abs_E_avg_i < 0:
+            # uncert_ratio = (step_std[inputs.idx_atom] - criteria_collected.Un_Abs_E_avg_i) / (criteria_collected.Un_Abs_E_std_i)
+            uncert_ratio = (step_std[inputs.idx_atom] - criteria_collected.Un_Abs_Ea_avg_i) / (criteria_collected.Un_Abs_Ea_std_i)
+            # if step_std[inputs.idx_atom] - criteria_collected.Un_Abs_E_avg_i < 0:
+            if step_std[inputs.idx_atom] - criteria_collected.Un_Abs_Ea_avg_i < 0:
                 temp_ratio = 1.0
             else:
                 temp_ratio = np.exp( (-1/2) * (uncert_ratio)**2 )
+        else:
+            temp_ratio = 0.0
 
         print(f'Step {MD_step_index}; temp activate (atom {inputs.idx_atom}):{temp_ratio}')
         sigma_elem = np.sqrt(2 * (temperature + temp_ratio * (inputs.temp_factor * units.kB)) * inputs.friction / masses[inputs.idx_atom][0])
@@ -222,26 +226,6 @@ def cont_NVTLangevin_temp(
         c3[inputs.idx_atom] = c3_elem
         c4[inputs.idx_atom] = c4_elem
         c5[inputs.idx_atom] = c5_elem
-
-        # c3, c4, c5 = [], [], []
-
-        # for idx_atom, (F_std, mass) in enumerate(zip(F_step_norm_std, masses)):
-        #     uncert_ratio = (F_std - criteria_collected.Un_Abs_F_avg_i*0.9) / (criteria_collected.Un_Abs_F_std_i * 0.1)
-        #     temp_ratio = 1.0 if uncert_ratio < 0 else 100.0 if uncert_ratio > 99 else uncert_ratio + 1
-        #     if temp_ratio > 1.0:
-        #         print(f'Step {MD_step_index}; temp activate (atom {idx_atom}):{temp_ratio}')
-        #     sigma_elem = np.sqrt(2 * (temperature * temp_ratio) * inputs.friction / mass[0])
-        #     c3_elem = np.sqrt(timestep) * sigma_elem / 2. - timestep**1.5 * inputs.friction * sigma_elem / 8.
-        #     c5_elem = timestep**1.5 * sigma_elem / (2 * np.sqrt(3))
-        #     c4_elem = inputs.friction / 2. * c5_elem
-
-        #     c3.append(c3_elem)
-        #     c4.append(c4_elem)
-        #     c5.append(c5_elem)
-
-        # c3 = np.array(c3)[:, np.newaxis]
-        # c4 = np.array(c4)[:, np.newaxis]
-        # c5 = np.array(c5)[:, np.newaxis]
 
         # mpi_print(f'Step 8: {time.time()-time_init}', rank)
         # Get get changes of positions and velocities
@@ -268,7 +252,7 @@ def cont_NVTLangevin_temp(
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
         comm.Barrier()
         # mpi_print(f'Step 10-1: {time.time()-time_init}', rank)
-        forces, step_std = get_forces_temp(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.al_type)
+        forces, step_std = get_forces_bias_temp(struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, inputs.anharmonic_F, criteria_collected, inputs.al_type, inputs.bias_A, inputs.bias_B, inputs.idx_atom)
         comm.Barrier()
         
         # mpi_print(f'Step 10-2: {time.time()-time_init}', rank)
@@ -360,8 +344,8 @@ def cont_NVTLangevin_temp(
         # mpi_print(f'Step 16: {time.time()-time_init}', rank)
 
 
-def get_forces_temp(
-    struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, al_type
+def get_forces_bias_temp(
+    struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, al_type, bias_A, bias_B, idx_atom
 ):
     """Function [get_forces]
     Evalulate the average of forces from all different trained models.
@@ -393,7 +377,7 @@ def get_forces_temp(
 
     # mpi_print(f'Step 10-a: {time.time()-time_init}', rank)
     if type(calculator) == list:
-        energy = []
+        energies = []
         forces = []
         sigmas = []
         zndex = 0
@@ -405,20 +389,17 @@ def get_forces_temp(
                     # mpi_print(f'Step 10-a1 second {rank}: {time.time()-time_init}', rank)
                     temp_force = struc.get_forces()
                     # mpi_print(f'Step 10-a1 third {rank}: {time.time()-time_init}', rank)
-                    if al_type == 'energy_max':
-                        energy.append(struc.get_potential_energies())
-                    else:
-                        energy.append(struc.get_potential_energy())
+                    energies.append(struc.get_potential_energies())
                     forces.append(temp_force)
                     # sigmas.append(eval_sigma(temp_force, struc.get_positions(), 'force_max'))
                     # mpi_print(f'Step 10-a1 last {rank}: {time.time()-time_init}', rank)
                     zndex += 1
         # mpi_print(f'Step 10-a2: {time.time()-time_init}', rank)
-        energy = comm.allgather(energy)
+        energies = comm.allgather(energies)
         forces = comm.allgather(forces)
         # sigmas = comm.allgather(sigmas)
-        # mpi_print(f'Step 10-a3: {time.time()-time_init}', rank)
-        E_step_filtered = [jtem for item in energy if len(item) != 0 for jtem in item]
+
+        E_step_filtered = [jtem for item in energies if len(item) != 0 for jtem in item]
         E_step_avg = np.average(E_step_filtered, axis=0)
         E_step_std = np.std(E_step_filtered, axis=0)
 
@@ -428,10 +409,53 @@ def get_forces_temp(
         F_step_norm_std = np.sqrt(np.average(F_step_norm ** 2, axis=0))
         F_step_norm_avg = np.linalg.norm(F_step_avg, axis=1)
 
-        # uncert_idcs = np.where((F_step_norm_std - criteria.Un_Abs_F_avg_i) > criteria.Un_Abs_F_std_i * 0.5)[0]
-        # print(f'uncert_idcs:{uncert_idcs}')
+        # idx_E_std = np.argmax(F_step_norm_std)
 
-        force_avg = F_step_avg
+        # !!!Entire!!!
+        # F_bias = []
+        # natoms = len(struc)
+        # for idx in range(natoms): # mpi needs to be fixed. (coom. Sequence problem); Serial is fine.
+        #     E_bias_deriv = E_step_std[idx] / (bias_B ** 2) * bias_A * (np.exp((-1) * (E_step_std[idx] ** 2) / (2 * bias_B ** 2)))
+        #     F_bias_elem = np.array([0.0, 0.0, 0.0])
+        #     for idx_E, idx_F in zip(np.array(E_step_filtered)[:,idx], np.array(F_step_filtered)[:,idx]):
+        #         F_bias_elem += (idx_E - E_step_avg[idx])*(idx_F - F_step_avg[idx])
+        #         # if idx == idx_E_std: print(f'idx_E:{idx_E - E_step_avg[idx]}, idx_F:{idx_F - F_step_avg[idx]}')
+        #     if idx == idx_E_std: print(f'E_bias_deriv:{E_bias_deriv}, F_bias_elem:{F_bias_elem}')
+        #     F_bias.append(E_bias_deriv * F_bias_elem)
+
+        # force_avg = F_step_avg + np.array(F_bias)
+
+        # norm_F_step = np.linalg.norm(F_step_avg, axis=1)
+        # norm_F_bias = np.linalg.norm(F_bias, axis=1)
+
+        # ratio_bias = []
+        # for item_norm_F_step, item_norm_F_bias in zip(norm_F_step, norm_F_bias):
+        #     ratio_bias.append(item_norm_F_bias/item_norm_F_step)
+        # print(f'Bias Ratio: {np.average(ratio_bias)}\n')
+
+
+        E_bias_deriv = E_step_std[idx_atom] / (bias_B ** 2) * bias_A * (np.exp((-1) * (E_step_std[idx_atom] ** 2) / (2 * bias_B ** 2)))
+        F_bias_elem = np.array([0.0, 0.0, 0.0])
+        for idx_E, idx_F in zip(np.array(E_step_filtered)[:,idx_atom], np.array(F_step_filtered)[:,idx_atom]):
+            F_bias_elem += (idx_E - E_step_avg[idx_atom])*(idx_F - F_step_avg[idx_atom])
+            # mpi_print(f'idx_E:{idx_E - E_step_avg[idx_atom]}, idx_F:{idx_F - F_step_avg[idx_atom]}', rank)
+        mpi_print(f'idx_atom:{idx_atom}| E_bias_deriv:{E_bias_deriv}, F_bias_elem:{F_bias_elem}', rank)
+        mpi_print(f'Uncert_E:{E_step_std[idx_atom]}', rank)
+        F_bias = E_bias_deriv * F_bias_elem
+
+        norm_F_step = np.linalg.norm(F_step_avg[idx_atom])
+        norm_F_bias = np.linalg.norm(F_bias)
+
+        ratio_bias = norm_F_bias/norm_F_step
+        mpi_print(f'Bias Ratio: {np.average(ratio_bias)}\n', rank)
+
+        force_avg = F_step_avg.copy()
+
+        if ratio_bias > 10:
+            F_bias = F_bias / ratio_bias * 10
+            force_avg[idx_atom] += F_bias
+        else:
+            force_avg[idx_atom] += F_bias
 
     else:
         forces = None

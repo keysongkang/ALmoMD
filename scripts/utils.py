@@ -1,7 +1,7 @@
 import os
 import re
 import sys
-import son
+from vibes import son
 import random
 import argparse
 import collections
@@ -250,6 +250,9 @@ def split_son(num_split, E_gs, harmonic_F=False):
         rm_file('trajectory_test.son')
         rm_file('trajectory_train.son')
         rm_file('MODEL/data-test.npz')
+        if metadata is not None:
+            son.dump(metadata, 'trajectory_test.son', is_metadata=True)
+            son.dump(metadata, 'trajectory_train.son', is_metadata=True)
         for test_item in test_data:
             son.dump(test_item, 'trajectory_test.son')   # Save testing data into trajectory_test.son file
         for train_item in train_data:
@@ -501,6 +504,7 @@ def harmonic2son(temperature, num_sample, output_format):
     single_print(f'[harmo2son]\tGo through all DFT results')
     for idx in range(num_sample):
         # Create a folder for each structral configuration
+        print(f'Sample {idx}')
         check_mkdir(f'{idx}')
         # Move to that folder
         os.chdir(f'{idx}')

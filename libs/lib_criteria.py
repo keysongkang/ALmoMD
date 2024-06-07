@@ -73,6 +73,20 @@ def eval_uncert(
 
         return (uncerts, Epot_step_avg, S_step_avg)
 
+    elif al_type == 'energy_max':
+        uncerts.UncertAbs_E = np.max(Epot_step_std)
+        uncerts.UncertRel_E = np.max(
+            np.array([std / np.absolute(avg) for avg, std in zip(Epot_step_avg, Epot_step_std)])
+            )
+        uncerts.UncertAbs_F = np.ndarray.max(F_step_norm_std)
+        uncerts.UncertRel_F = np.ndarray.max(
+            np.array([std / avg for avg, std in zip(F_step_norm_avg, F_step_norm_std)])
+            )
+        uncerts.UncertAbs_S = S_step_std
+        uncerts.UncertRel_S = S_step_std / S_step_avg
+
+        return (uncerts, np.sum(Epot_step_avg), S_step_avg)
+
     else:
         sys.exit("You need to set al_type.")
         
@@ -119,13 +133,19 @@ def eval_uncert_all(
     F_step = []
     prd_struc = []
     zndex = 0
+    natoms = len(struc_step)
 
     # Get predicted potential and total energies shifted by E_ref (ground state energy)
     for index_nmodel in range(nmodel):
         for index_nstep in range(nstep):
             if (index_nmodel*nstep + index_nstep) % size == rank:
                 struc_step.calc = calculator[zndex]
-                Epot_step.append(struc_step.get_potential_energy() - E_ref)
+
+                if al_type == 'energy_max':
+                    Epot_step.append(np.array(struc_step.get_potential_energies()) - E_ref/natoms)
+                else:
+                    Epot_step.append(struc_step.get_potential_energy() - E_ref)
+
                 F_step.append(struc_step.get_forces())
                 prd_struc.append(struc_step.get_positions())
                 zndex += 1
@@ -228,7 +248,7 @@ def get_criteria(
     criteria.Epotential_avg = result_data.loc[:, 'E_potent_avg_i'].to_numpy()[-1]
     criteria.Epotential_std = result_data.loc[:, 'E_potent_std_i'].to_numpy()[-1]
     
-    if al_type == 'energy':
+    if al_type == 'energy' or al_type == 'energy_max':
         criteria.Un_Abs_E_avg_i = result_data.loc[:, 'Un_Abs_E_avg_i'].to_numpy()[-1]
         criteria.Un_Abs_E_std_i = result_data.loc[:, 'Un_Abs_E_std_i'].to_numpy()[-1]
         criteria.Un_Rel_E_avg_i = result_data.loc[:, 'Un_Rel_E_avg_i'].to_numpy()[-1]
@@ -238,6 +258,17 @@ def get_criteria(
         criteria.Un_Abs_E_std_i = 0.0
         criteria.Un_Rel_E_avg_i = 0.0
         criteria.Un_Rel_E_std_i = 0.0
+
+    if al_type == 'energy_max':
+        criteria.Un_Abs_Ea_avg_i = result_data.loc[:, 'Un_Abs_Ea_avg_i'].to_numpy()[-1]
+        criteria.Un_Abs_Ea_std_i = result_data.loc[:, 'Un_Abs_Ea_std_i'].to_numpy()[-1]
+        criteria.Un_Rel_Ea_avg_i = result_data.loc[:, 'Un_Rel_Ea_avg_i'].to_numpy()[-1]
+        criteria.Un_Rel_Ea_std_i = result_data.loc[:, 'Un_Rel_Ea_std_i'].to_numpy()[-1]
+    else:
+        criteria.Un_Abs_Ea_avg_i = 0.0
+        criteria.Un_Abs_Ea_std_i = 0.0
+        criteria.Un_Rel_Ea_avg_i = 0.0
+        criteria.Un_Rel_Ea_std_i = 0.0
 
     if al_type == 'force' or al_type == 'force_max':
         criteria.Un_Abs_F_avg_i = result_data.loc[:, 'Un_Abs_F_avg_i'].to_numpy()[-1]
@@ -294,7 +325,7 @@ def get_result(inputs, get_type):
 
     result_print = ''
     # Get their average and standard deviation
-    if inputs.al_type == 'energy':
+    if inputs.al_type == 'energy' or inputs.al_type == 'energy_max':
         UncerAbs_E_list = uncert_data.loc[:,'UncertAbs_E'].values
         UncerRel_E_list = uncert_data.loc[:,'UncertRel_E'].values
         criteria_UncertAbs_E_avg_all = uncert_average(UncerAbs_E_list[:])
@@ -442,7 +473,7 @@ def get_criteria_prob(inputs, Epot_step, uncerts, criteria):
     criteria_Uncert_S = 1
 
     # Calculate the probability based on energy, force, or both energy and force
-    if inputs.al_type == 'energy':
+    if inputs.al_type == 'energy' or inputs.al_type == 'energy_max':
         criteria_Uncert_E = get_criteria_uncert(
             inputs.uncert_type, inputs.uncert_shift, inputs.uncert_grad,
             uncerts.UncertAbs_E, criteria.Un_Abs_E_avg_i, criteria.Un_Abs_E_std_i,
@@ -469,7 +500,7 @@ def get_criteria_prob(inputs, Epot_step, uncerts, criteria):
 
     beta = inputs.kB * inputs.temperature
 
-    if inputs.ensemble == 'NVTLangevin_meta' or inputs.ensemble == 'NVTLangevin_bias' or inputs.ensemble == 'NPTisoiso' :
+    if inputs.ensemble == 'NVTLangevin_meta' or inputs.ensemble == 'NVTLangevin_bias' or inputs.ensemble == 'NVTLangevin_bias_temp' or inputs.ensemble == 'NPTisoiso' or inputs.criteria_energy == False:
         criteria_Prob = 1
     else:
         # Caculate the canonical ensemble propbability using the total energy

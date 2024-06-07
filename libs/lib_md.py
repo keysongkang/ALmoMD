@@ -234,6 +234,20 @@ def cont_runMD(
             signal_uncert = signal_uncert,
             signal_append = signal_append
         )
+    elif inputs.ensemble == 'NVTLangevin_bias_temp':
+        from libs.lib_cont_nvtlangevin_bias_temp import cont_NVTLangevin_bias_temp
+        cont_NVTLangevin_bias_temp(
+            inputs = inputs,
+            struc = struc,
+            timestep = inputs.timestep * units.fs,
+            temperature = inputs.temperature * units.kB,
+            calculator = calculator,
+            E_ref = 0.0,
+            MD_index = MD_index,
+            MD_step_index = MD_step_index,
+            signal_uncert = signal_uncert,
+            signal_append = signal_append
+        )
     elif inputs.ensemble == 'NPTisoiso':
         from libs.lib_cont_nptisoiso import cont_NPTisoiso
         cont_NPTisoiso(

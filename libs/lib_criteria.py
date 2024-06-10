@@ -395,6 +395,9 @@ def uncert_strconvter(value):
     """
     if value == '----          ':
         return value
+    if isinstance(value, np.float32):
+        value = float(value)
+    
     return '{:.5e}'.format(Decimal(value))
     
 

@@ -365,15 +365,25 @@ def read_input_file(file_path):
                 value = value.strip()
 
                 # Perform type conversions for specific variables
-                if name in ['supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart', 'signal_uncert', 'criteria_energy', 'train_stress']:
+                if name in [
+                'supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart',
+                'signal_uncert', 'criteria_energy', 'train_stress'
+                ]:
                     value = eval(value)
-                elif name in ['crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad', 'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep', 'cell_factor', 'bias_A', 'bias_B', 'temp_factor']:
+                elif name in [
+                'crtria_cnvg', 'friction', 'compressibility', 'kB', 'E_gs', 'uncert_shift', 'uncert_grad',
+                'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep', 'cell_factor', 'bias_A',
+                'bias_B', 'temp_factor', 'r_cut', 'we', 'wf', 'ws', 'eval_energy_t', 'lr', 'lr_stop',
+                'lr_decay_exp_decay_factor', 'clip_by_global_norm'
+                ]:
                     value = float(value)
                 elif name in [
-                'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature', 'taut',
-                'pressure', 'taup', 'steps_ther', 'steps_init', 'steps_random',
-                'cutoff_ther', 'lmax', 'nfeatures', 'random_index',
-                'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc', 'printinterval', 'idx_atom'
+                'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature', 'taut', 'pressure',
+                'taup', 'steps_ther', 'steps_init', 'steps_random', 'cutoff_ther', 'lmax', 'nfeatures',
+                'random_index', 'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc',
+                'printinterval', 'idx_atom', 'l', 'f', 'l_min', 'l_max', 'max_body_order', 'f_body_order',
+                'epochs', 'lr_decay_exp_transition_steps', 'size_batch', 'size_batch_training',
+                'size_batch_validation', 'seed_data', 'seed_training'
                 ]:
                     value = int(value)
                 else:

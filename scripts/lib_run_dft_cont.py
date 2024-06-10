@@ -4,7 +4,6 @@ from ase.io import read as atoms_read
 
 from libs.lib_dft   import run_DFT
 from libs.lib_util  import output_init, mpi_print, check_mkdir
-from libs.lib_train import get_train_job
 from libs.lib_load_model  import load_model
 from libs.lib_criteria    import get_result
 from libs.lib_mainloop_new    import MLMD_main, MLMD_random

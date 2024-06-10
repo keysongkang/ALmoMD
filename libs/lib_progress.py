@@ -6,7 +6,6 @@ import pandas as pd
 
 from libs.lib_util        import check_mkdir, mpi_print, single_print, generate_msg
 from libs.lib_criteria    import get_result
-from libs.lib_train       import get_train_job
 from libs.lib_termination import get_testerror
 
 

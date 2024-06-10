@@ -3,7 +3,7 @@ from ase.io.trajectory import TrajectoryWriter
 from ase.io.bundletrajectory import BundleTrajectory
 
 import os
-import son
+from vibes import son
 import copy
 import random
 import numpy as np

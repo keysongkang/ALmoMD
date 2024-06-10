@@ -1,5 +1,5 @@
 import os
-import son
+from vibes import son
 import sys
 import numpy as np
 

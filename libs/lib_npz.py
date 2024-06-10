@@ -103,10 +103,18 @@ def generate_npz_DFT_init(inputs, traj, workpath):
             'F': np.array(F_train_store),
             'R': np.array(R_train_store),
             'z': np.array(z_train_store),
-            'CELL': np.array(CELL_train_store),
-            'PBC': np.array(PBC_train_store),
             'sigma': np.array(sigma_train_store)
         }
+
+        if inputs.MLIP == 'nequip':
+            arrays_to_save['CELL'] = np.array(CELL_train_store)
+            arrays_to_save['PBC'] = np.array(PBC_train_store)
+        elif inputs.MLIP == 'so3krates':
+            arrays_to_save['unit_cell'] = np.array(CELL_train_store)
+            arrays_to_save['pbc'] = np.array(PBC_train_store)
+        else:
+            arrays_to_save['CELL'] = np.array(CELL_train_store)
+            arrays_to_save['PBC'] = np.array(PBC_train_store)
 
         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
             arrays_to_save['stress'] = np.array(stress_train_store)
@@ -346,10 +354,18 @@ def generate_npz_DFT(inputs, workpath):
                 'F': np.array(F_train_store),
                 'R': np.array(R_train_store),
                 'z': np.array(z_train_store),
-                'CELL': np.array(CELL_train_store),
-                'PBC': np.array(PBC_train_store),
                 'sigma': np.array(sigma_train_store),
             }
+
+            if inputs.MLIP == 'nequip':
+                arrays_to_save['CELL'] = np.array(CELL_train_store)
+                arrays_to_save['PBC'] = np.array(PBC_train_store)
+            elif inputs.MLIP == 'so3krates':
+                arrays_to_save['unit_cell'] = np.array(CELL_train_store)
+                arrays_to_save['pbc'] = np.array(PBC_train_store)
+            else:
+                arrays_to_save['CELL'] = np.array(CELL_train_store)
+                arrays_to_save['PBC'] = np.array(PBC_train_store)
 
             if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                 arrays_to_save['stress'] = np.array(stress_train_store)
@@ -468,10 +484,18 @@ def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
             'F': np.array(F_train_store),
             'R': np.array(R_train_store),
             'z': np.array(z_train_store),
-            'CELL': np.array(CELL_train_store),
-            'PBC': np.array(PBC_train_store),
             'sigma': np.array(sigma_train_store)
         }
+
+        if inputs.MLIP == 'nequip':
+            arrays_to_save['CELL'] = np.array(CELL_train_store)
+            arrays_to_save['PBC'] = np.array(PBC_train_store)
+        elif inputs.MLIP == 'so3krates':
+            arrays_to_save['unit_cell'] = np.array(CELL_train_store)
+            arrays_to_save['pbc'] = np.array(PBC_train_store)
+        else:
+            arrays_to_save['CELL'] = np.array(CELL_train_store)
+            arrays_to_save['PBC'] = np.array(PBC_train_store)
 
         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
             arrays_to_save['stress'] = np.array(stress_train_store)
@@ -626,10 +650,18 @@ def generate_npz_DFT_rand(
                 'F': np.array(F_train_store),
                 'R': np.array(R_train_store),
                 'z': np.array(z_train_store),
-                'CELL': np.array(CELL_train_store),
-                'PBC': np.array(PBC_train_store),
                 'sigma': np.array(sigma_train_store)
             }
+
+            if inputs.MLIP == 'nequip':
+                arrays_to_save['CELL'] = np.array(CELL_train_store)
+                arrays_to_save['PBC'] = np.array(PBC_train_store)
+            elif inputs.MLIP == 'so3krates':
+                arrays_to_save['unit_cell'] = np.array(CELL_train_store)
+                arrays_to_save['pbc'] = np.array(PBC_train_store)
+            else:
+                arrays_to_save['CELL'] = np.array(CELL_train_store)
+                arrays_to_save['PBC'] = np.array(PBC_train_store)
 
             if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                 arrays_to_save['stress'] = np.array(stress_train_store)

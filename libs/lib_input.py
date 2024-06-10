@@ -49,6 +49,9 @@ class inputs:
         self.output_format = 'trajectory.son'
 
         ##[Active learning setting]
+
+        self.MLIP = 'nequip'
+
         # nstep: int
         #     The number of subsampling sets
         self.nstep = 1
@@ -184,6 +187,41 @@ class inputs:
         #     Recommend to use the ground state total energy.
         self.E_gs = 0.0
 
+        ##[so3krates setting]
+        self.r_cut = 5.0
+        self.l = 3
+        self.f = 132
+        self.l_min = 1
+        self.l_max = 3
+        self.max_body_order = 2
+        self.f_body_order = 1
+        self.we = 0.01 # weight-energy
+        self.wf = 1.00 # weight-forces
+        self.ws = 'None' # weight-stress
+        self.loss_variance_scaling = '--no-loss-variance-scaling'
+        self.epochs = 2000
+        self.eval_energy_t = 'None'
+        self.mic = '--mic'
+        self.float64 = '--no-float64'
+        self.lr = 0.001
+        self.lr_stop = 0.00001
+        self.lr_decay_exp_transition_steps = 100000
+        self.lr_decay_exp_decay_factor = 0.7
+        self.clip_by_global_norm = 'None'
+        self.shift_mean = '--shift-mean'
+        self.size_batch = 'None'
+        self.size_batch_training = 'None'
+        self.size_batch_validation = 'None'
+        # self.seed_model = 0
+        self.seed_data = 0
+        self.seed_training = 0
+        self.wandb_name = 'None'
+        self.wandb_group = 'None'
+        self.wandb_project = 'None'
+        # self.outfile_inputs = 'inputs.json'
+        self.overwrite_module = '--no-overwrite-module'
+        self.ace = '--no-ace'
+
         ##[Constants]
         # kB: float
         #     Boltzmann constant in units of eV/K
@@ -213,6 +251,8 @@ class inputs:
         self.ntotal_init = (self.ntrain_init + self.nval_init) * self.nstep
         # ntotal: Total number of added training and valdiation data for all subsamplings for each iteractive step
         self.ntotal = (self.ntrain + self.nval) * self.nstep
+
+        self.train_split = self.ntrain/(self.ntrain + self.nval)
 
         ### Initization of parameters
         # index: int

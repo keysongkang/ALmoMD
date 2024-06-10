@@ -2,7 +2,7 @@ from ase.io.trajectory import Trajectory
 from ase.io.trajectory import TrajectoryWriter
 
 import os
-import son
+from vibes import son
 import copy
 import random
 import numpy as np

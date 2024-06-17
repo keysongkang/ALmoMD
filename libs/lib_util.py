@@ -377,7 +377,7 @@ def read_input_file(file_path):
                     continue
 
                 name = name.strip()
-                value = value.strip()
+                value = value.split('#')[0].strip()
 
                 # Perform type conversions for specific variables
                 if name in [

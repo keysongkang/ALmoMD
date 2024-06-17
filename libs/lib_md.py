@@ -3,14 +3,14 @@ import ase.units as units
 import os
 import pandas as pd
 
-from libs.lib_util import mpi_print
+from libs.lib_util import single_print
 from libs.lib_nvtlangevin import NVTLangevin
 from libs.lib_nvtlangevin_meta import NVTLangevin_meta
 from libs.lib_nptisoiso import NPTisoiso
 
 def runMD(
     inputs, struc, steps,
-    logfile, trajectory, calculator,
+    logfile, trajectory, calculator, E_ref,
     signal_uncert, signal_append
 ):
     """Function [runMD]
@@ -70,7 +70,7 @@ def runMD(
             nstep = inputs.nstep,
             nmodel = inputs.nmodel,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             al_type = inputs.al_type,
             trajectory = trajectory,
             harmonic_F = inputs.harmonic_F,
@@ -90,7 +90,7 @@ def runMD(
             nstep = inputs.nstep,
             nmodel = inputs.nmodel,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             al_type = inputs.al_type,
             trajectory = trajectory,
             meta_Ediff = inputs.meta_Ediff,
@@ -114,7 +114,7 @@ def runMD(
             nstep = inputs.nstep,
             nmodel = inputs.nmodel,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             al_type = inputs.al_type,
             trajectory = trajectory,
             harmonic_F = inputs.harmonic_F,
@@ -124,12 +124,12 @@ def runMD(
             signal_append = signal_append
         )
     else:        
-        mpi_print(f'The ensemble model is not determined.', inputs.rank)
+        single_print(f'The ensemble model is not determined.', inputs.rank)
 
 
 def cont_runMD(
     inputs, struc,
-    MD_index, MD_step_index, calculator,
+    MD_index, MD_step_index, calculator, E_ref,
     signal_uncert, signal_append
 ):
     """Function [runMD]
@@ -186,7 +186,7 @@ def cont_runMD(
             timestep = inputs.timestep * units.fs,
             temperature = inputs.temperature * units.kB,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             MD_index = MD_index,
             MD_step_index = MD_step_index,
             signal_uncert = signal_uncert,
@@ -200,7 +200,7 @@ def cont_runMD(
             timestep = inputs.timestep * units.fs,
             temperature = inputs.temperature * units.kB,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             MD_index = MD_index,
             MD_step_index = MD_step_index,
             signal_uncert = signal_uncert,
@@ -214,7 +214,7 @@ def cont_runMD(
             timestep = inputs.timestep * units.fs,
             temperature = inputs.temperature * units.kB,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             MD_index = MD_index,
             MD_step_index = MD_step_index,
             signal_uncert = signal_uncert,
@@ -228,7 +228,7 @@ def cont_runMD(
             timestep = inputs.timestep * units.fs,
             temperature = inputs.temperature * units.kB,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             MD_index = MD_index,
             MD_step_index = MD_step_index,
             signal_uncert = signal_uncert,
@@ -242,7 +242,7 @@ def cont_runMD(
             timestep = inputs.timestep * units.fs,
             temperature = inputs.temperature * units.kB,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             MD_index = MD_index,
             MD_step_index = MD_step_index,
             signal_uncert = signal_uncert,
@@ -258,11 +258,11 @@ def cont_runMD(
             pressure = inputs.pressure * units.GPa,
             ttime = inputs.ttime * units.fs,
             calculator = calculator,
-            E_ref = 0.0,
+            E_ref = E_ref,
             MD_index = MD_index,
             MD_step_index = MD_step_index,
             signal_uncert = signal_uncert,
             signal_append = signal_append
         )
     else:        
-        mpi_print(f'The ensemble model is not determined.', inputs.rank)
+        single_print(f'The ensemble model is not determined.', inputs.rank)

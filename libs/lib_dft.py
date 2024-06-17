@@ -40,18 +40,16 @@ def run_DFT(inputs):
     
     if inputs.output_format == 'nequip':
         from nequip.ase import nequip_calculator
-        if inputs.rank == 0:
-            dply_model = f'deployed-model_0_0.pth'
-            if os.path.exists(f'REFER/{dply_model}'):
-                single_print(f'\t\tFound the deployed model: {dply_model}')
-                refer_MLIP = nequip_calculator.NequIPCalculator.from_deployed_model(
-                    f'REFER/{dply_model}', device=inputs.device
-                    )
+        dply_model = f'deployed-model_0_0.pth'
+        if os.path.exists(f'REFER/{dply_model}'):
+            single_print(f'\t\tFound the deployed model: {dply_model}')
+            refer_MLIP = nequip_calculator.NequIPCalculator.from_deployed_model(
+                f'REFER/{dply_model}', device=inputs.device
+                )
         else:
             # If there is no model, turn on the termination signal
             single_print(f'\t\tCannot find the model: {dply_model}')
             signal = 1
-            signal = inputs.comm.bcast(inputs.signal, root=inputs.rank)
 
     # Set the path to folders implementing DFT calculations
     calcpath = f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}'
@@ -105,16 +103,21 @@ def run_DFT(inputs):
             os.chdir(f'{jndex}')
         
             if inputs.output_format == 'nequip':
-                if inputs.rank == 0:
-                    from ase.io.trajectory import TrajectoryWriter
-                    write_geo = TrajectoryWriter('geometry.traj', mode='w')
-                    refer_atom = traj_DFT[jtem]
-                    refer_atom.calc = refer_MLIP
-                    refer_E = refer_atom.get_potential_energy()
-                    refer_F = refer_atom.get_forces()
-                    write_geo.write(refer_atom)
-                    write_geo.close()
-                    os.chdir(calcpath_cwd)
+                from ase.io.trajectory import TrajectoryWriter
+                write_geo = TrajectoryWriter('geometry.traj', mode='w')
+                refer_atom = traj_DFT[jtem]
+                refer_atom.calc = refer_MLIP
+
+                from ase.io import read as atoms_read
+                struc_init = atoms_read('geometry.in.supercell', format='aims')
+                struc_init.calc = refer_MLIP
+                E_gs = struc_init.get_potential_energy()
+
+                refer_E = refer_atom.get_potential_energy() - E_gs
+                refer_F = refer_atom.get_forces()
+                write_geo.write(refer_atom)
+                write_geo.close()
+                os.chdir(calcpath_cwd)
             else:
                 # Check if a previous calculation exists
                 if os.path.exists(f'aims/calculations/aims.out'):

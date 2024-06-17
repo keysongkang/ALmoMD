@@ -39,7 +39,8 @@ def generate_npz_DFT_init(inputs, traj, workpath):
     z_train      = [[] for i in range(inputs.nstep)]
     CELL_train   = [[] for i in range(inputs.nstep)]
     PBC_train    = [[] for i in range(inputs.nstep)]
-    sigma_train  = [[] for i in range(inputs.nstep)]
+    if inputs.npz_sigma:
+        sigma_train  = [[] for i in range(inputs.nstep)]
     if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
         stress_train = [[] for i in range(inputs.nstep)]
     
@@ -74,14 +75,16 @@ def generate_npz_DFT_init(inputs, traj, workpath):
                 if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                     stress_train[index_nstep].append(traj[i]['calculator']['stress'])
 
-                from libs.lib_util     import eval_sigma
-                sigma_train[index_nstep].append(
-                    eval_sigma(
-                        struc_step_forces = traj[i]['calculator']['forces'],
-                        struc_step_positions = traj[i]['atoms']['positions'],
-                        al_type = 'sigma'
+                if inputs.npz_sigma:
+                    from libs.lib_util     import eval_sigma
+                    sigma_train[index_nstep].append(
+                        eval_sigma(
+                            struc_step_forces = traj[i]['calculator']['forces'],
+                            struc_step_positions = traj[i]['atoms']['positions'],
+                            al_type = 'sigma'
+                            )
                         )
-                    )
+
                 break
 
     # Split the sampled data into individual files for each subsampling set
@@ -92,7 +95,8 @@ def generate_npz_DFT_init(inputs, traj, workpath):
         z_train_store    = z_train[index_nstep]
         CELL_train_store = CELL_train[index_nstep]
         PBC_train_store  = PBC_train[index_nstep]
-        sigma_train_store  = sigma_train[index_nstep]
+        if inputs.npz_sigma:
+            sigma_train_store  = sigma_train[index_nstep]
         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
             stress_train_store = stress_train[index_nstep]
 
@@ -102,8 +106,7 @@ def generate_npz_DFT_init(inputs, traj, workpath):
             'E': np.array(E_train_store),
             'F': np.array(F_train_store),
             'R': np.array(R_train_store),
-            'z': np.array(z_train_store),
-            'sigma': np.array(sigma_train_store)
+            'z': np.array(z_train_store)
         }
 
         if inputs.MLIP == 'nequip':
@@ -116,6 +119,8 @@ def generate_npz_DFT_init(inputs, traj, workpath):
             arrays_to_save['CELL'] = np.array(CELL_train_store)
             arrays_to_save['PBC'] = np.array(PBC_train_store)
 
+        if inputs.npz_sigma:
+            arrays_to_save['sigma'] = np.array(sigma_train_store)
         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
             arrays_to_save['stress'] = np.array(stress_train_store)
 
@@ -165,7 +170,8 @@ def generate_npz_DFT(inputs, workpath):
     z_train      = [[] for i in range(inputs.nstep)]
     CELL_train   = [[] for i in range(inputs.nstep)]
     PBC_train    = [[] for i in range(inputs.nstep)]
-    sigma_train  = [[] for i in range(inputs.nstep)]
+    if inputs.npz_sigma:
+        sigma_train  = [[] for i in range(inputs.nstep)]
     if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
         stress_train = [[] for i in range(inputs.nstep)]
 
@@ -212,14 +218,15 @@ def generate_npz_DFT(inputs, workpath):
                         CELL_train[index_nstep].append(atoms.get_cell());
                         PBC_train[index_nstep].append(atoms.get_pbc());
 
-                        from libs.lib_util     import eval_sigma
-                        sigma_train[index_nstep].append(
-                            eval_sigma(
-                                struc_step_forces = F_step,
-                                struc_step_positions = atoms.get_positions(),
-                                al_type = 'sigma'
+                        if inputs.npz_sigma:
+                            from libs.lib_util     import eval_sigma
+                            sigma_train[index_nstep].append(
+                                eval_sigma(
+                                    struc_step_forces = F_step,
+                                    struc_step_positions = atoms.get_positions(),
+                                    al_type = 'sigma'
+                                    )
                                 )
-                            )
 
                         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                             stress_train[index_nstep].append(atom.get_stress(voigt=False))
@@ -254,14 +261,15 @@ def generate_npz_DFT(inputs, workpath):
                         CELL_train[index_nstep].append(data[0]['atoms']['cell']);
                         PBC_train[index_nstep].append(data[0]['atoms']['pbc']);
 
-                        from libs.lib_util     import eval_sigma
-                        sigma_train[index_nstep].append(
-                            eval_sigma(
-                                struc_step_forces = data[0]['calculator']['forces'],
-                                struc_step_positions = data[0]['atoms']['positions'],
-                                al_type = 'sigma'
+                        if inputs.npz_sigma:
+                            from libs.lib_util     import eval_sigma
+                            sigma_train[index_nstep].append(
+                                eval_sigma(
+                                    struc_step_forces = data[0]['calculator']['forces'],
+                                    struc_step_positions = data[0]['atoms']['positions'],
+                                    al_type = 'sigma'
+                                    )
                                 )
-                            )
 
                         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                             stress_train[index_nstep].append(data[0]['calculator']['stress'])
@@ -293,14 +301,15 @@ def generate_npz_DFT(inputs, workpath):
                         CELL_train[index_nstep].append(data[0].get_cell());
                         PBC_train[index_nstep].append(data[0].get_pbc());
 
-                        from libs.lib_util     import eval_sigma
-                        sigma_train[index_nstep].append(
-                            eval_sigma(
-                                struc_step_forces = F_step,
-                                struc_step_positions = data[0].get_positions(),
-                                al_type = 'sigma'
+                        if inputs.npz_sigma:
+                            from libs.lib_util     import eval_sigma
+                            sigma_train[index_nstep].append(
+                                eval_sigma(
+                                    struc_step_forces = F_step,
+                                    struc_step_positions = data[0].get_positions(),
+                                    al_type = 'sigma'
+                                    )
                                 )
-                            )
 
                         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                             stress_train[index_nstep].append(data[0]['calculator']['stress'])
@@ -330,8 +339,9 @@ def generate_npz_DFT(inputs, workpath):
                 ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
                 PBC_train_store  = np.concatenate\
                 ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
-                sigma_train_store  = np.concatenate\
-                ((data_train['sigma'], sigma_train[index_nstep]), axis=0)
+                if inputs.npz_sigma:
+                    sigma_train_store  = np.concatenate\
+                    ((data_train['sigma'], sigma_train[index_nstep]), axis=0)
                 if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                     stress_train_store  = np.concatenate\
                     ((data_train['stress'], stress_train[index_nstep]), axis=0)
@@ -342,7 +352,8 @@ def generate_npz_DFT(inputs, workpath):
                 z_train_store    = z_train[index_nstep]
                 CELL_train_store = CELL_train[index_nstep]
                 PBC_train_store  = PBC_train[index_nstep]
-                sigma_train_store  = sigma_train[index_nstep]
+                if inputs.npz_sigma:
+                    sigma_train_store  = sigma_train[index_nstep]
                 if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                     stress_train_store = stress_train[index_nstep]
 
@@ -353,8 +364,7 @@ def generate_npz_DFT(inputs, workpath):
                 'E': np.array(E_train_store),
                 'F': np.array(F_train_store),
                 'R': np.array(R_train_store),
-                'z': np.array(z_train_store),
-                'sigma': np.array(sigma_train_store),
+                'z': np.array(z_train_store)
             }
 
             if inputs.MLIP == 'nequip':
@@ -366,6 +376,9 @@ def generate_npz_DFT(inputs, workpath):
             else:
                 arrays_to_save['CELL'] = np.array(CELL_train_store)
                 arrays_to_save['PBC'] = np.array(PBC_train_store)
+
+            if inputs.npz_sigma:
+                arrays_to_save['sigma'] = np.array(sigma_train_store)
 
             if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                 arrays_to_save['stress'] = np.array(stress_train_store)
@@ -416,7 +429,8 @@ def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
     z_train      = [[] for i in range(inputs.nstep)];
     CELL_train   = [[] for i in range(inputs.nstep)];
     PBC_train    = [[] for i in range(inputs.nstep)];
-    sigma_train    = [[] for i in range(inputs.nstep)];
+    if inputs.npz_sigma:
+        sigma_train    = [[] for i in range(inputs.nstep)];
     if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
         stress_train = [[] for i in range(inputs.nstep)]
     traj_idx     = [];
@@ -451,14 +465,15 @@ def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
                 CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
                 PBC_train[index_nstep].append(traj[i]['atoms']['pbc'])
 
-                from libs.lib_util     import eval_sigma
-                sigma_train[index_nstep].append(
-                    eval_sigma(
-                        struc_step_forces = F_step,
-                        struc_step_positions = traj[i]['atoms']['positions'],
-                        al_type = 'sigma'
+                if inputs.npz_sigma:
+                    from libs.lib_util     import eval_sigma
+                    sigma_train[index_nstep].append(
+                        eval_sigma(
+                            struc_step_forces = F_step,
+                            struc_step_positions = traj[i]['atoms']['positions'],
+                            al_type = 'sigma'
+                            )
                         )
-                    )
 
                 if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                     stress_train[index_nstep].append(traj[i]['calculator']['stress'])
@@ -473,7 +488,8 @@ def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
         z_train_store    = z_train[index_nstep]
         CELL_train_store = CELL_train[index_nstep]
         PBC_train_store  = PBC_train[index_nstep]
-        sigma_train_store  = sigma_train[index_nstep]
+        if inputs.npz_sigma:
+            sigma_train_store  = sigma_train[index_nstep]
         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
             stress_train_store = stress_train[index_nstep]
 
@@ -483,8 +499,7 @@ def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
             'E': np.array(E_train_store),
             'F': np.array(F_train_store),
             'R': np.array(R_train_store),
-            'z': np.array(z_train_store),
-            'sigma': np.array(sigma_train_store)
+            'z': np.array(z_train_store)
         }
 
         if inputs.MLIP == 'nequip':
@@ -497,6 +512,8 @@ def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
             arrays_to_save['CELL'] = np.array(CELL_train_store)
             arrays_to_save['PBC'] = np.array(PBC_train_store)
 
+        if inputs.npz_sigma:
+            arrays_to_save['sigma'] = np.array(sigma_train_store)
         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
             arrays_to_save['stress'] = np.array(stress_train_store)
 
@@ -561,7 +578,8 @@ def generate_npz_DFT_rand(
     z_train      = [[] for i in range(inputs.nstep)];
     CELL_train   = [[] for i in range(inputs.nstep)];
     PBC_train    = [[] for i in range(inputs.nstep)];
-    sigma_train    = [[] for i in range(inputs.nstep)];
+    if inputs.npz_sigma:
+        sigma_train    = [[] for i in range(inputs.nstep)];
     if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
         stress_train = [[] for i in range(inputs.nstep)]
 
@@ -601,14 +619,15 @@ def generate_npz_DFT_rand(
                     CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
                     PBC_train[index_nstep].append(traj[i]['atoms']['pbc'])
 
-                    from libs.lib_util     import eval_sigma
-                    sigma_train[index_nstep].append(
-                        eval_sigma(
-                            struc_step_forces = F_step,
-                            struc_step_positions = traj[i]['atoms']['positions'],
-                            al_type = 'sigma'
+                    if inputs.npz_sigma:
+                        from libs.lib_util     import eval_sigma
+                        sigma_train[index_nstep].append(
+                            eval_sigma(
+                                struc_step_forces = F_step,
+                                struc_step_positions = traj[i]['atoms']['positions'],
+                                al_type = 'sigma'
+                                )
                             )
-                        )
 
                     if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                         stress_train[index_nstep].append(traj[i]['calculator']['stress'])
@@ -636,8 +655,9 @@ def generate_npz_DFT_rand(
                 ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
                 PBC_train_store  = np.concatenate\
                 ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
-                sigma_train_store  = np.concatenate\
-                ((data_train['sigma'], sigma_train[index_nstep]), axis=0)
+                if inputs.npz_sigma:
+                    sigma_train_store  = np.concatenate\
+                    ((data_train['sigma'], sigma_train[index_nstep]), axis=0)
                 if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                     stress_train_store  = np.concatenate\
                     ((data_train['stress'], stress_train[index_nstep]), axis=0)
@@ -649,8 +669,7 @@ def generate_npz_DFT_rand(
                 'E': np.array(E_train_store),
                 'F': np.array(F_train_store),
                 'R': np.array(R_train_store),
-                'z': np.array(z_train_store),
-                'sigma': np.array(sigma_train_store)
+                'z': np.array(z_train_store)
             }
 
             if inputs.MLIP == 'nequip':
@@ -663,6 +682,8 @@ def generate_npz_DFT_rand(
                 arrays_to_save['CELL'] = np.array(CELL_train_store)
                 arrays_to_save['PBC'] = np.array(PBC_train_store)
 
+            if inputs.npz_sigma:
+                arrays_to_save['sigma'] = np.array(sigma_train_store)
             if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
                 arrays_to_save['stress'] = np.array(stress_train_store)
 

@@ -8,10 +8,9 @@ import time
 import os
 import random
 import numpy as np
-from mpi4py import MPI
 from decimal import Decimal
 
-from libs.lib_util    import single_print, mpi_print
+from libs.lib_util    import single_print
 from libs.lib_MD_util import get_forces, get_stress, get_MDinfo_temp, get_masses
 from libs.lib_criteria import eval_uncert, uncert_strconvter, get_criteria, get_criteria_prob
 
@@ -22,10 +21,6 @@ def cont_NPTisoiso(
     inputs, struc, timestep, temperature, pressure, ttime, calculator, E_ref,
     MD_index, MD_step_index, signal_uncert=False, signal_append=True
 ):
-
-    # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
 
     def traj_extra_contents_init():
         return np.array([timestep, temperature, desiredEkin, pressure, ttime, tfact, inputs.pfactor, pfact, frac_traceless])
@@ -60,25 +55,24 @@ def cont_NPTisoiso(
         # Add new configuration to the trajectory file
             
         if isinstance(logfile, str):
-            if rank == 0:
-                file_log = open(logfile, 'w')
+            file_log = open(logfile, 'w')
+            file_log.write(
+                'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
+                + 'Temperature[K]\t' + 'Pressure[GPa]'
+                )
+            if signal_uncert:
                 file_log.write(
-                    'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
-                    + 'Temperature[K]\t' + 'Pressure[GPa]'
+                    '\tUncertAbs_E\tUncertRel_E\t'
+                    + 'UncertAbs_F\tUncertRel_F\t'
+                    + 'UncertAbs_S\tUncertRel_S\tS_average\n'
                     )
-                if signal_uncert:
-                    file_log.write(
-                        '\tUncertAbs_E\tUncertRel_E\t'
-                        + 'UncertAbs_F\tUncertRel_F\t'
-                        + 'UncertAbs_S\tUncertRel_S\tS_average\n'
-                        )
-                else:
-                    file_log.write('\n')
-                file_log.close()
+            else:
+                file_log.write('\n')
+            file_log.close()
         
             # Get MD information at the current step
             info_TE, info_PE, info_KE, info_T, info_P = get_MDinfo_temp(
-                struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, signal_P = True
+                struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, E_ref, signal_P = True
                 )
 
             if signal_uncert:
@@ -88,29 +82,28 @@ def cont_NPTisoiso(
                 eval_uncert(struc, inputs.nstep, inputs.nmodel, E_ref, calculator, inputs.al_type, inputs.harmonic_F)
 
             # Log MD information at the current step in the log file
-            if rank == 0:
-                file_log = open(logfile, 'a')
+            file_log = open(logfile, 'a')
+            file_log.write(
+                '{:.5f}'.format(Decimal(str(0.0))) + '   \t' +
+                '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
+                '{:.2f}'.format(Decimal(str(info_T))) + '\t' +
+                '        ' + '{:.5e}'.format(Decimal(str(info_P)))
+                )
+            if signal_uncert:
                 file_log.write(
-                    '{:.5f}'.format(Decimal(str(0.0))) + '   \t' +
-                    '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                    '{:.2f}'.format(Decimal(str(info_T))) + '\t' +
-                    '        ' + '{:.5e}'.format(Decimal(str(info_P)))
+                    '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_S) + '\n'
                     )
-                if signal_uncert:
-                    file_log.write(
-                        '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_E) + '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_F) + '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_S) + '\n'
-                        )
-                else:
-                    file_log.write('\n')
-                file_log.close()
+            else:
+                file_log.write('\n')
+            file_log.close()
 
         NumAtoms = len(struc)
         struc = zero_center_of_mass_momentum(struc, NumAtoms, rank, verbose=1)
@@ -124,10 +117,10 @@ def cont_NPTisoiso(
         frac_traceless = 1
 
         if not cell[1, 0] == cell[2, 0] == cell[2, 1] == 0.0:
-            print("cell:")
-            print(cell)
-            print("Min:", min((cell[1, 0], cell[2, 0], cell[2, 1])))
-            print("Max:", max((cell[1, 0], cell[2, 0], cell[2, 1])))
+            single_print("cell:")
+            single_print(cell)
+            single_print("Min:", min((cell[1, 0], cell[2, 0], cell[2, 1])))
+            single_print("Max:", max((cell[1, 0], cell[2, 0], cell[2, 1])))
             raise NotImplementedError(
                 "Can (so far) only operate on lists of atoms where the "
                 "computational box is an upper triangular matrix.")
@@ -149,12 +142,11 @@ def cont_NPTisoiso(
 
         initialized = 1
 
-        if rank == 0:
-            file_traj.set_extra_data('npt_init', traj_extra_contents_init,  once=True)
-            file_traj.set_extra_data('npt_dyn', traj_extra_contents)
-            file_traj.set_extra_data('npt_dyn_eta', traj_extra_contents_eta)
-            file_traj.set_extra_data('npt_dyn_cell', traj_extra_contents_cell)
-            file_traj.write(atoms=struc)
+        file_traj.set_extra_data('npt_init', traj_extra_contents_init,  once=True)
+        file_traj.set_extra_data('npt_dyn', traj_extra_contents)
+        file_traj.set_extra_data('npt_dyn_eta', traj_extra_contents_eta)
+        file_traj.set_extra_data('npt_dyn_cell', traj_extra_contents_cell)
+        file_traj.write(atoms=struc)
     else:
         file_traj_read = BundleTrajectory(filename=trajectory, mode='r')
         file_traj_read[0]; #ASE bug
@@ -200,10 +192,10 @@ def cont_NPTisoiso(
         cell = struc.get_cell()
 
         if not cell[1, 0] == cell[2, 0] == cell[2, 1] == 0.0:
-            print("cell:")
-            print(cell)
-            print("Min:", min((cell[1, 0], cell[2, 0], cell[2, 1])))
-            print("Max:", max((cell[1, 0], cell[2, 0], cell[2, 1])))
+            single_print("cell:")
+            single_print(cell)
+            single_print("Min:", min((cell[1, 0], cell[2, 0], cell[2, 1])))
+            single_print("Max:", max((cell[1, 0], cell[2, 0], cell[2, 1])))
             raise NotImplementedError(
                 "Can (so far) only operate on lists of atoms where the "
                 "computational box is an upper triangular matrix.")
@@ -275,78 +267,72 @@ def cont_NPTisoiso(
             # Get absolute and relative uncertainties of energy and force
             # and also total energy
             uncerts, Epot_step, S_step =\
-            eval_uncert(struc, inputs.nstep, inputs.nmodel, 0.0, calculator, inputs.al_type, inputs.harmonic_F)
+            eval_uncert(struc, inputs.nstep, inputs.nmodel, E_ref, calculator, inputs.al_type, inputs.harmonic_F)
 
             # Get a criteria probability from uncertainty and energy informations
             criteria = get_criteria_prob(inputs, Epot_step, uncerts, criteria_collected)
 
             # mpi_print(f'Step 12: {time.time()-time_init}', rank)
             info_TE, info_PE, info_KE, info_T, info_P = get_MDinfo_temp(
-                struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, signal_P = True
+                struc, inputs.nstep, inputs.nmodel, calculator, inputs.harmonic_F, E_ref, signal_P = True
                 )
 
-            if inputs.rank == 0:
-                # Acceptance check with criteria
-                ##!! Epot_step should be rechecked.
-                if random.random() < criteria: # and Epot_step > 0.1:
-                    accept = 'Accepted'
-                    MD_index += 1
-                    write_traj.write(atoms=struc)
-                else:
-                    accept = 'Vetoed'
+            # Acceptance check with criteria
+            ##!! Epot_step should be rechecked.
+            if random.random() < criteria: # and Epot_step > 0.1:
+                accept = 'Accepted'
+                MD_index += 1
+                write_traj.write(atoms=struc)
+            else:
+                accept = 'Vetoed'
 
-                # Record the MD results at the current step
-                trajfile = open(f'UNCERT/uncertainty-{condition}_{inputs.index}.txt', 'a')
-                trajfile.write(
-                    '{:.5e}'.format(Decimal(str(info_T))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_P))) + '\t' +
+            # Record the MD results at the current step
+            trajfile = open(f'UNCERT/uncertainty-{condition}_{inputs.index}.txt', 'a')
+            trajfile.write(
+                '{:.5e}'.format(Decimal(str(info_T))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_P))) + '\t' +
+                uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                uncert_strconvter(uncerts.UncertRel_S) + '\t' +
+                uncert_strconvter(Epot_step) + '\t' +
+                uncert_strconvter(S_step) + '\t' +
+                str(MD_index) + '          \t' +
+                '{:.5e}'.format(Decimal(str(criteria))) + '\t' +
+                str(accept) + '   \n'
+            )
+            trajfile.close()
+
+            # mpi_print(f'Step 14: {time.time()-time_init}', rank)
+            file_log = open(logfile, 'a')
+            simtime = timestep*MD_step_index/units.fs/1000
+            file_log.write(
+                '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
+                '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
+                '{:.2f}'.format(Decimal(str(info_T))) + '\t' +
+                '        ' + '{:.5e}'.format(Decimal(str(info_P)))
+                )
+            if signal_uncert:
+                file_log.write(
+                    '\t' +
                     uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
                     uncert_strconvter(uncerts.UncertRel_E) + '\t' +
                     uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
                     uncert_strconvter(uncerts.UncertRel_F) + '\t' +
                     uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                    uncert_strconvter(uncerts.UncertRel_S) + '\t' +
-                    uncert_strconvter(Epot_step) + '\t' +
-                    uncert_strconvter(S_step) + '\t' +
-                    str(MD_index) + '          \t' +
-                    '{:.5e}'.format(Decimal(str(criteria))) + '\t' +
-                    str(accept) + '   \n'
-                )
-                trajfile.close()
-
-                # mpi_print(f'Step 14: {time.time()-time_init}', rank)
-                if rank == 0:
-                    file_log = open(logfile, 'a')
-                    simtime = timestep*MD_step_index/units.fs/1000
-                    file_log.write(
-                        '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
-                        '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                        '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                        '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                        '{:.2f}'.format(Decimal(str(info_T))) + '\t' +
-                        '        ' + '{:.5e}'.format(Decimal(str(info_P)))
-                        )
-                    if signal_uncert:
-                        file_log.write(
-                            '\t' +
-                            uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_E) + '\t' +
-                            uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_F) + '\t' +
-                            uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_S) + '\n'
-                            )
-                    else:
-                        file_log.write('\n')
-                    file_log.close()
-                # mpi_print(f'Step 15: {time.time()-time_init}', rank)
-            if rank == 0:
-                file_traj.write(atoms=struc)
-
-            MD_index = inputs.comm.bcast(MD_index, root=0)
+                    uncert_strconvter(uncerts.UncertRel_S) + '\n'
+                    )
+            else:
+                file_log.write('\n')
+            file_log.close()
+            # mpi_print(f'Step 15: {time.time()-time_init}', rank)
+            file_traj.write(atoms=struc)
 
         MD_step_index += 1
-        MD_step_index = inputs.comm.bcast(MD_step_index, root=0)
         # mpi_print(f'Step 16: {time.time()-time_init}', rank)
 
 
@@ -436,9 +422,9 @@ def zero_center_of_mass_momentum(struc, NumAtoms, rank, verbose=0):
     cm = struc.get_momenta().sum(0)
     abscm = np.sqrt(np.sum(cm * cm))
     if verbose and abscm > 1e-4:
-        mpi_print(
+        single_print(
             "Setting the center-of-mass momentum to zero "
-            "(was %.6g %.6g %.6g)" % tuple(cm), rank
+            "(was %.6g %.6g %.6g)" % tuple(cm)
             )
     struc.set_momenta(struc.get_momenta() - cm / NumAtoms)
     return struc

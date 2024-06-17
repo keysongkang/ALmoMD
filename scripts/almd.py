@@ -3,7 +3,6 @@ from vibes import son
 import sys
 
 import numpy as np
-from mpi4py import MPI
 from decimal import Decimal
 from nequip.ase import nequip_calculator
 

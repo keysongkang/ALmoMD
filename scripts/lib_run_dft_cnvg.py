@@ -6,7 +6,7 @@ from nequip.ase import nequip_calculator
 
 from ase import Atoms
 
-from libs.lib_util  import output_init, mpi_print, check_mkdir, eval_sigma
+from libs.lib_util  import output_init, single_print, check_mkdir, eval_sigma
 
 import torch
 torch.set_default_dtype(torch.float64)
@@ -18,46 +18,43 @@ def run_dft_cnvg(inputs):
     """
 
     output_init('cnvg', inputs.version, inputs.rank)
-    mpi_print(f'[cnvg]\tGet the convergence of {inputs.nmodel}x{inputs.nstep} matrix', inputs.rank)
-    inputs.comm.Barrier()
+    single_print(f'[cnvg]\tGet the convergence of {inputs.nmodel}x{inputs.nstep} matrix')
 
     # Specify the path to the test data
     npz_test = f'./MODEL/data-test.npz'
     data_test = np.load(npz_test)
-    mpi_print(f'[cnvg]\tLoad testing data: {npz_test}', inputs.rank)
-    inputs.comm.Barrier()
+    single_print(f'[cnvg]\tLoad testing data: {npz_test}')
 
     # Specify the working path and initialize the signal variable
     workpath = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_0'
     signal = 0
 
-    mpi_print(f'\t\tDevice: {inputs.device}', inputs.rank)
+    single_print(f'\t\tDevice: {inputs.device}')
 
-    mpi_print(f'[cnvg]\tFind the trained models: {workpath}', inputs.rank)
+    single_print(f'[cnvg]\tFind the trained models: {workpath}')
     # Load the trained models as calculators
     calc_MLIP = []
     for index_nmodel in range(inputs.nmodel):
         for index_nstep in range(inputs.nstep):
-            if (index_nmodel * inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-                dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-                if os.path.exists(f'{workpath}/{dply_model}'):
-                    mpi_print(f'\t\tFound the deployed model: {dply_model}', rank=0)
-                    calc_MLIP.append(
-                        nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}', device=inputs.device)
-                    )
-                else:
-                    mpi_print(f'\t\tCannot find the model: {dply_model}', rank=0)
-                    signal = 1
-                    signal = inputs.comm.bcast(signal, root=inputs.rank)
+            dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
+            if os.path.exists(f'{workpath}/{dply_model}'):
+                single_print(f'\t\tFound the deployed model: {dply_model}')
+                calc_MLIP.append(
+                    nequip_calculator.NequIPCalculator.from_deployed_model(
+                        f'{workpath}/{dply_model}', device=inputs.device
+                        )
+                )
+            else:
+                single_print(f'\t\tCannot find the model: {dply_model}')
+                signal = 1
 
     # Terminate the code when there is no tained model
     if signal == 1:
-        mpi_print('[cnvg]\tNot enough trained models', inputs.rank)
+        single_print('[cnvg]\tNot enough trained models')
         sys.exit()
-    inputs.comm.Barrier()
 
     # Predict matrices of energy and forces and their R2 and MAE 
-    mpi_print(f'[cnvg]\tGo through all trained models for the testing data', inputs.rank)
+    single_print(f'[cnvg]\tGo through all trained models for the testing data')
 
     prd_E_total = []
     prd_F_total = []
@@ -67,7 +64,7 @@ def run_dft_cnvg(inputs):
         data_test['R'], data_test['z'],
         data_test['CELL'], data_test['PBC']
     )):
-        mpi_print(f'\t\t\tTesting data:{idx}', inputs.rank)
+        single_print(f'\t\t\tTesting data:{idx}')
 
         struc = Atoms(
             id_z,
@@ -82,16 +79,11 @@ def run_dft_cnvg(inputs):
         zndex = 0
         for index_nmodel in range(inputs.nmodel):
             for index_nstep in range(inputs.nstep):
-                if (index_nmodel * inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-                    struc.calc = calc_MLIP[zndex]
-                    prd_E.append({f'{index_nmodel}_{index_nstep}': struc.get_potential_energy()})
-                    prd_F.append({f'{index_nmodel}_{index_nstep}': struc.get_forces()})
-                    prd_S.append({f'{index_nmodel}_{index_nstep}': eval_sigma(struc.get_forces(), struc.get_positions(), al_type='sigma')})
-                    zndex += 1
-
-        prd_E = inputs.comm.allgather(prd_E)
-        prd_F = inputs.comm.allgather(prd_F)
-        prd_S = inputs.comm.allgather(prd_S)
+                struc.calc = calc_MLIP[zndex]
+                prd_E.append({f'{index_nmodel}_{index_nstep}': struc.get_potential_energy()})
+                prd_F.append({f'{index_nmodel}_{index_nstep}': struc.get_forces()})
+                prd_S.append({f'{index_nmodel}_{index_nstep}': eval_sigma(struc.get_forces(), struc.get_positions(), al_type='sigma')})
+                zndex += 1
 
         prd_E_matrix = {}
         prd_F_matrix = {}
@@ -127,9 +119,8 @@ def run_dft_cnvg(inputs):
         #     check_mkdir(f'S_matrix_prd')
         #     np.savez(f'S_matrix_prd/S_matrix_prd_{idx}', S = [prd_S_matrix])
 
-    if inputs.rank == 0:
-        np.savez(f'E_matrix_prd', E = prd_E_total)
-        np.savez(f'F_matrix_prd', F = prd_F_total)
-        np.savez(f'S_matrix_prd', S = prd_S_total)
+    np.savez(f'E_matrix_prd', E = prd_E_total)
+    np.savez(f'F_matrix_prd', F = prd_F_total)
+    np.savez(f'S_matrix_prd', S = prd_S_total)
 
-    mpi_print(f'[cnvg]\tSave matrices: E_matrix, F_matrix, S_matrix', inputs.rank)
+    single_print(f'[cnvg]\tSave matrices: E_matrix, F_matrix, S_matrix')

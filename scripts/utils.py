@@ -13,7 +13,7 @@ from ase.io.trajectory import Trajectory
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from libs.lib_util import check_mkdir, rm_file, single_print, output_init
 
-version = '0.0.0'
+version = '0.1.1'
 
 def aims2son(temperature):
     """Function [aims2son]

@@ -87,6 +87,7 @@ class inputs:
         self.random_index = 1
 
         self.train_stress = False
+        self.npz_sigma = True
 
         ##[Molecular dynamics setting]
         # ensemble: str
@@ -260,9 +261,9 @@ class inputs:
         self.index = 0
 
 
-        # Extract MPI infos
-        from mpi4py import MPI
+        # # Extract MPI infos
+        # from mpi4py import MPI
 
-        self.comm = MPI.COMM_WORLD
-        self.size = self.comm.Get_size()
-        self.rank = self.comm.Get_rank()
+        # self.comm = MPI.COMM_WORLD
+        # self.size = self.comm.Get_size()
+        # self.rank = self.comm.Get_rank()

@@ -93,10 +93,9 @@ def get_testerror(inputs):
     """
     import sys
     from ase import Atoms
-    from libs.lib_util     import mpi_print, eval_sigma
+    from libs.lib_util     import eval_sigma, get_E_ref
     from libs.lib_criteria import uncert_strconvter
     from sklearn.metrics import mean_absolute_error
-    from ase.io import read as atoms_read
 
     # Read testing data
     if inputs.npz_test == 'train':
@@ -106,20 +105,8 @@ def get_testerror(inputs):
     data_test = np.load(npz_test)         # Load
 
     ## Prepare the ground state structure
-    # Read the ground state structure with the primitive cell
-    struc_init = atoms_read('geometry.in.supercell', format='aims')
-    # Get the number of atoms in the simulation cell
-
     # Get ground state energies predicted by trained models
-    # E_inter   = []
-    # zndex = 0
-    # for index_nmodel in range(inputs.nmodel):
-    #     for index_nstep in range(inputs.nstep):
-    #         if (index_nmodel*inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-    #             struc_init.calc = inputs.calc_MLIP[zndex]
-    #             E_inter.append(struc_init.get_potential_energy())
-    #             zndex += 1
-    # E_inter = inputs.comm.allgather(E_inter)
+    E_ref = get_E_ref(inputs.nmodel, inputs.nstep, inputs.calc_MLIP)
     
     # # Calculate the average of ground state energies
     # E_ref = np.average(np.array([i for items in E_inter for i in items]), axis=0);
@@ -153,31 +140,21 @@ def get_testerror(inputs):
         natoms = len(struc)
         
         if id_step % inputs.printinterval == 0:
-            mpi_print(f'[Termi]\tTesting: sample {id_step}', inputs.rank)
+            single_print(f'[Termi]\tTesting: sample {id_step}')
 
         # Go through all trained models
         for index_nmodel in range(inputs.nmodel):
             for index_nstep in range(inputs.nstep):
-                if (index_nmodel * inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-                    struc.calc = inputs.calc_MLIP[zndex]
-                    # Predicted energy is shifted E_gs back, but the E_gs defualt is zero
+                struc.calc = inputs.calc_MLIP[zndex]
+                # Predicted energy is shifted E_gs back, but the E_gs defualt is zero
 
-                    if inputs.al_type == 'energy_max':
-                        prd_E.append(struc.get_potential_energies())
-                    else:
-                        prd_E.append(struc.get_potential_energy())
-                    prd_F.append(struc.get_forces(md=True))
-                    prd_R.append(struc.get_positions())
-                    zndex += 1
-
-        # Get average and standard deviation (Uncertainty) of predicted energies from various models
-        prd_E = inputs.comm.allgather(prd_E)
-        prd_E = [jtem for item in prd_E if len(item) != 0 for jtem in item]
-        inputs.comm.Barrier()
-
-        # Get average of predicted forces from various models
-        prd_F = inputs.comm.allgather(prd_F)
-        prd_F = [jtem for item in prd_F if len(item) != 0 for jtem in item]
+                if inputs.al_type == 'energy_max':
+                    prd_E.append(struc.get_potential_energies()-E_ref[1][zndex])
+                else:
+                    prd_E.append(struc.get_potential_energy()-E_ref[0][zndex])
+                prd_F.append(struc.get_forces(md=True))
+                prd_R.append(struc.get_positions())
+                zndex += 1
 
         if inputs.harmonic_F:
             from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
@@ -188,7 +165,6 @@ def get_testerror(inputs):
             E_ha = get_E_ha(displacements, F_ha)
             prd_E = np.array(prd_E) + E_ha
             # id_E = id_E - E_ha
-
 
         if inputs.al_type == 'energy_max':
             # mpi_print(prd_E, inputs.rank)
@@ -216,10 +192,6 @@ def get_testerror(inputs):
 
             prd_F_avg.append(prd_F_step_norm_avg)
             prd_F_std.append(prd_F_step_norm_std)
-
-        # Get average of predicted sigmas from various models
-        prd_R = inputs.comm.allgather(prd_R)
-        prd_R = [jtem for item in prd_R if len(item) != 0 for jtem in item]
 
         prd_sigma = []
         prd_sigma_max = []
@@ -321,50 +293,48 @@ def get_testerror(inputs):
         UncertRel_sigma_std = '----          '
 
     if inputs.calc_type == 'active' or inputs.calc_type == 'period':
-        if inputs.rank == 0:
-            outputfile = open(f'result.txt', 'a')
+        outputfile = open(f'result.txt', 'a')
 
-            result_print = f'{inputs.temperature}      \t{inputs.index}             '\
-                           + '\t' + uncert_strconvter(E_MAE)\
-                           + '\t' + uncert_strconvter(F_MAE)\
-                           + '\t' + uncert_strconvter(sigma_MAE)\
-                           + '\t' + uncert_strconvter(np.average(prd_E_avg))\
-                           + '\t' + uncert_strconvter(np.std(prd_E_avg))
+        result_print = f'{inputs.temperature}      \t{inputs.index}             '\
+                       + '\t' + uncert_strconvter(E_MAE)\
+                       + '\t' + uncert_strconvter(F_MAE)\
+                       + '\t' + uncert_strconvter(sigma_MAE)\
+                       + '\t' + uncert_strconvter(np.average(prd_E_avg))\
+                       + '\t' + uncert_strconvter(np.std(prd_E_avg))
 
-            if inputs.al_type == 'energy' or inputs.al_type == 'energy_max':
-                result_print +=   '\t' + uncert_strconvter(UncertAbs_E_avg)\
-                                + '\t' + uncert_strconvter(UncertAbs_E_std)\
-                                + '\t' + uncert_strconvter(UncertRel_E_avg)\
-                                + '\t' + uncert_strconvter(UncertRel_E_std)
+        if inputs.al_type == 'energy' or inputs.al_type == 'energy_max':
+            result_print +=   '\t' + uncert_strconvter(UncertAbs_E_avg)\
+                            + '\t' + uncert_strconvter(UncertAbs_E_std)\
+                            + '\t' + uncert_strconvter(UncertRel_E_avg)\
+                            + '\t' + uncert_strconvter(UncertRel_E_std)
 
-            if inputs.al_type == 'energy_max':
-                result_print +=   '\t' + uncert_strconvter(UncertAbs_E_atom_avg)\
-                                + '\t' + uncert_strconvter(UncertAbs_E_atom_std)\
-                                + '\t' + uncert_strconvter(UncertRel_E_atom_avg)\
-                                + '\t' + uncert_strconvter(UncertRel_E_atom_std)
+        if inputs.al_type == 'energy_max':
+            result_print +=   '\t' + uncert_strconvter(UncertAbs_E_atom_avg)\
+                            + '\t' + uncert_strconvter(UncertAbs_E_atom_std)\
+                            + '\t' + uncert_strconvter(UncertRel_E_atom_avg)\
+                            + '\t' + uncert_strconvter(UncertRel_E_atom_std)
 
-            if inputs.al_type == 'force' or inputs.al_type == 'force_max':
-                result_print +=   '\t' + uncert_strconvter(UncertAbs_F_avg)\
-                                + '\t' + uncert_strconvter(UncertAbs_F_std)\
-                                + '\t' + uncert_strconvter(UncertRel_F_avg)\
-                                + '\t' + uncert_strconvter(UncertRel_F_std)
+        if inputs.al_type == 'force' or inputs.al_type == 'force_max':
+            result_print +=   '\t' + uncert_strconvter(UncertAbs_F_avg)\
+                            + '\t' + uncert_strconvter(UncertAbs_F_std)\
+                            + '\t' + uncert_strconvter(UncertRel_F_avg)\
+                            + '\t' + uncert_strconvter(UncertRel_F_std)
 
-            if inputs.al_type == 'sigma' or inputs.al_type == 'sigma_max':
-                result_print +=   '\t' + uncert_strconvter(UncertAbs_sigma_avg)\
-                                + '\t' + uncert_strconvter(UncertAbs_sigma_std)\
-                                + '\t' + uncert_strconvter(UncertRel_sigma_avg)\
-                                + '\t' + uncert_strconvter(UncertRel_sigma_std)
-            outputfile.write(result_print)
-            outputfile.close()
+        if inputs.al_type == 'sigma' or inputs.al_type == 'sigma_max':
+            result_print +=   '\t' + uncert_strconvter(UncertAbs_sigma_avg)\
+                            + '\t' + uncert_strconvter(UncertAbs_sigma_std)\
+                            + '\t' + uncert_strconvter(UncertRel_sigma_avg)\
+                            + '\t' + uncert_strconvter(UncertRel_sigma_std)
+        outputfile.write(result_print)
+        outputfile.close()
     elif inputs.calc_type == 'random':
-        if inputs.rank == 0:
-            outputfile = open(f'result.txt', 'a')
-            outputfile.write(
-                f'{inputs.temperature}      \t{inputs.index}             \t' +
-                uncert_strconvter(E_MAE) + '\t' +
-                uncert_strconvter(F_MAE) + '\t' +
-                uncert_strconvter(sigma_MAE) + '\n'
-                )
-            outputfile.close()
+        outputfile = open(f'result.txt', 'a')
+        outputfile.write(
+            f'{inputs.temperature}      \t{inputs.index}             \t' +
+            uncert_strconvter(E_MAE) + '\t' +
+            uncert_strconvter(F_MAE) + '\t' +
+            uncert_strconvter(sigma_MAE) + '\n'
+            )
+        outputfile.close()
     else:
-        mpi_print('You need to assign a clac_type', inputs.rank)
+        single_print('You need to assign a clac_type')

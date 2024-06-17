@@ -13,7 +13,7 @@ from ase.io.trajectory import Trajectory
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
 from libs.lib_md import runMD
-from libs.lib_util  import output_init, single_print, mpi_print, check_mkdir
+from libs.lib_util  import output_init, single_print, check_mkdir
 
 import torch
 torch.set_default_dtype(torch.float64)
@@ -25,23 +25,22 @@ def run_dft_runmd(inputs):
     """
 
     # Print the head
-    output_init('runMD', inputs.version, inputs.rank)
-    mpi_print(f'[runMD]\tInitiate runMD process', inputs.rank)
-    inputs.comm.Barrier()
+    output_init('runMD', inputs.version)
+    single_print(f'[runMD]\tInitiate runMD process')
 
     # Initialization of a termination signal
     signal = 0
 
-    mpi_print(f'[runMD]\tCheck the initial configuration', inputs.rank)
+    single_print(f'[runMD]\tCheck the initial configuration')
     if os.path.exists('start.in'):
-        mpi_print(f'[runMD]\tFound the start.in file. MD starts from this.', inputs.rank)
+        print(f'[runMD]\tFound the start.in file. MD starts from this.')
         # Read the ground state structure with the primitive cell
         struc_init = atoms_read('start.in', format='aims')
         # Make it supercell
         struc = make_supercell(struc_init, inputs.supercell_init)
         MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
     elif os.path.exists('start.traj'):
-        mpi_print(f'[runMD]\tFound the start.traj file. MD starts from this.', inputs.rank)
+        single_print(f'[runMD]\tFound the start.traj file. MD starts from this.')
         # Read the ground state structure with the primitive cell
         struc_init = Trajectory('start.traj')[-1]
         struc = make_supercell(struc_init, inputs.supercell_init)
@@ -52,7 +51,7 @@ def run_dft_runmd(inputs):
             MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
     elif os.path.exists('start.bundle'):
         from ase.io.bundletrajectory import BundleTrajectory
-        mpi_print(f'[runMD]\tFound the start.bundle file. MD starts from this.', inputs.rank)
+        single_print(f'[runMD]\tFound the start.bundle file. MD starts from this.')
         file_traj_read = BundleTrajectory(filename='start.bundle', mode='r')
         file_traj_read[0]; #ASE bug
         struc_init = file_traj_read[-1]
@@ -63,7 +62,7 @@ def run_dft_runmd(inputs):
         except AttributeError:
             MaxwellBoltzmannDistribution(struc, temperature_K=inputs.temperature, force_temp=True)
     else:
-        mpi_print(f'[runMD]\tMD starts from the last entry of the trajectory.son file', inputs.rank)
+        single_print(f'[runMD]\tMD starts from the last entry of the trajectory.son file')
         # Read all structural configurations in SON file
         metadata, data = son.load('trajectory.son')
         atom_numbers = [
@@ -79,61 +78,55 @@ def run_dft_runmd(inputs):
             )
         struc_son.set_velocities(data[-1]['atoms']['velocities'])
         struc = make_supercell(struc_son, inputs.supercell_init)
-    inputs.comm.Barrier()
 
     ## Prepare the ground state structure
     # Read the ground state structure with the primitive cell
     struc_init = atoms_read('geometry.in.supercell', format='aims')
-    mpi_print(f'[runMD]\tRead the reference structure: geometry.in.next_step', inputs.rank)
-    inputs.comm.Barrier()
+    single_print(f'[runMD]\tRead the reference structure: geometry.in.next_step')
 
     cell_new = struc.get_cell()
     struc.set_cell(cell_new * inputs.cell_factor)
 
-    mpi_print(f'[runMD]\tFind the trained models: {inputs.modelpath}', inputs.rank)
+    single_print(f'[runMD]\tFind the trained models: {inputs.modelpath}')
     # Prepare empty lists for potential and total energies
     Epot_step = []
     calc_MLIP = []
 
-    mpi_print(f'\t\tDevice: {inputs.device}', inputs.rank)
+    single_print(f'\t\tDevice: {inputs.device}')
 
     for index_nmodel in range(inputs.nmodel):
         for index_nstep in range(inputs.nstep):
-            if (index_nmodel * inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-                dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-                if os.path.exists(f'{inputs.modelpath}/{dply_model}'):
-                    single_print(f'\t\tFound the deployed model: {dply_model}')
-                    calc_MLIP.append(
-                        nequip_calculator.NequIPCalculator.from_deployed_model(
-                            f'{inputs.modelpath}/{dply_model}', device=inputs.device
-                            )
-                    )
-                    struc_init.calc = calc_MLIP[-1]
-                    Epot_step.append(struc_init.get_potential_energy() - inputs.E_gs)
-                else:
-                    # If there is no model, turn on the termination signal
-                    single_print(f'\t\tCannot find the model: {dply_model}')
-                    signal = 1
-                    signal = inputs.comm.bcast(inputs.signal, root=inputs.rank)
-    Epot_step = inputs.comm.allgather(Epot_step)
+            dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
+            if os.path.exists(f'{inputs.modelpath}/{dply_model}'):
+                single_print(f'\t\tFound the deployed model: {dply_model}')
+                calc_MLIP.append(
+                    nequip_calculator.NequIPCalculator.from_deployed_model(
+                        f'{inputs.modelpath}/{dply_model}', device=inputs.device
+                        )
+                )
+                struc_init.calc = calc_MLIP[-1]
+                Epot_step.append(struc_init.get_potential_energy() - inputs.E_gs)
+            else:
+                # If there is no model, turn on the termination signal
+                single_print(f'\t\tCannot find the model: {dply_model}')
+                signal = 1
 
     # Get averaged energy from trained models
     Epot_step_avg =\
     np.average(np.array([i for items in Epot_step for i in items]), axis=0)
-    mpi_print(f'[runMD]\tGet the potential energy of the reference structure: {Epot_step_avg}', inputs.rank)
+    single_print(f'[runMD]\tGet the potential energy of the reference structure: {Epot_step_avg}')
 
     # if the number of trained model is not enough, terminate it
     if signal == 1:
         sys.exit()
-    inputs.comm.Barrier()
 
-    mpi_print(f'[runMD]\tInitiate MD with trained models', inputs.rank)
+    single_print(f'[runMD]\tInitiate MD with trained models')
 
     if inputs.MD_search == 'restart':
         sigma = 0.0
         stepss = 300
         while sigma < 1.0:
-            mpi_print(f'[runMD]\tFound the start.traj file. MD starts from this.', inputs.rank)
+            single_print(f'[runMD]\tFound the start.traj file. MD starts from this.')
             # Read the ground state structure with the primitive cell
             struc_init = Trajectory('start.traj')[0]
             struc = make_supercell(struc_init, inputs.supercell_init)
@@ -151,7 +144,6 @@ def run_dft_runmd(inputs):
             import pandas as pd
             data = pd.read_csv('md.log', sep='\t')
             sigma = np.array(data['S_average'])[-1]
-
     else:
         runMD(
             inputs, struc, inputs.steps,
@@ -165,4 +157,4 @@ def run_dft_runmd(inputs):
     #     signal_uncert=True, signal_append=True
     #     )
 
-    mpi_print(f'[runMD]\t!! Finish MD calculations', inputs.rank)
+    single_print(f'[runMD]\t!! Finish MD calculations')

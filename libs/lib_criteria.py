@@ -120,13 +120,8 @@ def eval_uncert_all(
         Standard deviation of predicted energies
     """
 
-    from mpi4py import MPI
+    # from mpi4py import MPI
     from libs.lib_util import eval_sigma
-
-    # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    size = comm.Get_size()
-    rank = comm.Get_rank()
 
     # Prepare empty lists for potential and total energies
     Epot_step = []
@@ -138,46 +133,37 @@ def eval_uncert_all(
     # Get predicted potential and total energies shifted by E_ref (ground state energy)
     for index_nmodel in range(nmodel):
         for index_nstep in range(nstep):
-            if (index_nmodel*nstep + index_nstep) % size == rank:
-                struc_step.calc = calculator[zndex]
+            struc_step.calc = calculator[zndex]
 
-                if al_type == 'energy_max':
-                    Epot_step.append(np.array(struc_step.get_potential_energies()) - E_ref/natoms)
-                else:
-                    Epot_step.append(struc_step.get_potential_energy() - E_ref)
+            if al_type == 'energy_max':
+                Epot_step.append(np.array(struc_step.get_potential_energies()) - E_ref[1][zndex])
+            else:
+                Epot_step.append(struc_step.get_potential_energy() - E_ref[0][zndex])
 
-                F_step.append(struc_step.get_forces())
-                prd_struc.append(struc_step.get_positions())
-                zndex += 1
-    Epot_step = comm.allgather(Epot_step)
-    F_step = comm.allgather(F_step)
-    prd_struc = comm.allgather(prd_struc) 
+            F_step.append(struc_step.get_forces())
+            prd_struc.append(struc_step.get_positions())
+            zndex += 1
 
     # Get the average and standard deviation of predicted potential energies
-    # and the average of total energies
-    Epot_step_filtered = np.array([jtem for item in Epot_step if len(item) != 0 for jtem in item])
     # Get the average and standard deviation of the norm of predicted forces
-    F_step_filtered = np.array([jtem for item in F_step if len(item) != 0 for jtem in item])
-    struc_filtered = [jtem for item in prd_struc if len(item) != 0 for jtem in item]
-
     if harmonic_F:
         from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
         displacements = get_displacements(struc_step.get_positions(), 'geometry.in.supercell')
         F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
         E_ha = get_E_ha(displacements, F_ha)
-        Epot_step_filtered = Epot_step_filtered + E_ha
-        F_step_filtered = F_step_filtered + F_ha
+        Epot_step = Epot_step + E_ha
+        F_step = F_step + F_ha
 
-    Epot_step_avg = np.average(Epot_step_filtered, axis=0)
-    Epot_step_std = np.std(Epot_step_filtered, axis=0)
+    Epot_step_avg = np.average(Epot_step, axis=0)
+    Epot_step_std = np.std(Epot_step, axis=0)
 
-    F_step_avg = np.average(F_step_filtered, axis=0)
-    F_step_norm = np.array([[np.linalg.norm(Fcomp) for Fcomp in Ftems] for Ftems in F_step_filtered - F_step_avg])
+    F_step_avg = np.average(F_step, axis=0)
+    F_step_norm = np.array([[np.linalg.norm(Fcomp) for Fcomp in Ftems] for Ftems in F_step - F_step_avg])
     F_step_norm_std = np.sqrt(np.average(F_step_norm ** 2, axis=0))
     F_step_norm_avg = np.linalg.norm(F_step_avg, axis=1)
 
     prd_sigma = []
-    for prd_F_step, prd_struc_step in zip(F_step_filtered, struc_filtered):
+    for prd_F_step, prd_struc_step in zip(F_step, prd_struc):
         prd_sigma.append(eval_sigma(prd_F_step, prd_struc_step, al_type))
 
     # Get the average and standard deviation of the norm of predicted forces
@@ -350,9 +336,8 @@ def get_result(inputs, get_type):
                         + '\t' + uncert_strconvter(criteria_UncertRel_S_avg_all)
 
     # Record the average values
-    if inputs.rank == 0:
-        with open('result.txt', 'a') as criteriafile:
-            criteriafile.write(result_print+ '\n')
+    with open('result.txt', 'a') as criteriafile:
+        criteriafile.write(result_print+ '\n')
 
 
     

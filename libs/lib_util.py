@@ -8,21 +8,21 @@ from ase        import Atoms
 from ase.data   import atomic_numbers
 
 
-def mpi_print(string, rank):
-    """Function [mpi_print]
-    Instantly print a message only from one MPI thread.
+# def mpi_print(string, rank):
+#     """Function [mpi_print]
+#     Instantly print a message only from one MPI thread.
 
-    Parameters:
+#     Parameters:
 
-    string: str
-        A message to be printed
-    rank: int
-        The index of current MPI thread
-    """
+#     string: str
+#         A message to be printed
+#     rank: int
+#         The index of current MPI thread
+#     """
 
-    if rank == 0:
-        print(string)
-    sys.stdout.flush() # Instant printing
+#     if rank == 0:
+#         print(string)
+#     sys.stdout.flush() # Instant printing
 
 
 def single_print(string):
@@ -80,11 +80,11 @@ def rm_file(dir_name):
         os.system('rm ./'+dir_name)
 
 
-def output_init(string, version, rank):
+def output_init(string, version):
     from datetime import datetime
 
     if not string == 'cont' and not string == 'gen':
-        mpi_print(
+        single_print(
             '\n'
             '#################################################################\n'
             '#                                                               #\n'
@@ -97,13 +97,11 @@ def output_init(string, version, rank):
             '#  @     @    @         @  @  @   @     @   @     @   @    @    #\n'
             '#  @     @    @@@@@@@   @  @  @    @@@@@    @     @   @@@@@     #\n'
             '#                                                               #\n'
-            '#################################################################\n',
-            rank
-            )
+            '#################################################################\n'
+        )
 
-    mpi_print(f'[{string}]\t' + datetime.now().strftime("Date/Time: %Y %m %d %H:%M"), rank)
-
-    mpi_print(f'[{string}]\tALmoMD Version: {version}', rank)
+    single_print(f'[{string}]\t' + datetime.now().strftime("Date/Time: %Y %m %d %H:%M"))
+    single_print(f'[{string}]\tALmoMD Version: {version}')
 
 
         
@@ -294,6 +292,23 @@ def get_E_ha(displacements, fc_ha):
     return displacements.flatten() @ -fc_ha.flatten() / 2
 
 
+def get_E_ref(nmodel, nstep, calculator):
+    # Read the ground state structure with the primitive cell
+    from ase.io import read as atoms_read
+    struc_init = atoms_read('geometry.in.supercell', format='aims')
+
+    E_ref = []
+    Eatom_ref = []
+    zndex = 0
+    for index_nmodel in range(nmodel):
+        for index_nstep in range(nstep):
+            struc_init.calc = calculator[zndex]
+            Eatom_ref.append(np.array(struc_init.get_potential_energies()))
+            E_ref.append(struc_init.get_potential_energy())
+            zndex += 1
+
+    return [np.array(E_ref), np.array(Eatom_ref)]
+
 
 def generate_msg(al_type):
     result_msg = 'Temperature[K]\tIteration\t'\
@@ -367,7 +382,7 @@ def read_input_file(file_path):
                 # Perform type conversions for specific variables
                 if name in [
                 'supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart',
-                'signal_uncert', 'criteria_energy', 'train_stress'
+                'signal_uncert', 'criteria_energy', 'train_stress', 'npz_sigma'
                 ]:
                     value = eval(value)
                 elif name in [

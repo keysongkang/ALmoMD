@@ -6,10 +6,9 @@ from ase.io.cif        import write_cif
 import time
 import os
 import numpy as np
-from mpi4py import MPI
 from decimal import Decimal
 
-from libs.lib_util    import single_print, mpi_print
+from libs.lib_util    import single_print
 from libs.lib_MD_util import get_MDinfo_temp, get_masses
 from libs.lib_criteria import eval_uncert, uncert_strconvter, get_criteria
 
@@ -68,10 +67,6 @@ def NVTLangevin_meta(
 
     time_init = time.time()
 
-    # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-
     # Initialization of index
     Langevin_idx = 0
 
@@ -90,25 +85,23 @@ def NVTLangevin_meta(
     else: # New start
         file_traj = TrajectoryWriter(filename=trajectory, mode='w')
         # Add new configuration to the trajectory file
-        if rank == 0:
-            file_traj.write(atoms=struc)
+        file_traj.write(atoms=struc)
             
         if isinstance(logfile, str):
-            if rank == 0:
-                file_log = open(logfile, 'w')
+            file_log = open(logfile, 'w')
+            file_log.write(
+                'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
+                + 'Temperature[K]'
+                )
+            if signal_uncert:
                 file_log.write(
-                    'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
-                    + 'Temperature[K]'
+                    '\tUncertAbs_E\tUncertRel_E\t'
+                    + 'UncertAbs_F\tUncertRel_F\t'
+                    + 'UncertAbs_S\tUncertRel_S\tS_average\n'
                     )
-                if signal_uncert:
-                    file_log.write(
-                        '\tUncertAbs_E\tUncertRel_E\t'
-                        + 'UncertAbs_F\tUncertRel_F\t'
-                        + 'UncertAbs_S\tUncertRel_S\tS_average\n'
-                        )
-                else:
-                    file_log.write('\n')
-                file_log.close()
+            else:
+                file_log.write('\n')
+            file_log.close()
         
             # Get MD information at the current step
             info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
@@ -122,29 +115,28 @@ def NVTLangevin_meta(
                 eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
             # Log MD information at the current step in the log file
-            if rank == 0:
-                file_log = open(logfile, 'a')
+            file_log = open(logfile, 'a')
+            file_log.write(
+                '{:.5f}'.format(Decimal(str(0.0))) + '   \t' +
+                '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
+                '{:.2f}'.format(Decimal(str(info_T)))
+                )
+            if signal_uncert:
                 file_log.write(
-                    '{:.5f}'.format(Decimal(str(0.0))) + '   \t' +
-                    '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                    '{:.2f}'.format(Decimal(str(info_T)))
+                    '      \t' +
+                    uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_S) + '\t' +
+                    uncert_strconvter(S_step) + '\n'
                     )
-                if signal_uncert:
-                    file_log.write(
-                        '      \t' +
-                        uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_E) + '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_F) + '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_S) + '\t' +
-                        uncert_strconvter(S_step) + '\n'
-                        )
-                else:
-                    file_log.write('\n')
-                file_log.close()
+            else:
+                file_log.write('\n')
+            file_log.close()
 
     # Put random 0 and 300
     criteria = get_criteria(temperature, 0, 0, 300, al_type)
@@ -188,13 +180,10 @@ def NVTLangevin_meta(
         
         # mpi_print(f'Step 7: {time.time()-time_init}', rank)
         # Sample the random numbers for the temperature fluctuation
-        xi = np.empty(shape=(natoms, 3))
-        eta = np.empty(shape=(natoms, 3))
-        if rank == 0:
-            xi = np.random.standard_normal(size=(natoms, 3))
-            eta = np.random.standard_normal(size=(natoms, 3))
-        comm.Bcast(xi, root=0)
-        comm.Bcast(eta, root=0)
+        # xi = np.empty(shape=(natoms, 3))
+        # eta = np.empty(shape=(natoms, 3))
+        xi = np.random.standard_normal(size=(natoms, 3))
+        eta = np.random.standard_normal(size=(natoms, 3))
         
         # mpi_print(f'Step 8: {time.time()-time_init}', rank)
         # Get get changes of positions and velocities
@@ -219,10 +208,8 @@ def NVTLangevin_meta(
         # mpi_print(f'Step 10: {time.time()-time_init}', rank)
         # recalc velocities after RATTLE constraints are applied
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
-        comm.Barrier()
         # mpi_print(f'Step 10-1: {time.time()-time_init}', rank)
         forces = get_forces_meta(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F, criteria, meta_Ediff)
-        comm.Barrier()
         
         # mpi_print(f'Step 10-2: {time.time()-time_init}', rank)
         # Update the velocities
@@ -249,34 +236,31 @@ def NVTLangevin_meta(
                     eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
                 # mpi_print(f'Step 14: {time.time()-time_init}', rank)
-                if rank == 0:
-                    file_log = open(logfile, 'a')
-                    simtime = timestep*(idx+loginterval)/units.fs/1000
+                file_log = open(logfile, 'a')
+                simtime = timestep*(idx+loginterval)/units.fs/1000
+                file_log.write(
+                    '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
+                    '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
+                    '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
+                    '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
+                    '{:.2f}'.format(Decimal(str(info_T)))
+                    )
+                if signal_uncert:
                     file_log.write(
-                        '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
-                        '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                        '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                        '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                        '{:.2f}'.format(Decimal(str(info_T)))
+                        '      \t' +
+                        uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                        uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                        uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_S) + '\t' +
+                        uncert_strconvter(S_step) + '\n'
                         )
-                    if signal_uncert:
-                        file_log.write(
-                            '      \t' +
-                            uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_E) + '\t' +
-                            uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_F) + '\t' +
-                            uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_S) + '\t' +
-                            uncert_strconvter(S_step) + '\n'
-                            )
-                    else:
-                        file_log.write('\n')
-                    file_log.close()
+                else:
+                    file_log.write('\n')
+                file_log.close()
                 # mpi_print(f'Step 15: {time.time()-time_init}', rank)
-            if rank == 0:
-                file_traj.write(atoms=struc)
-
+            file_traj.write(atoms=struc)
 
             # mpi_print(f'Step 16: {time.time()-time_init}', rank)
 
@@ -308,10 +292,6 @@ def get_forces_meta(
     from libs.lib_util import eval_sigma
 
     # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    size = comm.Get_size()
-    rank = comm.Get_rank()
-
     # mpi_print(f'Step 10-a: {time.time()-time_init}', rank)
     if type(calculator) == list:
         energy = []
@@ -320,20 +300,18 @@ def get_forces_meta(
         zndex = 0
         for index_nmodel in range(nmodel):
             for index_nstep in range(nstep):
-                if (index_nmodel*nstep + index_nstep) % size == rank:
-                    # mpi_print(f'Step 10-a1 first {rank}: {time.time()-time_init}', rank)
-                    struc.calc = calculator[zndex]
-                    # mpi_print(f'Step 10-a1 second {rank}: {time.time()-time_init}', rank)
-                    temp_force = struc.get_forces()
-                    # mpi_print(f'Step 10-a1 third {rank}: {time.time()-time_init}', rank)
-                    energy.append(struc.get_potential_energy())
-                    forces.append(temp_force)
-                    # sigmas.append(eval_sigma(temp_force, struc.get_positions(), 'force_max'))
-                    # mpi_print(f'Step 10-a1 last {rank}: {time.time()-time_init}', rank)
-                    zndex += 1
+                # mpi_print(f'Step 10-a1 first {rank}: {time.time()-time_init}', rank)
+                struc.calc = calculator[zndex]
+                # mpi_print(f'Step 10-a1 second {rank}: {time.time()-time_init}', rank)
+                temp_force = struc.get_forces()
+                # mpi_print(f'Step 10-a1 third {rank}: {time.time()-time_init}', rank)
+                energy.append(struc.get_potential_energy())
+                forces.append(temp_force)
+                # sigmas.append(eval_sigma(temp_force, struc.get_positions(), 'force_max'))
+                # mpi_print(f'Step 10-a1 last {rank}: {time.time()-time_init}', rank)
+                zndex += 1
         # mpi_print(f'Step 10-a2: {time.time()-time_init}', rank)
-        energy = comm.allgather(energy)
-        forces = comm.allgather(forces)
+
         # sigmas = comm.allgather(sigmas)
         # mpi_print(f'Step 10-a3: {time.time()-time_init}', rank)
         E_step_filtered = [jtem for item in energy if len(item) != 0 for jtem in item]
@@ -362,22 +340,22 @@ def get_forces_meta(
 
         if (F_step_norm_std[uncert_max_idx] - criteria.Un_Abs_F_avg_i + criteria.Un_Abs_F_std_i * 0.5) >= 0:
             uncert_relat = (F_step_norm_std[uncert_max_idx] - criteria.Un_Abs_F_avg_i + criteria.Un_Abs_F_std_i * 0.5) / (criteria.Un_Abs_F_std_i * 1.5)
-            mpi_print(np.absolute(E_step - E_ha) / E_ha, rank)
-            mpi_print(np.absolute(E_step - E_ha), rank)
+            single_print(np.absolute(E_step - E_ha) / E_ha)
+            single_print(np.absolute(E_step - E_ha))
             # mpi_print(E_ha, rank)
-            mpi_print(E_step, rank)
+            single_print(E_step)
             # mpi_print(criteria.Epotential_avg * (1+meta_Ediff), rank)
-            mpi_print(criteria.Epotential_avg, rank)
-            mpi_print(f'{np.absolute(E_step - E_ha) / E_ha > meta_Ediff}', rank)
+            single_print(criteria.Epotential_avg)
+            single_print(f'{np.absolute(E_step - E_ha) / E_ha > meta_Ediff}')
             # mpi_print(f'{E_ha >= criteria.Epotential_avg * (1+meta_Ediff)}', rank)
-            mpi_print(f'{E_step >= criteria.Epotential_avg + 3 * criteria.Epotential_std}', rank)
+            single_print(f'{E_step >= criteria.Epotential_avg + 3 * criteria.Epotential_std}')
             # mpi_print(criteria.Epotential_avg - 2 * criteria.Epotential_std, rank)
 
             if np.absolute(E_step - E_ha) / E_ha > meta_Ediff: # or E_step >= criteria.Epotential_avg + 3 * criteria.Epotential_std:
-                mpi_print('deactivate', rank)
+                single_print('deactivate')
                 uncert_coeff[uncert_max_idx] = 0
             else:
-                mpi_print('activate', rank)
+                single_print('activate')
                 if uncert_relat > 1.0:
                     uncert_coeff[uncert_max_idx] = 1.0
                 else:
@@ -457,11 +435,8 @@ def get_forces_meta(
         # print(force_avg)
 
     else:
-        forces = None
-        if rank == 0:
-            struc.calc = calculator
-            forces = struc.get_forces(md=True)
-        force_avg = comm.bcast(forces, root=0)
+        struc.calc = calculator
+        forces_avg = struc.get_forces(md=True)
 
     # mpi_print(f'Step 10-d: {time.time()-time_init}', rank)
 

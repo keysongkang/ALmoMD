@@ -13,7 +13,7 @@ import matplotlib.ticker as tck
 from matplotlib.ticker import MultipleLocator
 from sklearn.metrics import r2_score, mean_absolute_error
 
-from libs.lib_util  import output_init, mpi_print, check_mkdir
+from libs.lib_util  import output_init, single_print, check_mkdir
 
 import torch
 torch.set_default_dtype(torch.float64)
@@ -24,17 +24,15 @@ def run_dft_test(inputs):
     Check the validation error.
     """
 
-    output_init('test', inputs.version, inputs.rank)
-    mpi_print(f'[test]\tInitiate the validation test process', inputs.rank)
-    inputs.comm.Barrier()
+    output_init('test', inputs.version)
+    single_print(f'[test]\tInitiate the validation test process')
 
     # Read testing data
     npz_test = f'./MODEL/data-test.npz' # Path
     data_test = np.load(npz_test)         # Load
-    mpi_print(f'[test]\tRead the testing data: data-test.npz', inputs.rank)
-    inputs.comm.Barrier()
+    single_print(f'[test]\tRead the testing data: data-test.npz')
 
-    mpi_print(f'\t\tDevice: {inputs.device}', inputs.rank)
+    single_print(f'\t\tDevice: {inputs.device}')
 
     for test_idx in range(inputs.test_index):
         # Set the path to folders storing the training data for NequIP
@@ -42,39 +40,35 @@ def run_dft_test(inputs):
         # Initialization of a termination signal
         signal = 0
 
-        mpi_print(f'[test]\tFind the trained models: {workpath}', inputs.rank)
+        single_print(f'[test]\tFind the trained models: {workpath}')
         # Load the trained models as calculators
         calc_MLIP = []
         for index_nmodel in range(inputs.nmodel):
             for index_nstep in range(inputs.nstep):
-                if (index_nmodel * inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-                    dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-                    if os.path.exists(f'{workpath}/{dply_model}'):
-                        mpi_print(f'\t\tFound the deployed model: {dply_model}', inputs.rank)
-                        calc_MLIP.append(
-                            nequip_calculator.NequIPCalculator.from_deployed_model(f'{workpath}/{dply_model}', device=inputs.device)
-                        )
-                    else:
-                        # If there is no model, turn on the termination signal
-                        mpi_print(f'\t\tCannot find the model: {dply_model}', inputs.rank)
-                        signal = 1
-                        signal = inputs.comm.bcast(signal, root=inputs.rank)
+                dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
+                if os.path.exists(f'{workpath}/{dply_model}'):
+                    single_print(f'\t\tFound the deployed model: {dply_model}')
+                    calc_MLIP.append(
+                        nequip_calculator.NequIPCalculator.from_deployed_model(
+                            f'{workpath}/{dply_model}', device=inputs.device
+                            )
+                    )
+                else:
+                    # If there is no model, turn on the termination signal
+                    single_print(f'\t\tCannot find the model: {dply_model}')
+                    signal = 1
 
         # Check the termination signal
         if signal == 1:
-            mpi_print('[test]\tSome training processes are not finished.', inputs.rank)
+            single_print('[test]\tSome training processes are not finished.')
             sys.exit()
-        inputs.comm.Barrier()
 
         # Open the file to store the results
-        if inputs.rank == 0:
-            outputfile = open(f'result-test_{test_idx}_energy.txt', 'w')
-            outputfile.write('index   \tUncertAbs\tRealErrorAbs\tRealE\tPredictE\n')
-            outputfile.close()
-
-        inputs.comm.Barrier()
+        outputfile = open(f'result-test_{test_idx}_energy.txt', 'w')
+        outputfile.write('index   \tUncertAbs\tRealErrorAbs\tRealE\tPredictE\n')
+        outputfile.close()
         
-        mpi_print(f'[test]\tGo through all configurations in the testing data ...', inputs.rank)
+        single_print(f'[test]\tGo through all configurations in the testing data ...')
         # Go through all configurations in the testing data
         config_idx = 1
         for id_E, id_F, id_R, id_z, id_CELL, id_PBC in zip(
@@ -91,58 +85,50 @@ def run_dft_test(inputs):
             # Go through all trained models
             for index_nmodel in range(inputs.nmodel):
                 for index_nstep in range(inputs.nstep):
-                    if (index_nmodel * inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-                        struc.calc = calc_MLIP[zndex]
-                        prd_E.append(struc.get_potential_energy())
-                        prd_F.append(struc.get_forces())
-                        zndex += 1
+                    struc.calc = calc_MLIP[zndex]
+                    prd_E.append(struc.get_potential_energy())
+                    prd_F.append(struc.get_forces())
+                    zndex += 1
 
             # Get average and standard deviation (Uncertainty) of predicted energies from various models
-            prd_E = inputs.comm.allgather(prd_E)
-            prd_E_avg = np.average([jtem for item in prd_E if len(item) != 0 for jtem in item], axis=0)
-            prd_E_std = np.std([jtem for item in prd_E if len(item) != 0 for jtem in item], axis=0)
+            prd_E_avg = np.average(prd_E)
+            prd_E_std = np.std(prd_E)
 
             # Get the real error
             realerror_E = np.absolute(prd_E_avg - id_E)
 
             # Get average of predicted forces from various models
-            prd_F = inputs.comm.allgather(prd_F)
-            prd_F_filtered = [jtem for item in prd_F if len(item) != 0 for jtem in item]
-
             if inputs.harmonic_F:
                 from libs.lib_util import get_fc_ha
                 F_ha = get_fc_ha(struc.get_positions(), 'geometry.in.supercell', 'FORCE_CONSTANTS_remapped')
-                F_step_filtered = F_step_filtered + F_ha
+                prd_F = prd_F + F_ha
 
-            prd_F_avg = np.average(prd_F_filtered, axis=0)
+            prd_F_avg = np.average(prd_F, axis=0)
 
             # Save all energy information
-            if inputs.rank == 0:
-                trajfile = open(f'result-test_{test_idx}_energy.txt', 'a')
-                trajfile.write(
-                    str(config_idx) + '          \t' +
-                    '{:.5e}'.format(Decimal(str(prd_E_std))) + '\t' +       # Standard deviation (Uncertainty)
-                    '{:.5e}'.format(Decimal(str(realerror_E))) + '\t' +     # Real error
-                    '{:.10e}'.format(Decimal(str(id_E))) + '\t' +           # Real energy
-                    '{:.10e}'.format(Decimal(str(prd_E_avg))) + '\n'        # Predicted energy
-                )
-                trajfile.close()
+            trajfile = open(f'result-test_{test_idx}_energy.txt', 'a')
+            trajfile.write(
+                str(config_idx) + '          \t' +
+                '{:.5e}'.format(Decimal(str(prd_E_std))) + '\t' +       # Standard deviation (Uncertainty)
+                '{:.5e}'.format(Decimal(str(realerror_E))) + '\t' +     # Real error
+                '{:.10e}'.format(Decimal(str(id_E))) + '\t' +           # Real energy
+                '{:.10e}'.format(Decimal(str(prd_E_avg))) + '\n'        # Predicted energy
+            )
+            trajfile.close()
 
             # Save all force information
-            if inputs.rank == 0:
-                trajfile = open(f'result-test_{test_idx}_force.txt', 'a')
-                for kndex in range(len(prd_F_avg)):
-                    for lndex in range(3):
-                        trajfile.write(
-                            '{:.10e}'.format(Decimal(str(id_F[kndex][lndex]))) + '\t' +     # Real force
-                            '{:.10e}'.format(Decimal(str(prd_F_avg[kndex][lndex]))) + '\n'  # Predicted force
-                        )
-                trajfile.close()
+            trajfile = open(f'result-test_{test_idx}_force.txt', 'a')
+            for kndex in range(len(prd_F_avg)):
+                for lndex in range(3):
+                    trajfile.write(
+                        '{:.10e}'.format(Decimal(str(id_F[kndex][lndex]))) + '\t' +     # Real force
+                        '{:.10e}'.format(Decimal(str(prd_F_avg[kndex][lndex]))) + '\n'  # Predicted force
+                    )
+            trajfile.close()
 
-            inputs.comm.Barrier()
             config_idx += 1
 
-        mpi_print(f'[test]\tPlot the results ...', inputs.rank)
+        single_print(f'[test]\tPlot the results ...')
         ## Plot the energy and force prediction results
         # Read the energy data
         data = pd.read_csv(f'result-test_{test_idx}_energy.txt', sep="\t")
@@ -193,8 +179,8 @@ def run_dft_test(inputs):
         MAE_F = mean_absolute_error(data[0], data[1])
 
         # Print out the statistic results
-        mpi_print(f'[test]\t[[Statistic results]]', inputs.rank)
-        mpi_print(f'[test]\tEnergy_R2\tEnergy_MAE\tForces_R2\tForces_MAE', inputs.rank)
-        mpi_print(f'[test]\t{R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}', inputs.rank)
+        single_print(f'[test]\t[[Statistic results]]')
+        single_print(f'[test]\tEnergy_R2\tEnergy_MAE\tForces_R2\tForces_MAE')
+        single_print(f'[test]\t{R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}')
 
-    mpi_print(f'[test]\t!! Finish the testing process', inputs.rank)
+    single_print(f'[test]\t!! Finish the testing process')

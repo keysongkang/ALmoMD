@@ -6,10 +6,9 @@ from ase.io.cif        import write_cif
 import time
 import os
 import numpy as np
-from mpi4py import MPI
 from decimal import Decimal
 
-from libs.lib_util    import single_print, mpi_print
+from libs.lib_util    import single_print
 from libs.lib_MD_util import get_forces, get_MDinfo_temp, get_masses
 from libs.lib_criteria import eval_uncert, uncert_strconvter
 
@@ -68,10 +67,6 @@ def NVTLangevin(
 
     time_init = time.time()
 
-    # Extract MPI infos
-    comm = MPI.COMM_WORLD
-    rank = comm.Get_rank()
-
     # Initialization of index
     Langevin_idx = 0
 
@@ -90,25 +85,23 @@ def NVTLangevin(
     else: # New start
         file_traj = TrajectoryWriter(filename=trajectory, mode='w')
         # Add new configuration to the trajectory file
-        if rank == 0:
-            file_traj.write(atoms=struc)
+        file_traj.write(atoms=struc)
             
         if isinstance(logfile, str):
-            if rank == 0:
-                file_log = open(logfile, 'w')
+            file_log = open(logfile, 'w')
+            file_log.write(
+                'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
+                + 'Temperature[K]'
+                )
+            if signal_uncert:
                 file_log.write(
-                    'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
-                    + 'Temperature[K]'
+                    '\tUncertAbs_E\tUncertRel_E\t'
+                    + 'UncertAbs_F\tUncertRel_F\t'
+                    + 'UncertAbs_S\tUncertRel_S\tS_average\n'
                     )
-                if signal_uncert:
-                    file_log.write(
-                        '\tUncertAbs_E\tUncertRel_E\t'
-                        + 'UncertAbs_F\tUncertRel_F\t'
-                        + 'UncertAbs_S\tUncertRel_S\tS_average\n'
-                        )
-                else:
-                    file_log.write('\n')
-                file_log.close()
+            else:
+                file_log.write('\n')
+            file_log.close()
         
             # Get MD information at the current step
             info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
@@ -122,29 +115,28 @@ def NVTLangevin(
                 eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
             # Log MD information at the current step in the log file
-            if rank == 0:
-                file_log = open(logfile, 'a')
+            file_log = open(logfile, 'a')
+            file_log.write(
+                '{:.5f}'.format(Decimal(str(0.0))) + '   \t' +
+                '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
+                '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
+                '{:.2f}'.format(Decimal(str(info_T)))
+                )
+            if signal_uncert:
                 file_log.write(
-                    '{:.5f}'.format(Decimal(str(0.0))) + '   \t' +
-                    '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                    '{:.2f}'.format(Decimal(str(info_T)))
+                    '      \t' +
+                    uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                    uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                    uncert_strconvter(uncerts.UncertRel_S) + '\t' +
+                    uncert_strconvter(S_step) + '\n'
                     )
-                if signal_uncert:
-                    file_log.write(
-                        '      \t' +
-                        uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_E) + '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_F) + '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_S) + '\t' +
-                        uncert_strconvter(S_step) + '\n'
-                        )
-                else:
-                    file_log.write('\n')
-                file_log.close()
+            else:
+                file_log.write('\n')
+            file_log.close()
 
     # mpi_print(f'Step 2: {time.time()-time_init}', rank)
 
@@ -183,13 +175,10 @@ def NVTLangevin(
         
         # mpi_print(f'Step 7: {time.time()-time_init}', rank)
         # Sample the random numbers for the temperature fluctuation
-        xi = np.empty(shape=(natoms, 3))
-        eta = np.empty(shape=(natoms, 3))
-        if rank == 0:
-            xi = np.random.standard_normal(size=(natoms, 3))
-            eta = np.random.standard_normal(size=(natoms, 3))
-        comm.Bcast(xi, root=0)
-        comm.Bcast(eta, root=0)
+        # xi = np.empty(shape=(natoms, 3))
+        # eta = np.empty(shape=(natoms, 3))
+        xi = np.random.standard_normal(size=(natoms, 3))
+        eta = np.random.standard_normal(size=(natoms, 3))
         
         # mpi_print(f'Step 8: {time.time()-time_init}', rank)
         # Get get changes of positions and velocities
@@ -214,10 +203,9 @@ def NVTLangevin(
         # mpi_print(f'Step 10: {time.time()-time_init}', rank)
         # recalc velocities after RATTLE constraints are applied
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
-        comm.Barrier()
+
         # mpi_print(f'Step 10-1: {time.time()-time_init}', rank)
         forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
-        comm.Barrier()
         
         # mpi_print(f'Step 10-2: {time.time()-time_init}', rank)
         # Update the velocities
@@ -244,31 +232,30 @@ def NVTLangevin(
                     eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
 
                 # mpi_print(f'Step 14: {time.time()-time_init}', rank)
-                if rank == 0:
-                    file_log = open(logfile, 'a')
-                    simtime = timestep*(idx+loginterval)/units.fs/1000
+                file_log = open(logfile, 'a')
+                simtime = timestep*(idx+loginterval)/units.fs/1000
+                file_log.write(
+                    '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
+                    '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
+                    '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
+                    '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
+                    '{:.2f}'.format(Decimal(str(info_T)))
+                    )
+                if signal_uncert:
                     file_log.write(
-                        '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
-                        '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                        '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                        '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                        '{:.2f}'.format(Decimal(str(info_T)))
+                        '      \t' +
+                        uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_E) + '\t' +
+                        uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_F) + '\t' +
+                        uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
+                        uncert_strconvter(uncerts.UncertRel_S) + '\t' +
+                        uncert_strconvter(S_step) + '\n'
                         )
-                    if signal_uncert:
-                        file_log.write(
-                            '      \t' +
-                            uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_E) + '\t' +
-                            uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_F) + '\t' +
-                            uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                            uncert_strconvter(uncerts.UncertRel_S) + '\t' +
-                            uncert_strconvter(S_step) + '\n'
-                            )
-                    else:
-                        file_log.write('\n')
-                    file_log.close()
+                else:
+                    file_log.write('\n')
+                file_log.close()
                 # mpi_print(f'Step 15: {time.time()-time_init}', rank)
-            if rank == 0:
-                file_traj.write(atoms=struc)
+            
+            file_traj.write(atoms=struc)
             # mpi_print(f'Step 16: {time.time()-time_init}', rank)

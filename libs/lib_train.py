@@ -5,9 +5,8 @@ import sys
 import copy
 import subprocess
 import numpy as np
-from mpi4py import MPI
 
-from libs.lib_util        import mpi_print, single_print, rm_mkdir
+from libs.lib_util        import single_print, rm_mkdir
 
 import torch
 torch.set_default_dtype(torch.float64)
@@ -302,34 +301,33 @@ def execute_train_job(
             for index_nstep in range(inputs.nstep):
                 dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
                 if os.path.exists(f'{workpath}/{dply_model}'):
-                    mpi_print(f'\t\tFound the deployed model: {dply_model}', inputs.rank)
+                    single_print(f'\t\tFound the deployed model: {dply_model}')
                 else: # If not, prepare the training job
                     rm_mkdir(f'{workpath}/train_{index_nmodel}_{index_nstep}')
                     job_script_input.append(nequip_train_job(
                         inputs, ntrain, nval, workpath, index_nstep, index_nmodel, dply_model
                     ))
-                    mpi_print(f'\t\tPrepare a command line for traing a model: {dply_model}', inputs.rank)
+                    single_print(f'\t\tPrepare a command line for traing a model: {dply_model}')
 
-        if inputs.rank == 0:
-            for index_num_mdl in range(inputs.num_mdl_calc):
+        for index_num_mdl in range(inputs.num_mdl_calc):
 
-                # Prepare ingredients for the job script
-                with open(f'./{inputs.job_MLIP_name}', 'r') as job_script_initial:
-                    job_script_default = job_script_initial.read()
+            # Prepare ingredients for the job script
+            with open(f'./{inputs.job_MLIP_name}', 'r') as job_script_initial:
+                job_script_default = job_script_initial.read()
 
-                os.chdir(workpath)
-                # Write an input for NequIP
-                job_script   = f'./{inputs.job_MLIP_name.split(".")[0]}_{index_num_mdl}.{inputs.job_MLIP_name.split(".")[1]}'
+            os.chdir(workpath)
+            # Write an input for NequIP
+            job_script   = f'./{inputs.job_MLIP_name.split(".")[0]}_{index_num_mdl}.{inputs.job_MLIP_name.split(".")[1]}'
 
-                with open(job_script, 'w') as writing_input:
-                    writing_input.write(job_script_default)
-                    for index_item, job_item in enumerate(job_script_input):
-                        if index_item % inputs.num_mdl_calc == index_num_mdl:
-                            writing_input.write(job_item)
+            with open(job_script, 'w') as writing_input:
+                writing_input.write(job_script_default)
+                for index_item, job_item in enumerate(job_script_input):
+                    if index_item % inputs.num_mdl_calc == index_num_mdl:
+                        writing_input.write(job_item)
 
-                # Submit the job scripts
-                # subprocess.run([inputs.job_command, job_script]);
-                os.chdir(currentpath)
+            # Submit the job scripts
+            # subprocess.run([inputs.job_command, job_script]);
+            os.chdir(currentpath)
 
     elif inputs.MLIP == 'so3krates':
         job_script_input = []
@@ -337,51 +335,31 @@ def execute_train_job(
             for index_nstep in range(inputs.nstep):
                 dply_model = f'deployed-model_{index_nmodel}_{index_nstep}'
                 if os.path.exists(f'{workpath}/{dply_model}'):
-                    mpi_print(f'\t\tFound the deployed model: {dply_model}', inputs.rank)
+                    single_print(f'\t\tFound the deployed model: {dply_model}')
                 else: # If not, prepare the training job
                     rm_mkdir(f'{workpath}/inputs_{index_nmodel}_{index_nstep}.json')
                     job_script_input.append(so3krates_train_job(
                         inputs, ntrain, nval, workpath, index_nstep, index_nmodel, dply_model
                     ))
-                    mpi_print(f'\t\tPrepare a command line for traing a model: {dply_model}', inputs.rank)
+                    single_print(f'\t\tPrepare a command line for traing a model: {dply_model}')
 
-        if inputs.rank == 0:
-            for index_num_mdl in range(inputs.num_mdl_calc):
-                inputs.job_MLIP_name = 'job-so3krates.slurm'
-                # Prepare ingredients for the job script
-                with open(f'./{inputs.job_MLIP_name}', 'r') as job_script_initial:
-                    job_script_default = job_script_initial.read()
+        for index_num_mdl in range(inputs.num_mdl_calc):
+            inputs.job_MLIP_name = 'job-so3krates.slurm'
+            # Prepare ingredients for the job script
+            with open(f'./{inputs.job_MLIP_name}', 'r') as job_script_initial:
+                job_script_default = job_script_initial.read()
 
-                os.chdir(workpath)
-                # Write an input for NequIP
-                job_script   = f'./{inputs.job_MLIP_name.split(".")[0]}_{index_num_mdl}.{inputs.job_MLIP_name.split(".")[1]}'
+            os.chdir(workpath)
+            # Write an input for NequIP
+            job_script   = f'./{inputs.job_MLIP_name.split(".")[0]}_{index_num_mdl}.{inputs.job_MLIP_name.split(".")[1]}'
 
-                with open(job_script, 'w') as writing_input:
-                    writing_input.write(job_script_default)
-                    for index_item, job_item in enumerate(job_script_input):
-                        if index_item % inputs.num_mdl_calc == index_num_mdl:
-                            writing_input.write(job_item)
+            with open(job_script, 'w') as writing_input:
+                writing_input.write(job_script_default)
+                for index_item, job_item in enumerate(job_script_input):
+                    if index_item % inputs.num_mdl_calc == index_num_mdl:
+                        writing_input.write(job_item)
 
-                # Submit the job scripts
-                # subprocess.run([inputs.job_command, job_script]);
-                os.chdir(currentpath)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            # Submit the job scripts
+            # subprocess.run([inputs.job_command, job_script]);
+            os.chdir(currentpath)
 

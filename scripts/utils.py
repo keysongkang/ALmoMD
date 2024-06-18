@@ -29,7 +29,7 @@ def aims2son(temperature):
     """
 
     # Print the head
-    output_init('aims2son', version, rank=0)
+    output_init('aims2son', version)
     single_print(f'[aims2son]\tConvert aims.out to trajectory.son')
 
     # Tracking the reading line for the specific contents
@@ -224,7 +224,7 @@ def split_son(num_split, E_gs, harmonic_F=False):
     from libs.lib_util     import eval_sigma
 
     # Print the head
-    output_init('split_son', version, rank=0)
+    output_init('split_son', version)
     single_print(f'[split_son]\tInitiate splitting trajectory.son')
 
     if harmonic_F:
@@ -368,7 +368,7 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
     from ase.io.aims import write_aims
 
     # Print the head
-    output_init('harmo_run', version, rank=0)
+    output_init('harmo_run', version)
     single_print(f'[harmo_run]\tInitiate DFT calc. with harmonic samples')
 
     # Prepare the index inputs
@@ -485,7 +485,7 @@ def harmonic2son(temperature, num_sample, output_format):
     """
 
     # Print the head
-    output_init('harmo2son', version, rank=0)
+    output_init('harmo2son', version)
     single_print(f'[harmo2son]\tCollect all DFT results and convert them to SON file')
 
     # Prepare the index inputs
@@ -735,7 +735,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
     import subprocess
 
     # Print the head
-    output_init('traj_run', version, rank=0)
+    output_init('traj_run', version)
     single_print(f'[traj_run]\tInitiate DFT calc. for configurations from a trajectory file')
 
     single_print(f'[traj_run]\tRead {traj_path} file and truncate the thermalization steps {thermal_cutoff}')

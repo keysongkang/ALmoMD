@@ -303,7 +303,11 @@ def get_E_ref(nmodel, nstep, calculator):
     for index_nmodel in range(nmodel):
         for index_nstep in range(nstep):
             struc_init.calc = calculator[zndex]
-            Eatom_ref.append(np.array(struc_init.get_potential_energies()))
+            try:
+                Eatom_ref.append(np.array(struc_init.get_potential_energies()))
+            except Exception as e:
+                # print(f"Error encountered in get_potential_energies: {e}")
+                Eatom_ref.append(np.array([]))
             E_ref.append(struc_init.get_potential_energy())
             zndex += 1
 

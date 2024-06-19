@@ -231,6 +231,7 @@ def split_son(num_split, E_gs, harmonic_F=False):
         single_print(f'[split_son]\tharmoic_F = True: Harmonic term will be excluded')
 
     # take any inputs converted it to float
+    E_gs = str(E_gs)
     E_gs = eval(E_gs)
 
     single_print(f'[split_son]\tRead trajectory.son file')

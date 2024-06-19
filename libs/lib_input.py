@@ -222,6 +222,7 @@ class inputs:
         # self.outfile_inputs = 'inputs.json'
         self.overwrite_module = '--no-overwrite-module'
         self.ace = '--no-ace'
+        self.skin = 0.01
 
         ##[Constants]
         # kB: float

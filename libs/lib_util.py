@@ -398,7 +398,7 @@ def read_input_file(file_path):
                 'random_index', 'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc',
                 'printinterval', 'idx_atom', 'l', 'f', 'l_min', 'l_max', 'max_body_order', 'f_body_order',
                 'epochs', 'lr_decay_exp_transition_steps', 'size_batch', 'size_batch_training',
-                'size_batch_validation', 'seed_data', 'seed_training'
+                'size_batch_validation', 'seed_data', 'seed_training', 'skin'
                 ]:
                     value = int(value)
                 else:

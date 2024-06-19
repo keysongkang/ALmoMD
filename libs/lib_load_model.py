@@ -37,7 +37,7 @@ def load_model(inputs):
                 from glp import instantiate
                 from glp.ase import Calculator
                 potential_dict = {"mlff": {"folder": f"{workpath}/deployed-model_{index_nmodel}_{index_nstep}"}}
-                get_calculator = instantiate.get_calculator(potential_dict, {"atom_pair": {"skin": 0.1}})
+                get_calculator = instantiate.get_calculator(potential_dict, {"atom_pair": {"skin": inputs.skin}})
                 inputs.calc_MLIP.append(Calculator(get_calculator))
 
     # Check the termination signal

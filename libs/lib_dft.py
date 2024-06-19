@@ -110,7 +110,7 @@ def run_DFT(inputs):
                 refer_atom.calc = refer_MLIP
 
                 from ase.io import read as atoms_read
-                struc_init = atoms_read('geometry.in.supercell', format='aims')
+                struc_init = atoms_read('../../../geometry.in.supercell', format='aims')
                 struc_init.calc = refer_MLIP
                 E_gs = struc_init.get_potential_energy()
 

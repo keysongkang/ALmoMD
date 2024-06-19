@@ -230,6 +230,9 @@ def split_son(num_split, E_gs, harmonic_F=False):
     if harmonic_F:
         single_print(f'[split_son]\tharmoic_F = True: Harmonic term will be excluded')
 
+    # take any inputs converted it to float
+    E_gs = eval(E_gs)
+
     single_print(f'[split_son]\tRead trajectory.son file')
     # Read trajectory.son file
     metadata, data = son.load('trajectory.son')

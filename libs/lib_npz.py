@@ -335,10 +335,23 @@ def generate_npz_DFT(inputs, workpath):
                 ((data_train['R'], R_train[index_nstep]), axis=0)
                 z_train_store    = np.concatenate\
                 ((data_train['z'], z_train[index_nstep]), axis=0)
-                CELL_train_store = np.concatenate\
-                ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
-                PBC_train_store  = np.concatenate\
-                ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
+                
+                if inputs.MLIP == 'nequip':
+                    CELL_train_store = np.concatenate\
+                    ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
+                    PBC_train_store  = np.concatenate\
+                    ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
+                elif inputs.MLIP == 'so3krates':
+                    CELL_train_store = np.concatenate\
+                    ((data_train['unit_cell'], CELL_train[index_nstep]), axis=0)
+                    PBC_train_store  = np.concatenate\
+                    ((data_train['pbc'], PBC_train[index_nstep]), axis=0)
+                else:
+                    CELL_train_store = np.concatenate\
+                    ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
+                    PBC_train_store  = np.concatenate\
+                    ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
+
                 if inputs.npz_sigma:
                     sigma_train_store  = np.concatenate\
                     ((data_train['sigma'], sigma_train[index_nstep]), axis=0)

@@ -40,6 +40,13 @@ def load_model(inputs):
                 get_calculator = instantiate.get_calculator(potential_dict, {"atom_pair": {"skin": inputs.skin}})
                 inputs.calc_MLIP.append(Calculator(get_calculator))
 
+    from ase.io.aims import read_aims
+    ref = read_aims('/u/kkang/scratch/r_ZrO_ALmoMD_so3krates/4_ALmoMD/geometry.in.supercell')
+
+    for calculator in inputs.calc_MLIP:
+        ref.calc = calculator
+        print(ref.get_potential_energy())
+
     # Check the termination signal
     if signal == 1:
         single_print('[Termi]\tSome training processes are not finished.')

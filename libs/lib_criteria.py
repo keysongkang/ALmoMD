@@ -138,6 +138,7 @@ def eval_uncert_all(
             if al_type == 'energy_max':
                 Epot_step.append(np.array(struc_step.get_potential_energies()) - E_ref[1][zndex])
             else:
+                print(E_ref[0])
                 Epot_step.append(struc_step.get_potential_energy() - E_ref[0][zndex])
 
             F_step.append(struc_step.get_forces())

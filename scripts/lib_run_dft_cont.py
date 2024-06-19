@@ -97,6 +97,7 @@ def run_dft_cont(inputs):
 
     single_print(f'[cont]\tSubmit the DFT calculations for sampled configurations')
     # Submit job-scripts for DFT calculationsions with sampled configurations and job-dependence for run_dft_gen
+    
     run_DFT(inputs)
 
     # Submit a job-dependence to execute run_dft_gen after the DFT calculations

@@ -66,8 +66,9 @@ def run_DFT(inputs):
     calcpath_cwd = os.getcwd()
 
     # Get the template of the job script
-    with open(f'../../DFT_INPUTS/{inputs.job_dft_name}', 'r') as job_script_DFT_initial:
-        job_script_DFT_default = job_script_DFT_initial.read()
+    if inputs.output_format != 'nequip':
+        with open(f'../../DFT_INPUTS/{inputs.job_dft_name}', 'r') as job_script_DFT_initial:
+            job_script_DFT_default = job_script_DFT_initial.read()
 
     # Prepare an empty list for the calculation paths
     execute_cwd = []

@@ -97,6 +97,15 @@ def run_DFT(inputs):
 
     # Go through all sampled structral configurations
     # Collect the calculations and deploy all inputs for FHI-vibes
+
+    if inputs.output_format == 'nequip':
+        from ase.io import read as atoms_read
+        single_print('[NequIP] Extract the pretrained NequIP ground truth.')
+        struc_init = atoms_read('../../../geometry.in.supercell', format='aims')
+        struc_init.calc = refer_MLIP
+        E_gs = struc_init.get_potential_energy()
+
+
     for jndex, jtem in enumerate(smapled_indices):
         # Get configurations until the number of target subsampling data
         if jndex < inputs.ntotal:
@@ -110,11 +119,6 @@ def run_DFT(inputs):
                 write_geo = TrajectoryWriter('geometry.traj', mode='w')
                 refer_atom = traj_DFT[jtem]
                 refer_atom.calc = refer_MLIP
-
-                from ase.io import read as atoms_read
-                struc_init = atoms_read('../../../geometry.in.supercell', format='aims')
-                struc_init.calc = refer_MLIP
-                E_gs = struc_init.get_potential_energy()
 
                 refer_E = refer_atom.get_potential_energy() - E_gs
                 refer_F = refer_atom.get_forces()

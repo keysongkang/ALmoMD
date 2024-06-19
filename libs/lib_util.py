@@ -311,6 +311,7 @@ def get_E_ref(nmodel, nstep, calculator):
             E_ref.append(struc_init.get_potential_energy())
             zndex += 1
 
+    print(E_ref)
     return [np.array(E_ref), np.array(Eatom_ref)]
 
 

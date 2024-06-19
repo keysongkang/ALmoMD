@@ -244,7 +244,7 @@ def cont_NVTLangevin(
             # Get absolute and relative uncertainties of energy and force
             # and also total energy
             uncerts, Epot_step, S_step =\
-            eval_uncert(struc, inputs.nstep, inputs.nmodel, 0.0, calculator, inputs.al_type, inputs.harmonic_F)
+            eval_uncert(struc, inputs.nstep, inputs.nmodel, E_ref, calculator, inputs.al_type, inputs.harmonic_F)
 
             # Get a criteria probability from uncertainty and energy informations
             criteria = get_criteria_prob(inputs, Epot_step, uncerts, criteria_collected)

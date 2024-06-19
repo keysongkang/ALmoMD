@@ -10,9 +10,6 @@ from decimal import Decimal
 
 from libs.lib_util   import check_mkdir, single_print
 
-import torch
-torch.set_default_dtype(torch.float64)
-
 def run_DFT(inputs):
     """Function [get_criteria_uncert]
     Create a folder and run DFT calculations
@@ -42,6 +39,9 @@ def run_DFT(inputs):
     
     if inputs.output_format == 'nequip':
         from nequip.ase import nequip_calculator
+        import torch
+        torch.set_default_dtype(torch.float64)
+
         dply_model = f'deployed-model_0_0.pth'
         if os.path.exists(f'REFER/{dply_model}'):
             single_print(f'\t\tFound the deployed model: {dply_model}')

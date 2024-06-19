@@ -163,7 +163,7 @@ def cont_NVTLangevin(
                 uncert_data = pd.read_csv(uncert_file, index_col=False, delimiter='\t')
 
                 if np.array(uncert_data.loc[:,'S_average'])[-1] > inputs.meta_r_crtria:
-                    mpi_print(f'[MLMD] Read a configuration from start.in', inputs.rank)
+                    single_print(f'[MLMD] Read a configuration from start.in')
                     # Read the ground state structure with the primitive cell
                     struc_init = atoms_read('start.in', format='aims')
                     # Make it supercell

@@ -104,6 +104,7 @@ def run_DFT(inputs):
         struc_init = atoms_read('./../../geometry.in.supercell', format='aims')
         struc_init.calc = refer_MLIP
         E_gs = struc_init.get_potential_energy()
+        single_print('[NequIP] Get G_gs from NequIP.')
 
 
     for jndex, jtem in enumerate(smapled_indices):

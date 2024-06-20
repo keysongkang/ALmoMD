@@ -103,7 +103,39 @@ def MLMD_main(
     # When this initialization starts from scratch,
     if MD_index == 0:
         # Even when it is very first iterative step,
-        if inputs.index != 0:
+        if os.path.exists('start.in'):
+            single_print(f'[MLMD] Read a configuration from start.in')
+            # Read the ground state structure with the primitive cell
+            struc_init = atoms_read('start.in', format='aims')
+            # Make it supercell
+            struc_step = make_supercell(struc_init, inputs.supercell_init)
+            MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
+
+        elif os.path.exists('start.traj'):
+            single_print(f'[runMD]\tFound the start.traj file. MD starts from this.')
+            # Read the ground state structure with the primitive cell
+            struc_init = Trajectory('start.traj')[-1]
+            struc_step = make_supercell(struc_init, inputs.supercell_init)
+            del struc_init
+            try:
+                struc_step.get_velocities()
+            except AttributeError:
+                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
+
+        elif os.path.exists('start.bundle'):
+            from ase.io.bundletrajectory import BundleTrajectory
+            single_print(f'[runMD]\tFound the start.bundle file. MD starts from this.')
+            file_traj_read = BundleTrajectory(filename='start.bundle', mode='r')
+            file_traj_read[0]; #ASE bug
+            struc_init = file_traj_read[-1]
+            struc_step = make_supercell(struc_init, inputs.supercell_init)
+            del struc_init
+            try:
+                struc_step.get_velocities()
+            except AttributeError:
+                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
+
+        elif inputs.index != 0:
             # Name of the pervious uncertainty file
             uncert_file = f'UNCERT/uncertainty-{condition}_{inputs.index-1}.txt'
 
@@ -142,38 +174,6 @@ def MLMD_main(
                                            ['forces', 'velocities', 'temperature'])
                 # Resume the MD calculation from last configuration in the trajectory file
                 struc_step    = traj_previous[-1]; del traj_previous;
-
-        elif os.path.exists('start.in'):
-            single_print(f'[MLMD] Read a configuration from start.in')
-            # Read the ground state structure with the primitive cell
-            struc_init = atoms_read('start.in', format='aims')
-            # Make it supercell
-            struc_step = make_supercell(struc_init, inputs.supercell_init)
-            MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
-
-        elif os.path.exists('start.traj'):
-            single_print(f'[runMD]\tFound the start.traj file. MD starts from this.')
-            # Read the ground state structure with the primitive cell
-            struc_init = Trajectory('start.traj')[-1]
-            struc_step = make_supercell(struc_init, inputs.supercell_init)
-            del struc_init
-            try:
-                struc_step.get_velocities()
-            except AttributeError:
-                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
-
-        elif os.path.exists('start.bundle'):
-            from ase.io.bundletrajectory import BundleTrajectory
-            single_print(f'[runMD]\tFound the start.bundle file. MD starts from this.')
-            file_traj_read = BundleTrajectory(filename='start.bundle', mode='r')
-            file_traj_read[0]; #ASE bug
-            struc_init = file_traj_read[-1]
-            struc_step = make_supercell(struc_init, inputs.supercell_init)
-            del struc_init
-            try:
-                struc_step.get_velocities()
-            except AttributeError:
-                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
 
         else:
             single_print(f'[MLMD] Read a configuration from trajectory_train.son')

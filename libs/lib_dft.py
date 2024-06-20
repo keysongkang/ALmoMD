@@ -148,17 +148,18 @@ def run_DFT(inputs):
                     os.chdir(calcpath_cwd)
     
     # Create job scripts and submit them
-    for index_calc in range(inputs.num_calc):
-        job_script = f'{inputs.job_dft_name.split(".")[0]}_{index_calc}.{inputs.job_dft_name.split(".")[1]}'
-        with open(job_script, 'w') as writing_input:
-            writing_input.write(job_script_DFT_default)
-            for index_execute_cwd, value_execute_cwd in enumerate(execute_cwd):
-                if index_execute_cwd % inputs.num_calc == index_calc:
-                    writing_input.write('cd '+value_execute_cwd+'\n')
-                    writing_input.write(inputs.vibes_command+'\n')
-        # If the previous calculation is not finished, rerun it
-        # subprocess.run([inputs.job_command, job_script])
-        # os.system(f'{inputs.job_command} {job_script}')
+    if inputs.output_format != 'nequip':
+        for index_calc in range(inputs.num_calc):
+            job_script = f'{inputs.job_dft_name.split(".")[0]}_{index_calc}.{inputs.job_dft_name.split(".")[1]}'
+            with open(job_script, 'w') as writing_input:
+                writing_input.write(job_script_DFT_default)
+                for index_execute_cwd, value_execute_cwd in enumerate(execute_cwd):
+                    if index_execute_cwd % inputs.num_calc == index_calc:
+                        writing_input.write('cd '+value_execute_cwd+'\n')
+                        writing_input.write(inputs.vibes_command+'\n')
+            # If the previous calculation is not finished, rerun it
+            # subprocess.run([inputs.job_command, job_script])
+            # os.system(f'{inputs.job_command} {job_script}')
 
     # Move back to the original position
     os.chdir(mainpath_cwd)

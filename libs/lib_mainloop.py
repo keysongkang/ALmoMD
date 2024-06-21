@@ -102,6 +102,8 @@ def MLMD_main(
     single_print(f'[MLMD] Calculate it from index {inputs.index}, MD_index {MD_index}, MD_step_index {MD_step_index}')
     # When this initialization starts from scratch,
     if MD_index == 0:
+        single_print(f'read it?')
+        single_print(os.path.exists('start.in'))
         # Even when it is very first iterative step,
         if os.path.exists('start.in'):
             single_print(f'[MLMD] Read a configuration from start.in')

@@ -278,6 +278,7 @@ def split_son(num_split, E_gs, harmonic_F=False):
         CELL_test   = [] # Lattice paratmers
         PBC_test    = [] # Periodicity
         sigma_test  = [] # Anharmonicity
+        stress_test = []
 
         if harmonic_F:
             E_test_ori = []
@@ -318,6 +319,7 @@ def split_son(num_split, E_gs, harmonic_F=False):
                     al_type = 'sigma'
                     )
                 )
+            stress_test.append(test_item['calculator']['stress'])
         
         # Save all information into data-test.npz
         npz_name = 'MODEL/data-test.npz'
@@ -329,7 +331,8 @@ def split_son(num_split, E_gs, harmonic_F=False):
             z=np.array(z_test),
             CELL=np.array(CELL_test),
             PBC=np.array(PBC_test),
-            sigma=np.array(sigma_test)
+            sigma=np.array(sigma_test),
+            stress=np.array(stress_test)
         )
         
         if harmonic_F:
@@ -343,7 +346,8 @@ def split_son(num_split, E_gs, harmonic_F=False):
                 z=np.array(z_test),
                 CELL=np.array(CELL_test),
                 PBC=np.array(PBC_test),
-                sigma=np.array(sigma_test)
+                sigma=np.array(sigma_test),
+                stress=np.array(stress_test)
             )
 
         single_print('[split_son]\tFinish the sampling testing data: data-train.npz')

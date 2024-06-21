@@ -144,7 +144,7 @@ def MLMD_main(
                 # Start from the configuration with the largest real error
                 if inputs.output_format == 'nequip':
                     traj_temp     = f'TRAJ/traj-{condition}_{inputs.index}.traj'
-                    mpi_print(f'[MLMD] Read a configuration from traj file', inputs.rank)
+                    single_print(f'[MLMD] Read a configuration from traj file', inputs.rank)
                     # Read the trajectory from previous trajectory file
                     traj_previous = Trajectory(traj_temp, properties=\
                                                ['forces', 'velocities', 'temperature'])
@@ -155,6 +155,7 @@ def MLMD_main(
                 
                 # Open the uncertainty file for current step
                 check_mkdir('UNCERT')
+                single_print(f'[MLMD] Read a configuration from previous sampled traj file')
                 uncert_file_next = f'UNCERT/uncertainty-{condition}_{inputs.index}.txt'
                 trajfile = open(uncert_file_next, 'w')
                 title = 'Temperature[K]\t'

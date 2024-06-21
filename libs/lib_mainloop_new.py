@@ -104,56 +104,13 @@ def MLMD_main(
     # When this initialization starts from scratch,
     if MD_index == 0:
         # Even when it is very first iterative step,
-        if inputs.index != 0:
-            # Name of the pervious uncertainty file
-            uncert_file = f'UNCERT/uncertainty-{condition}_{inputs.index-1}.txt'
-
-            # Check the existence of the file
-            if os.path.exists(uncert_file):
-                # Start from the configuration with the largest real error
-                if inputs.output_format == 'nequip':
-                    traj_temp     = f'TRAJ/traj-{condition}_{inputs.index}.traj'
-                    single_print(f'[MLMD] Read a configuration from traj file')
-                    # Read the trajectory from previous trajectory file
-                    traj_previous = Trajectory(traj_temp, properties=\
-                                               ['forces', 'velocities', 'temperature'])
-                    # Resume the MD calculation from last configuration in the trajectory file
-                    struc_step    = traj_previous[-1]; del traj_previous;
-                else:
-                    struc_step = traj_fromRealE(inputs.temperature, inputs.pressure, inputs.E_gs, inputs.uncert_type, inputs.al_type, inputs.ntotal, inputs.index)
-                
-                # Open the uncertainty file for current step
-                check_mkdir('UNCERT')
-                uncert_file_next = f'UNCERT/uncertainty-{condition}_{inputs.index}.txt'
-                trajfile = open(uncert_file_next, 'w')
-                title = 'Temperature[K]\t'
-                if inputs.ensemble[:3] == 'NPT':
-                    title += 'Pressure[GPa]\t'
-                title += 'UncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'\
-                        +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'\
-                        +'\tCounting\tProbability\tAcceptance\n'
-                trajfile.write(title)
-                trajfile.close()
-
-            else: # If there is no privous uncertainty file
-                # Read the trajectory from previous trajectory file
-                single_print(f'[MLMD] Read a configuration from traj file')
-                if inputs.ensemble[:3] == 'NPT':
-                    traj_temp     = f'TEMPORARY/temp-{condition}_{inputs.index}.bundle'
-                    traj_previous = BundleTrajectory(traj_temp)
-                else:
-                    traj_temp     = f'TEMPORARY/temp-{condition}_{inputs.index}.traj'
-                    traj_previous = Trajectory(traj_temp)
-                # Resume the MD calculation from last configuration in the trajectory file
-                struc_step    = traj_previous[-1]; del traj_previous;
-
-        elif os.path.exists('start.in'):
+        if os.path.exists('start.in'):
             single_print(f'[MLMD] Read a configuration from start.in')
             # Read the ground state structure with the primitive cell
             struc_init = atoms_read('start.in', format='aims')
             # Make it supercell
             struc_step = make_supercell(struc_init, inputs.supercell_init)
-            MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature*1.5, force_temp=True)
+            MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
 
         elif os.path.exists('start.traj'):
             single_print(f'[runMD]\tFound the start.traj file. MD starts from this.')
@@ -164,7 +121,7 @@ def MLMD_main(
             try:
                 struc_step.get_velocities()
             except AttributeError:
-                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature*1.5, force_temp=True)
+                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
 
         elif os.path.exists('start.bundle'):
             from ase.io.bundletrajectory import BundleTrajectory
@@ -177,7 +134,48 @@ def MLMD_main(
             try:
                 struc_step.get_velocities()
             except AttributeError:
-                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature*1.5, force_temp=True)
+                MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
+
+        elif inputs.index != 0:
+            # Name of the pervious uncertainty file
+            uncert_file = f'UNCERT/uncertainty-{condition}_{inputs.index-1}.txt'
+
+            # Check the existence of the file
+            if os.path.exists(uncert_file):
+                # Start from the configuration with the largest real error
+                if inputs.output_format == 'nequip':
+                    traj_temp     = f'TRAJ/traj-{condition}_{inputs.index}.traj'
+                    single_print(f'[MLMD] Read a configuration from traj file', inputs.rank)
+                    # Read the trajectory from previous trajectory file
+                    traj_previous = Trajectory(traj_temp, properties=\
+                                               ['forces', 'velocities', 'temperature'])
+                    # Resume the MD calculation from last configuration in the trajectory file
+                    struc_step    = traj_previous[-1]; del traj_previous;
+                else:
+                    struc_step = traj_fromRealE(inputs.temperature, inputs.pressure, inputs.E_gs, inputs.uncert_type, inputs.al_type, inputs.ntotal, inputs.index)
+                
+                # Open the uncertainty file for current step
+                check_mkdir('UNCERT')
+                single_print(f'[MLMD] Read a configuration from previous sampled traj file')
+                uncert_file_next = f'UNCERT/uncertainty-{condition}_{inputs.index}.txt'
+                trajfile = open(uncert_file_next, 'w')
+                title = 'Temperature[K]\t'
+                if inputs.ensemble[:3] == 'NPT':
+                    title += 'Pressure[GPa]\t'
+                title += 'UncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F'\
+                        +'\tUncertAbs_S\tUncertRel_S\tEpot_average\tS_average'\
+                        +'\tCounting\tProbability\tAcceptance\n'
+                trajfile.write(title)
+                trajfile.close()
+
+            else: # If there is no privous uncertainty file
+                traj_temp     = f'TEMPORARY/temp-{condition}_{inputs.index}.traj'
+                single_print(f'[MLMD] Read a configuration from traj file')
+                # Read the trajectory from previous trajectory file
+                traj_previous = Trajectory(traj_temp, properties=\
+                                           ['forces', 'velocities', 'temperature'])
+                # Resume the MD calculation from last configuration in the trajectory file
+                struc_step    = traj_previous[-1]; del traj_previous;
 
         else:
             single_print(f'[MLMD] Read a configuration from trajectory_train.son')

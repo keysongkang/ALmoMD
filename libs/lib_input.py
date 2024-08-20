@@ -126,7 +126,11 @@ class inputs:
 
         self.temp_factor = 0.0
 
+        # Set the testing data
+        # test / train
         self.npz_test = 'test'
+
+        # Usage of energy criteria
         self.criteria_energy = True
 
         ##[runMD default inputs]

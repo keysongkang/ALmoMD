@@ -121,6 +121,8 @@ def generate_npz_DFT_init(inputs, traj, workpath):
 
         if inputs.npz_sigma:
             arrays_to_save['sigma'] = np.array(sigma_train_store)
+        else:
+            arrays_to_Save['sigma'] = np.zeros_like(np.array(E_train_store))
         if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
             arrays_to_save['stress'] = np.array(stress_train_store)
 

@@ -208,7 +208,7 @@ conda activate almomd
 #[Active learning types]
 calc_type     : active             # (active) sampling up to the number of training data needed (period) sampling during the assigned period
 al_type       : force_max          # Uncertainty type: force_max (Maximum atomic force uncertainty)
-uncert_type   : absolute           # Absolute or relative uncertainty
+uncert_type   : absolute           # Absolute or relative uncertainty (absolute / relative)
 output_format : trajectory.son     # File format of the output file (trajectory.son / aims.out / nequip)
 device        : cuda               # Calating core type (cpu / cuda)
 

@@ -495,8 +495,10 @@ def get_criteria_prob(inputs, Epot_step, uncerts, criteria):
         Prob = np.exp((-1) * (Epot_step / inputs.NumAtoms) / beta)
         Prob_upper_limit = np.exp(
             (-1) * ((criteria.Epotential_avg + criteria.Epotential_std) / inputs.NumAtoms) / beta)
+        # Prob_lower_limit = np.exp(
+        #     (-1) * ((criteria.Epotential_avg + criteria.Epotential_std*1.8) / inputs.NumAtoms) / beta)
         Prob_lower_limit = np.exp(
-            (-1) * ((criteria.Epotential_avg + criteria.Epotential_std*1.8) / inputs.NumAtoms) / beta)
+            (-1) * ((criteria.Epotential_avg - criteria.Epotential_std*2.0) / inputs.NumAtoms) / beta)
 
         # Get relative probability of the canomical ensemble
         criteria_Prob_inter = Prob / Prob_upper_limit;

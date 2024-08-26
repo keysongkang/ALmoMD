@@ -166,6 +166,12 @@ def nequip_train_job(
     with open('./nequip.yaml', 'r') as nequip_initial:
         nequip_input_default = nequip_initial.read()
 
+    # Loss function: 1/varience
+    data_nstep = np.load(f'{workpath}/data-train_{index_nstep}')
+    var_E = 1/np.var(np.array(data_nstep['E']))
+    var_F = 1/np.var(np.array(data_nstep['F']).flatten())
+    var_S = 1/np.var(np.array(data_nstep['S']).flatten())
+
     nequip_input_extra = (
         f'root: train_{index_nmodel}_{index_nstep}/projects\n'
         + f'run_name: train\n'
@@ -176,9 +182,15 @@ def nequip_train_job(
         + f'r_max: {inputs.rmax}\n'
         + f'l_max: {inputs.lmax}\n'
         + f'num_features: {inputs.nfeatures}\n\n'
-        + f'seed: {index_nmodel}\n'
+        + f'seed: {index_nmodel}\n\n'
+        + f'loss_coeffs:\n'
+        + f' total_energy: {var_E}\n'
+        + f' forces: {var_F}\n'
     )
-        
+
+    if inputs.train_stress:
+        nequip_input_extra += f' stress: {var_S}\n'
+
     job_script_extra = 'srun nequip-train'
     job_script_deploy = 'srun nequip-deploy build --train-dir'
     

@@ -86,6 +86,7 @@ class inputs:
         #     The number of iteration for DFT random sampling
         self.random_index = 1
 
+        self.loss_var = False
         self.train_stress = False
         self.npz_sigma = True
 

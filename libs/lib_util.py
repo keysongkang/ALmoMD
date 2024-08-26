@@ -386,7 +386,7 @@ def read_input_file(file_path):
                 # Perform type conversions for specific variables
                 if name in [
                 'supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart',
-                'signal_uncert', 'criteria_energy', 'train_stress', 'npz_sigma', 'E_gs', 'lr', 'lr_stop'
+                'signal_uncert', 'criteria_energy', 'train_stress', 'npz_sigma', 'E_gs', 'lr', 'lr_stop', 'loss_var'
                 ]:
                     value = eval(value)
                 elif name in [

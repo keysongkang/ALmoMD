@@ -66,6 +66,20 @@ def run_dft_cont(inputs):
     total_ntrain = inputs.ntrain * inputs.index + inputs.ntrain_init
     total_nval = inputs.nval * inputs.index + inputs.nval_init
 
+    if inputs.idx_atom == 'random':
+        if MD_step_index != 0:
+            import re
+            with open('almomd.out', 'r') as file:
+                content = file.read()
+
+            matches = re.findall(r'Randomly\s+selected\s+biased\s+idx_atom\s*:\s*(\d+)', content)
+            inputs.idx_atom = int(matches[-1])
+        else:
+            import random
+            inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+    else:
+        inputs.idx_atom = int(inputs.idx_atom)
+
     ### Get calculators
     # Set the path to folders finding the trained model from NequIP
     workpath = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}'

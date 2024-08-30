@@ -121,7 +121,7 @@ class inputs:
         self.meta_restart = False
         self.meta_r_crtria = 100.0
 
-        self.idx_atom = 0
+        self.idx_atom = 'random'
         self.bias_A = 0.0
         self.bias_B = 999
 

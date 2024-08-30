@@ -333,17 +333,17 @@ def get_forces_bias(
         zndex = 0
         for index_nmodel in range(nmodel):
             for index_nstep in range(nstep):
-                if (index_nmodel*nstep + index_nstep) % size == rank:
-                    # mpi_print(f'Step 10-a1 first {rank}: {time.time()-time_init}', rank)
-                    struc.calc = calculator[zndex]
-                    # mpi_print(f'Step 10-a1 second {rank}: {time.time()-time_init}', rank)
-                    temp_force = struc.get_forces()
-                    # mpi_print(f'Step 10-a1 third {rank}: {time.time()-time_init}', rank)
-                    energies.append(struc.get_potential_energies() - E_ref[1][zndex])
-                    forces.append(temp_force)
-                    # sigmas.append(eval_sigma(temp_force, struc.get_positions(), 'force_max'))
-                    # mpi_print(f'Step 10-a1 last {rank}: {time.time()-time_init}', rank)
-                    zndex += 1
+                # if (index_nmodel*nstep + index_nstep) % size == rank:
+                # mpi_print(f'Step 10-a1 first {rank}: {time.time()-time_init}', rank)
+                struc.calc = calculator[zndex]
+                # mpi_print(f'Step 10-a1 second {rank}: {time.time()-time_init}', rank)
+                temp_force = struc.get_forces()
+                # mpi_print(f'Step 10-a1 third {rank}: {time.time()-time_init}', rank)
+                energies.append(struc.get_potential_energies() - E_ref[1][zndex])
+                forces.append(temp_force)
+                # sigmas.append(eval_sigma(temp_force, struc.get_positions(), 'force_max'))
+                # mpi_print(f'Step 10-a1 last {rank}: {time.time()-time_init}', rank)
+                zndex += 1
         # mpi_print(f'Step 10-a2: {time.time()-time_init}', rank)
 
         E_step_avg = np.average(energies, axis=0)

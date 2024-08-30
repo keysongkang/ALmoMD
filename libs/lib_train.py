@@ -170,7 +170,7 @@ def nequip_train_job(
     data_nstep = np.load(f'{workpath}/data-train_{index_nstep}.npz')
     var_E = 1/np.var(np.array(data_nstep['E']))
     var_F = 1/np.var(np.array(data_nstep['F']).flatten())
-    var_S = 1/np.var(np.array(data_nstep['S']).flatten())
+    var_S = 1/np.var(np.array(data_nstep['stress']).flatten())
 
     nequip_input_extra = (
         f'root: train_{index_nmodel}_{index_nstep}/projects\n'
@@ -187,7 +187,7 @@ def nequip_train_job(
 
     if inputs.loss_var:
         nequip_input_extra += (
-            + f'loss_coeffs:\n'
+            f'loss_coeffs:\n'
             + f' total_energy: {var_E}\n'
             + f' forces: {var_F}\n'
             )

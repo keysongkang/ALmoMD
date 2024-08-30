@@ -386,7 +386,8 @@ def read_input_file(file_path):
                 # Perform type conversions for specific variables
                 if name in [
                 'supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart',
-                'signal_uncert', 'criteria_energy', 'train_stress', 'npz_sigma', 'E_gs', 'lr', 'lr_stop', 'loss_var'
+                'signal_uncert', 'criteria_energy', 'train_stress', 'npz_sigma', 'E_gs', 'lr',
+                'lr_stop', 'loss_var'
                 ]:
                     value = eval(value)
                 elif name in [
@@ -400,7 +401,7 @@ def read_input_file(file_path):
                 'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature', 'taut', 'pressure',
                 'taup', 'steps_ther', 'steps_init', 'steps_random', 'cutoff_ther', 'lmax', 'nfeatures',
                 'random_index', 'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc',
-                'printinterval', 'idx_atom', 'l', 'f', 'l_min', 'l_max', 'max_body_order', 'f_body_order',
+                'printinterval', 'l', 'f', 'l_min', 'l_max', 'max_body_order', 'f_body_order',
                 'epochs', 'lr_decay_exp_transition_steps', 'size_batch', 'size_batch_training',
                 'size_batch_validation', 'seed_data', 'seed_training'
                 ]:

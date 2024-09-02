@@ -61,11 +61,6 @@ def run_dft_cont(inputs):
         single_print(f'[cont]\tCalculation is terminated during the check_progress')
         sys.exit()
 
-    single_print(f'[cont]\tCurrent iteration index: {inputs.index}')
-    # Get the total number of traning and validating data at current step
-    total_ntrain = inputs.ntrain * inputs.index + inputs.ntrain_init
-    total_nval = inputs.nval * inputs.index + inputs.nval_init
-
     if inputs.idx_atom == 'random':
         if MD_step_index != 0:
             import re
@@ -77,8 +72,14 @@ def run_dft_cont(inputs):
         else:
             import random
             inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+            single_print(f'[cont]\tRandomly selected biased idx_atom : {inputs.idx_atom}')
     else:
         inputs.idx_atom = int(inputs.idx_atom)
+
+    single_print(f'[cont]\tCurrent iteration index: {inputs.index}')
+    # Get the total number of traning and validating data at current step
+    total_ntrain = inputs.ntrain * inputs.index + inputs.ntrain_init
+    total_nval = inputs.nval * inputs.index + inputs.nval_init
 
     ### Get calculators
     # Set the path to folders finding the trained model from NequIP

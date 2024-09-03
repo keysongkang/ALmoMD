@@ -37,6 +37,6 @@ pip install .
 
 # Contents
 - [Back to Home](https://keysongkang.github.io/ALmoMD/)
-- [Theoretical Background](theory.md)
-- [User Manuals](documentation.md)
-- [Tutorials](tutorial.md)
+- [Installation Guide](installation.md)
+- [User Manuals](documentation.md) ([Input Files](doc_input_file.md), [Input Parameters](doc_input_para.md))
+- [Tutorials](../tutorial/tutorial.md)

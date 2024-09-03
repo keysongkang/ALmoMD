@@ -239,3 +239,9 @@ conda activate almomd (or your conda environment for FHI-vibes)
 
 (Just leave here empty)
 ```
+
+# Contents
+- [Back to Home](https://keysongkang.github.io/ALmoMD/)
+- [Installation Guide](installation.md)
+- [User Manuals](documentation.md) ([Input Files](doc_input_file.md), [Input Parameters](doc_input_para.md))
+- [Tutorials](../tutorial/tutorial.md)

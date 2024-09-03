@@ -113,3 +113,11 @@ Please check the [details](https://github.com/sirmarcel/glp) in the So3krates we
 1) __E_gs__ (float): 0.0 (default)
 
 - The reference total energy in units of eV/unitcell to shift the total energies. Recommend to use the total energy of the ground state structure.
+
+<br>
+***
+# Contents
+- [Back to Home](https://keysongkang.github.io/ALmoMD/)
+- [Installation Guide](installation.md)
+- [User Manuals](documentation.md) ([Input Files](doc_input_file.md), [Input Parameters](doc_input_para.md))
+- [Tutorials](../tutorial/tutorial.md)

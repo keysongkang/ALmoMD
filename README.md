@@ -10,10 +10,9 @@
 The primary goal of ALmoMD is to efficiently train the MLIP without posing a challenge to _ab initio_ molecular dynamics, while effectively capturing rare dynamical events, leading to a more reliable MLIP. Additionally, ALmoMD includes the implementation of MD with uncertainty evaluation, providing an indication of its reliability.
 <br>
 
-- [Installation Guide](docs/installation.md)
-- [Theoretical Background](docs/theory.md)
-- [User Manuals](docs/documentation.md)
-- [Tutorials](tutorial/tutorial.md)
+- [Installation Guide](installation.md)
+- [User Manuals](documentation.md) ([Input Files](doc_input_file.md), [Input Parameters](doc_input_para.md))
+- [Tutorials](../tutorial/tutorial.md)
 
 ## Code integration
 ALmoMD utilizes multiple code packages to implement the active learning scheme for MLIP and MLIP-MD, with plans to introduce additional interfaces in the future.

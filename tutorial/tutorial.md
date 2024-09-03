@@ -101,5 +101,5 @@ When your training is done, you will get deployed MLIP models (__depolyed-model\
 # Contents
 - [Back to Home](https://keysongkang.github.io/ALmoMD/)
 - [Installation Guide](../docs/installation.md)
-- [Theoretical Background](../docs/theory.md)
-- [User Manuals](../docs/documentation.md)
+- [User Manuals](../docs/documentation.md) ([Input Files](../docs/doc_input_file.md), [Input Parameters](../docs/doc_input_para.md))
+- [Tutorials](tutorial.md)

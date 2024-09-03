@@ -34,7 +34,7 @@ Here, parameters employed in __input.in__ are described.
 - Type of MLIP models.
 
 <br>
-***
+---
 ### [Active learning parameters]
 1) __nstep__ (int): 1 (default)
 
@@ -57,7 +57,7 @@ Here, parameters employed in __input.in__ are described.
 - The number of MLIP-MD steps for the exploration during the active learning scheme.
 
 <br>
-***
+---
 ### [Molecular dynamics setting]
 1) __ensemble__ (str): *NVTLangevin*
 
@@ -80,7 +80,7 @@ Here, parameters employed in __input.in__ are described.
 - The strength of the friction parameter in NVTLangevin ensemble.
 
 <br>
-***
+---
 ### [NequIP setting]
 Only four parameters are assigned by the ALmoMD. The other setting is included in *nequip.yaml*.
 
@@ -101,7 +101,7 @@ Only four parameters are assigned by the ALmoMD. The other setting is included i
 - The reference total energy in units of eV/unitcell to shift the total energies. Recommend to use the total energy of the ground state structure.
 
 <br>
-***
+---
 ### [So3krates setting]
 All parameters are employed. For examples,
 
@@ -115,7 +115,7 @@ Please check the [details](https://github.com/sirmarcel/glp) in the So3krates we
 - The reference total energy in units of eV/unitcell to shift the total energies. Recommend to use the total energy of the ground state structure.
 
 <br>
-***
+---
 # Contents
 - [Back to Home](https://keysongkang.github.io/ALmoMD/)
 - [Installation Guide](installation.md)

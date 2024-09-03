@@ -38,11 +38,10 @@ class inputs:
         self.anharmonic_F = False
         # uncert_type: str
         #     Use the harmonic force constants
-        self.uncert_shift = 0.2661
+        self.uncert_shift = 2.0
         # uncert_grad: float
         #     Gradient of erf function
         #     (Value is relative to standard deviation)
-        #     The default is set to a probability of 0.2 at the average
         self.uncert_grad = 1.0
         # output_format: str
         #     Type of FHI-vibes output to be read
@@ -66,10 +65,10 @@ class inputs:
         self.steps_random = 125
         # ntrain_init: int
         #     The number of training data for first iterative step
-        self.ntrain_init = 5
+        self.ntrain_init = 25
         # ntrain: int
         #     The number of added training data for each iterative step
-        self.ntrain = 5
+        self.ntrain = 25
         # nperiod: int
         #     The number of steps for the active learning with a finite period
         self.nperiod = 200

@@ -29,8 +29,8 @@ conda activate almomd
 6) Get the ALmoMD from github and install it.
 
 ```
-git clone git@github.com:keysongkang/ALmoMD.git
-cd almomd
+git clone https://github.com/keysongkang/ALmoMD.git
+cd ALmoMD
 pip install .
 ```
 

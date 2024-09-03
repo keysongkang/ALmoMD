@@ -319,7 +319,8 @@ def split_son(num_split, E_gs, harmonic_F=False):
                     al_type = 'sigma'
                     )
                 )
-            stress_test.append(test_item['calculator']['stress'])
+            if 'stress' in test_item['calculator']:
+                stress_test.append(test_item['calculator']['stress'])
         
         # Save all information into data-test.npz
         npz_name = 'MODEL/data-test.npz'

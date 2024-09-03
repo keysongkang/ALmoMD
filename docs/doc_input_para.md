@@ -1,4 +1,4 @@
-#Documentation
+# User Manual
 
 Here, parameters employed in __input.in__ are described.
 

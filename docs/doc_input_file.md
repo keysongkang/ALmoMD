@@ -1,4 +1,4 @@
-#Documentation
+# User Manual
 
 ## Input files
 

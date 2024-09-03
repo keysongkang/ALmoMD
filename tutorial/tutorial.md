@@ -1,4 +1,4 @@
-#ALmoMD Tutorial
+#Tutorials
 
 
 ## Initialization
@@ -6,7 +6,7 @@
 We are going to have a tutorial of the ALmoMD with an example of CuI.
 
 ### Ground truth
-But the actual implementation of ALmoMD with DFT is too demanding for the tutorial purpose. Therefore, in this tutorial, we are going to have a pretrained MLIP model as a ground truth instead of DFT. To do that, you need __REFER__ instead of __DFT_INPUTS__.
+But the actual implementation of ALmoMD with DFT is too demanding for the tutorial purpose due to the large amount of supercell calculations via DFT. Therefore, in this tutorial, we are going to have a pretrained MLIP model as a ground truth instead of DFT. To do that, you need __REFER__ instead of __DFT_INPUTS__.
 
 __REFER__: A directory containing the pretrained MLIP depolyed model (deployed-model\_0\_0.pth). 
 
@@ -97,3 +97,9 @@ sbatch job-nequip-gpu\_0.slurm; sbatch job-nequip-gpu\_1.slurm; sbatch job-nequi
 ```
 
 When your training is done, you will get deployed MLIP models (__depolyed-model\_\*\_\*.pth__). Then, go back to __MLIP exploration__ section to complete the loop.
+
+# Contents
+- [Back to Home](https://keysongkang.github.io/ALmoMD/)
+- [Installation Guide](../docs/installation.md)
+- [Theoretical Background](../docs/theory.md)
+- [User Manuals](../docs/documentation.md)

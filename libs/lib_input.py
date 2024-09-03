@@ -19,7 +19,7 @@ class inputs:
         """
 
         ### Version
-        self.version = '0.1.1'
+        self.version = '0.2.0'
 
         ### Default setting for inputs
         ##[Active learning types]
@@ -28,7 +28,7 @@ class inputs:
         self.calc_type = 'active'
         # al_type: str
         #     Type of active learning; 'energy', 'force', 'force_max'
-        self.al_type = 'force'
+        self.al_type = 'force_max'
         # uncert_type: str
         #     Type of uncertainty; 'absolute', 'relative'
         self.uncert_type = 'absolute'

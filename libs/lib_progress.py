@@ -71,7 +71,10 @@ def check_progress(inputs, calc_step='cont'):
 
             outputfile.write(result_msg + '\n')
             outputfile.close()
-            # Get the test errors using data-test.npz
+            # Get the test errors using data-tst.npz
+            import random
+            inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+            single_print(f'[cont]\tRandomly selected biased idx_atom : {inputs.idx_atom}')
             get_testerror(inputs)
         else: # When there is a 'result.txt',
             # Check the contents in 'result.txt' before recording
@@ -88,12 +91,18 @@ def check_progress(inputs, calc_step='cont'):
             # Print the test errors only for first calculation
             if get_criteria_index == 0:
                 # Get the test errors using data-test.npz
+                import random
+                inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+                single_print(f'[cont]\tRandomly selected biased idx_atom : {inputs.idx_atom}')
                 get_testerror(inputs)
     else:
         result_data = \
         pd.read_csv('result.txt', index_col=False, delimiter='\t')
         get_criteria_index = np.array(result_data.loc[:,'Iteration'])[-1]
         if inputs.index == (get_criteria_index if calc_step == 'gen' else get_criteria_index + 1):
+            import random
+            inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+            single_print(f'[cont]\tRandomly selected biased idx_atom : {inputs.idx_atom}')
             get_testerror(inputs)
         result_msg = generate_msg(inputs.al_type)
         get_criteria_index = result_data.loc[:,result_msg[-14:]].isnull().values.any();

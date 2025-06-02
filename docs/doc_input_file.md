@@ -50,8 +50,8 @@ key_mapping:
   E: total_energy            # total potential eneriges to train to
   F: forces                  # atomic forces to train to
   R: pos                     # raw atomic positions
-  unit_cell: cell
-  pbc: pbc
+  CELL: cell
+  PBC: pbc
 chemical_symbols:
   - Cu
   - I

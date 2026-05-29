@@ -216,7 +216,7 @@ def traj_run_command(args):
             '(e.g. almomd utils traj_run md.traj 300 500 aims --harmonic_F)'
             )
     else:
-        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc, harmonic_F)
+        traj_run(args.traj_path, args.thermal_cutoff, args.num_traj, args.DFT_calc, args.num_calc, args.harmonic_F)
 
 
 def cnvg_post_command(args):
@@ -435,7 +435,7 @@ def main():
         'nstep', nargs='?', type=int,
         help='The number of the subsampling'
         )
-    cnvg_post_parser.set_defaults(func=traj_run_command)
+    cnvg_post_parser.set_defaults(func=cnvg_post_command)
 
     # Subparser for "utils covert_npz" subcommand
     convert_npz_parser = utils_subparsers.add_parser(
@@ -451,7 +451,7 @@ def main():
         action='store_true',
         help='Exclude harmonic terms'
         )
-    convert_npz_parser.set_defaults(func=traj_run_command)
+    convert_npz_parser.set_defaults(func=convert_npz_command)
 
     args = parser.parse_args()
 

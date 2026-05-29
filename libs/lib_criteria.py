@@ -129,18 +129,33 @@ def eval_uncert_all(
     zndex = 0
     natoms = len(struc_step)
 
-    # Get predicted potential and total energies shifted by E_ref (ground state energy)
-    for index_nmodel in range(nmodel):
-        for index_nstep in range(nstep):
+    # Get predicted energies and forces shifted by E_ref (ground state energy).
+    # For the common total-energy path, reuse the ensemble forward helper so
+    # NequIP builds the neighbor list once instead of once per model.
+    if isinstance(calculator, list) and al_type != 'energy_max':
+        from libs.lib_load_model import ensemble_calculate
+        results = ensemble_calculate(calculator, struc_step)
+        positions = struc_step.get_positions()
+        for zndex, result in enumerate(results):
+            energy = float(np.asarray(result.get('energy', result.get('free_energy'))).reshape(-1)[0])
+            Epot_step.append(energy - E_ref[0][zndex])
+            F_step.append(result['forces'])
+            prd_struc.append(positions)
+    else:
+        for index_nmodel in range(nmodel):
+            for index_nstep in range(nstep):
 
-            if al_type == 'energy_max':
-                Epot_step.append(np.array(calculator[zndex].get_potential_energies()) - E_ref[1][zndex])
-            else:
-                Epot_step.append(calculator[zndex].get_potential_energy() - E_ref[0][zndex])
+                if al_type == 'energy_max':
+                    Epot_step.append(np.array(calculator[zndex].get_potential_energies()) - E_ref[1][zndex])
+                else:
+                    Epot_step.append(calculator[zndex].get_potential_energy() - E_ref[0][zndex])
 
-            F_step.append(calculator[zndex].get_forces())
-            prd_struc.append(struc_step.get_positions())
-            zndex += 1
+                F_step.append(calculator[zndex].get_forces())
+                prd_struc.append(struc_step.get_positions())
+                zndex += 1
+
+    Epot_step = np.array(Epot_step)
+    F_step = np.array(F_step)
 
     # Get the average and standard deviation of predicted potential energies
     # Get the average and standard deviation of the norm of predicted forces

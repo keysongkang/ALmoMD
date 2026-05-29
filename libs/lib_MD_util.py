@@ -34,7 +34,7 @@ def get_forces(
     if type(calculator) == list:
         from libs.lib_load_model import ensemble_calculate
         results = ensemble_calculate(calculator, struc)
-        forces = [r['forces'] for r in results]
+        forces = np.array([r['forces'] for r in results])
 
         if harmonic_F and anharmonic_F:
             from libs.lib_util import get_displacements, get_fc_ha
@@ -46,7 +46,7 @@ def get_forces(
 
     else:
         struc.calc = calculator
-        forces_avg = struc.get_forces(md=True)
+        force_avg = struc.get_forces(md=True)
 
     return force_avg
 
@@ -99,7 +99,7 @@ def get_stress(
 
 @timeit
 def get_MDinfo_temp(
-    struc, nstep, nmodel, calculator, harmonic_F, E_ref, signal_P = False
+    struc, nstep, nmodel, calculator, harmonic_F, E_ref=None, signal_P = False
 ):
     """Function [get_MDinfo_temp]
     Extract the average of total, potential, and kinetic energy of
@@ -128,52 +128,31 @@ def get_MDinfo_temp(
         Averaged temeprature across trained models
     """
 
-    # Get calculators from trained models and corresponding predicted quantities
-    info_TE, info_PE, info_KE, info_T = [], [], [], []
-    if signal_P:
-        info_P = []
+    ncalc = nstep * nmodel
+    if E_ref is None:
+        E_ref = [np.zeros(ncalc), np.array([])]
 
-    # GPU_threading = True
-    # if GPU_threading:
-    #     # initialize threading for each model
-    #     t_list = []
-    #     for index_nmodel in range(nmodel):
-    #         for index_nstep in range(nstep):
-    #             index_totalmodel = index_nmodel * nstep + index_nstep
-    #             t = threading.Thread(
-    #                 target=calculator[index_totalmodel].calculate,
-    #                 args=[struc, ['energy', 'forces', 'stress']]
-    #             )
-    #             t_list.append(t)
-    #
-    #     # run each model
-    #     for t in t_list:
-    #         t.start()
-    #
-    #     # wait for another thread to finish
-    #     for t in t_list:
-    #         t.join()
-    # else:
-    #     for index_nmodel in range(nmodel):
-    #         for index_nstep in range(nstep):
-    #             index_totalmodel = index_nmodel * nstep + index_nstep
-    #             calculator[index_totalmodel].calculate(struc)
+    KE = struc.get_kinetic_energy()
+    temp = struc.get_temperature()
 
+    if type(calculator) == list:
+        from libs.lib_load_model import ensemble_calculate
+        results = ensemble_calculate(calculator, struc)
+        info_PE = np.array([
+            float(np.asarray(result.get('energy', result.get('free_energy'))).reshape(-1)[0]) - E_ref[0][idx]
+            for idx, result in enumerate(results)
+        ])
+        if signal_P:
+            info_P = [result['stress'] for result in results]
+    else:
+        struc.calc = calculator
+        info_PE = np.array([struc.get_potential_energy() - E_ref[0][0]])
+        if signal_P:
+            info_P = [struc.get_stress()]
 
-    zndex = 0
-    for index_nmodel in range(nmodel):
-        for index_nstep in range(nstep):
-            struc.calc = calculator[zndex]
-            PE = struc.get_potential_energy() - E_ref[0][zndex]
-            KE = struc.get_kinetic_energy()
-            TE = PE + KE
-            info_TE.append(TE)
-            info_PE.append(PE)
-            info_KE.append(KE)
-            info_T.append(struc.get_temperature())
-            if signal_P:
-                info_P.append(struc.get_stress())
-            zndex += 1
+    info_KE = np.full(len(info_PE), KE)
+    info_T = np.full(len(info_PE), temp)
+    info_TE = info_PE + KE
     
     # Get their average
     # info_TE_avg =\
@@ -184,7 +163,7 @@ def get_MDinfo_temp(
         from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
         displacements = get_displacements(struc.get_positions(), 'geometry.in.supercell')
         F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-        E_ha = get_E_ha(displacements, fc_ha)
+        E_ha = get_E_ha(displacements, F_ha)
         info_PE_avg = np.average(info_PE, axis=0) + E_ha
     else:
         info_PE_avg = np.average(info_PE, axis=0)
@@ -217,8 +196,4 @@ def get_masses(get_masses, natoms):
         An array of atoms' masses in the simulation cell
     """
 
-    masses = []
-    for idx in range(natoms):
-        masses.append([get_masses[idx]])
-
-    return np.array(masses)
+    return np.asarray(get_masses)[:natoms, None]

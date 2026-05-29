@@ -85,9 +85,9 @@ def run_DFT(inputs):
 
         if inputs.al_type == 'energy':
             al_piece = 'E'
-        elif inputs.al_type == 'force' or 'force_max':
+        elif inputs.al_type in ('force', 'force_max'):
             al_piece = 'F'
-        elif inputs.al_type == 'sigma' or 'sigma_max':
+        elif inputs.al_type in ('sigma', 'sigma_max'):
             al_piece = 'S'
 
         data = pd.read_csv(f'./../../UNCERT/uncertainty-{condition}_{inputs.index}.txt', sep='\t')

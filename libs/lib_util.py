@@ -4,7 +4,10 @@ import sys
 import subprocess
 import threading
 import time
+import shutil
 import numpy as np
+import ast
+from functools import lru_cache
 
 from ase        import Atoms
 from ase.data   import atomic_numbers
@@ -86,8 +89,7 @@ def check_mkdir(dir_name):
     dir_name: str
         The name of the new directory
     """
-    if os.path.exists('./'+dir_name) == False:
-        os.system('mkdir ./'+dir_name)
+    os.makedirs(dir_name, exist_ok=True)
         
         
 def rm_mkdir(dir_name):
@@ -100,8 +102,8 @@ def rm_mkdir(dir_name):
     dir_name: str
         The name of the target directory
     """
-    if os.path.exists('./'+dir_name):
-        os.system('rm -r ./'+dir_name)
+    if os.path.exists(dir_name):
+        shutil.rmtree(dir_name)
 
 
 def rm_file(dir_name):
@@ -114,8 +116,18 @@ def rm_file(dir_name):
     dir_name: str
         The name of the target file
     """
-    if os.path.exists('./'+dir_name):
-        os.system('rm ./'+dir_name)
+    if os.path.exists(dir_name):
+        os.remove(dir_name)
+
+
+@lru_cache(maxsize=8)
+def _read_aims_geometry_cached(filename):
+    return read_aims_geometry(filename)
+
+
+@lru_cache(maxsize=8)
+def _loadtxt_cached(filename):
+    return np.loadtxt(filename)
 
 
 def output_init(string, version):
@@ -311,7 +323,7 @@ class Structure(Atoms):
         )
 
     def set_ref_structure(self, filename="geometry.in.supercell", *args, **kwargs):
-        self.ref_structure = read_aims_geometry(filename)
+        self.ref_structure = _read_aims_geometry_cached(filename).copy()
 
     def set_displacements(self, *args, **kwargs):
         if self.ref_structure is None:
@@ -333,7 +345,7 @@ class Structure(Atoms):
         return self.displacements
 
     def set_force_constants(self, filename="FORCE_CONSTANTS_remapped", *args, **kwargs):
-        self.force_constants = np.loadtxt(filename)
+        self.force_constants = _loadtxt_cached(filename).copy()
 
     def set_fc_ha(self, *args, **kwargs):
         if self.displacements is None:
@@ -488,7 +500,7 @@ def eval_sigma(struc_step_forces, struc_step_positions, al_type):
 
 def get_displacements(struc_step_positions, struc='geometry.in.supercell'):
     # Read the ground state structure with the primitive cell
-    ref_struc_super = read_aims_geometry(struc)
+    ref_struc_super = _read_aims_geometry_cached(struc)
 
     # Get the structral information
     ref_cell = np.asarray(ref_struc_super.get_cell())
@@ -507,7 +519,7 @@ def get_displacements(struc_step_positions, struc='geometry.in.supercell'):
 @timeit
 def get_fc_ha(displacements, fc_file='FORCE_CONSTANTS_remapped'):
     # Get the harmonic force from the force constant of the phonon dispersion
-    fc = np.loadtxt(fc_file)
+    fc = _loadtxt_cached(fc_file)
     shape = displacements.shape
     fc_ha = -fc @ displacements.flatten()
 
@@ -611,11 +623,11 @@ def read_input_file(file_path):
 
                 # Perform type conversions for specific variables
                 if name in [
-                'supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'meta_restart',
+                'supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'anharmonic_F', 'meta_restart',
                 'signal_uncert', 'criteria_energy', 'train_stress', 'npz_sigma', 'E_gs', 'lr',
                 'lr_stop', 'loss_var'
                 ]:
-                    value = eval(value)
+                    value = ast.literal_eval(value)
                 elif name in [
                 'crtria_cnvg', 'friction', 'compressibility', 'kB', 'uncert_shift', 'uncert_grad',
                 'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep', 'cell_factor', 'bias_A',
@@ -638,5 +650,3 @@ def read_input_file(file_path):
                 variables[name] = value
 
     return variables
-
-

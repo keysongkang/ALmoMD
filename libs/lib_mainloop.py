@@ -326,9 +326,9 @@ def traj_fromRealE(temperature, pressure, E_gs, uncert_type, al_type, ntotal, in
 
     if al_type == 'energy':
         al_piece = 'E'
-    elif al_type == 'force' or 'force_max':
+    elif al_type in ('force', 'force_max'):
         al_piece = 'F'
-    elif al_type == 'sigma' or 'sigma_max':
+    elif al_type in ('sigma', 'sigma_max'):
         al_piece = 'S'
 
     # Extract the accepted samples

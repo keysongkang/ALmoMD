@@ -142,19 +142,33 @@ def get_testerror(inputs):
         if id_step % inputs.printinterval == 0:
             single_print(f'[Termi]\tTesting: sample {id_step}')
 
-        # Go through all trained models
-        for index_nmodel in range(inputs.nmodel):
-            for index_nstep in range(inputs.nstep):
-                struc.calc = inputs.calc_MLIP[zndex]
-                # Predicted energy is shifted E_gs back, but the E_gs defualt is zero
+        # Go through all trained models. The common total-energy path reuses
+        # the ensemble helper to avoid rebuilding NequIP neighbor lists per model.
+        if isinstance(inputs.calc_MLIP, list) and inputs.al_type != 'energy_max':
+            from libs.lib_load_model import ensemble_calculate
+            results = ensemble_calculate(inputs.calc_MLIP, struc)
+            positions = struc.get_positions()
+            for zndex, result in enumerate(results):
+                energy = float(np.asarray(result.get('energy', result.get('free_energy'))).reshape(-1)[0])
+                prd_E.append(energy - E_ref[0][zndex])
+                prd_F.append(result['forces'])
+                prd_R.append(positions)
+        else:
+            for index_nmodel in range(inputs.nmodel):
+                for index_nstep in range(inputs.nstep):
+                    struc.calc = inputs.calc_MLIP[zndex]
+                    # Predicted energy is shifted E_gs back, but the E_gs defualt is zero
 
-                if inputs.al_type == 'energy_max':
-                    prd_E.append(struc.get_potential_energies()-E_ref[1][zndex])
-                else:
-                    prd_E.append(struc.get_potential_energy()-E_ref[0][zndex])
-                prd_F.append(struc.get_forces(md=True))
-                prd_R.append(struc.get_positions())
-                zndex += 1
+                    if inputs.al_type == 'energy_max':
+                        prd_E.append(struc.get_potential_energies()-E_ref[1][zndex])
+                    else:
+                        prd_E.append(struc.get_potential_energy()-E_ref[0][zndex])
+                    prd_F.append(struc.get_forces(md=True))
+                    prd_R.append(struc.get_positions())
+                    zndex += 1
+
+        prd_E = np.array(prd_E)
+        prd_F = np.array(prd_F)
 
         if inputs.harmonic_F:
             from libs.lib_util import get_displacements, get_fc_ha, get_E_ha

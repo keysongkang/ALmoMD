@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import ast
 from vibes import son
 from vibes.trajectory import reader, Trajectory
 from vibes.helpers.converters import atoms2dict
@@ -256,7 +257,7 @@ def split_son(num_split, E_gs, harmonic_F=False):
 
     # take any inputs converted it to float
     E_gs = str(E_gs)
-    E_gs = eval(E_gs)
+    E_gs = ast.literal_eval(E_gs)
 
     single_print(f'[split_son]\tRead {trajname} file')
     # Read trajectory file
@@ -272,7 +273,8 @@ def split_son(num_split, E_gs, harmonic_F=False):
     # Randomly sample training and testing data index with a total count of num_split.
     data_index = list(range(len(data)))
     test_index = random.sample(data_index, num_split)
-    train_index = [id for id in data_index if id not in test_index]
+    test_index_set = set(test_index)
+    train_index = [id for id in data_index if id not in test_index_set]
 
     # Extract the training and testing data using data index
     test_data = [data[id] for id in test_index]

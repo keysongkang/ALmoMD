@@ -71,7 +71,7 @@ def run_dft_cont(inputs):
             inputs.idx_atom = int(matches[-1])
         else:
             import random
-            inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+            inputs.idx_atom = random.randrange(inputs.NumAtoms)
             single_print(f'[cont]\tRandomly selected biased idx_atom : {inputs.idx_atom}')
     else:
         inputs.idx_atom = int(inputs.idx_atom)

@@ -73,7 +73,7 @@ def check_progress(inputs, calc_step='cont'):
             outputfile.close()
             # Get the test errors using data-tst.npz
             import random
-            inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+            inputs.idx_atom = random.randrange(inputs.NumAtoms)
             single_print(f'[cont]\tRandomly selected biased idx_atom : {inputs.idx_atom}')
             get_testerror(inputs)
         else: # When there is a 'result.txt',
@@ -92,7 +92,7 @@ def check_progress(inputs, calc_step='cont'):
             if get_criteria_index == 0:
                 # Get the test errors using data-test.npz
                 import random
-                inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+                inputs.idx_atom = random.randrange(inputs.NumAtoms)
                 single_print(f'[cont]\tRandomly selected biased idx_atom : {inputs.idx_atom}')
                 get_testerror(inputs)
     else:
@@ -101,7 +101,7 @@ def check_progress(inputs, calc_step='cont'):
         get_criteria_index = np.array(result_data.loc[:,'Iteration'])[-1]
         if inputs.index == (get_criteria_index if calc_step == 'gen' else get_criteria_index + 1):
             import random
-            inputs.idx_atom = random.randint(0, inputs.NumAtoms)
+            inputs.idx_atom = random.randrange(inputs.NumAtoms)
             single_print(f'[cont]\tRandomly selected biased idx_atom : {inputs.idx_atom}')
             get_testerror(inputs)
         result_msg = generate_msg(inputs.al_type)

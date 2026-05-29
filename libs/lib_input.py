@@ -1,274 +1,214 @@
+from dataclasses import InitVar, dataclass, field, fields
+
 from libs.lib_util import read_input_file
 
+
+@dataclass
 class inputs:
-    """Object [almd]
-    Read, update, and store input variables.
+    """Configuration loaded from input.in.
 
-    Functions:
-
-    __init__: Automatically initialize the inputs and read input.in file.
+    The lowercase class name is kept for backward compatibility with the
+    existing CLI and workflow code, which call ``inputs()`` directly.
     """
 
-    def __init__(self, input_file='input.in'):
-        """Function [__init__]
-        Automatically initialize the inputs and read input.in file.
+    input_file: InitVar[str] = 'input.in'
 
-        Parameters:
+    version: str = '0.2.0'
 
-        input_file: Read the inputs from input.in file 
-        """
+    # Active learning
+    calc_type: str = 'active'
+    al_type: str = 'force_max'
+    uncert_type: str = 'absolute'
+    harmonic_F: bool = False
+    anharmonic_F: bool = False
+    uncert_shift: float = 2.0
+    uncert_grad: float = 1.0
+    output_format: str = 'trajectory.son'
+    MLIP: str = 'nequip'
 
-        ### Version
-        self.version = '0.2.0'
+    nstep: int = 1
+    nmodel: int = 1
+    steps_init: int = 125
+    steps_random: int = 125
+    ntrain_init: int = 25
+    ntrain: int = 25
+    nperiod: int = 200
+    crtria_cnvg: float = 1.0e-7
+    num_calc: int = 16
+    num_mdl_calc: int = 6
+    random_index: int = 1
 
-        ### Default setting for inputs
-        ##[Active learning types]
-        # calc_type: str
-        #     Type of sampling; 'active' (active learning), 'random', 'converge'
-        self.calc_type = 'active'
-        # al_type: str
-        #     Type of active learning; 'energy', 'force', 'force_max'
-        self.al_type = 'force_max'
-        # uncert_type: str
-        #     Type of uncertainty; 'absolute', 'relative'
-        self.uncert_type = 'absolute'
-        # uncert_shift: boolean
-        #     Shifting of erf function
-        self.harmonic_F = False
-        self.anharmonic_F = False
-        # uncert_type: str
-        #     Use the harmonic force constants
-        self.uncert_shift = 2.0
-        # uncert_grad: float
-        #     Gradient of erf function
-        #     (Value is relative to standard deviation)
-        self.uncert_grad = 1.0
-        # output_format: str
-        #     Type of FHI-vibes output to be read
-        self.output_format = 'trajectory.son'
+    loss_var: bool = True
+    train_stress: bool = False
+    npz_sigma: bool = True
 
-        ##[Active learning setting]
+    # Molecular dynamics
+    ensemble: str = 'NVTLangevin'
+    supercell: list = field(default_factory=lambda: [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    timestep: float = 1.0
+    loginterval: int = 10
+    printinterval: int = 1
+    temperature: int = 2000
+    pressure: int = 0
+    ttime: float = 500.0
+    pfactor: float = None
+    signal_uncert: bool = True
 
-        self.MLIP = 'nequip'
+    meta_Ediff: float = 0.0
+    meta_restart: bool = False
+    meta_r_crtria: float = 100.0
+    idx_atom: object = 0
+    bias_A: float = 0.0
+    bias_B: float = 999.0
+    temp_factor: float = 0.0
 
-        # nstep: int
-        #     The number of subsampling sets
-        self.nstep = 1
-        # nmodel: int
-        #     The number of ensemble model sets with different initialization
-        self.nmodel = 1
-        # steps_init: int
-        #     Initialize MD steps to get averaged uncertainties and energies
-        self.steps_init = 125
-        # steps_random: int
-        #     the length of MD run for random sampling
-        self.steps_random = 125
-        # ntrain_init: int
-        #     The number of training data for first iterative step
-        self.ntrain_init = 25
-        # ntrain: int
-        #     The number of added training data for each iterative step
-        self.ntrain = 25
-        # nperiod: int
-        #     The number of steps for the active learning with a finite period
-        self.nperiod = 200
-        # crtria_cnvg: float
-        #     Convergence criteria
-        self.crtria_cnvg = 0.0000001
-        # num_calc: int
-        #     The number of job scripts for DFT calculations
-        self.num_calc = 16
-        # num_mdl_calc: int
-        #     The number of job scripts for MLIP training calculations
-        self.num_mdl_calc = 6
-        # random_index: int
-        #     The number of iteration for DFT random sampling
-        self.random_index = 1
+    npz_test: str = 'test'
+    criteria_energy: bool = True
 
-        self.loss_var = True
-        self.train_stress = False
-        self.npz_sigma = True
+    # Standalone runMD
+    modelpath: str = './MODEL'
+    logfile: str = 'md.log'
+    trajectory: str = 'md.traj'
+    steps: int = 500
+    supercell_init: list = field(default_factory=lambda: [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    MD_search: str = 'continue'
+    cell_factor: float = 1.0
 
-        ##[Molecular dynamics setting]
-        # ensemble: str
-        #     Type of MD ensembles; 'NVTLangevin'
-        self.ensemble = 'NVTLangevin'
-        # supercell: 2D array of floats
-        #     Tensor shape of supercell for MD calculations
-        #     compared to primitive cell.
-        self.supercell = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-        # timestep: float
-        #     MD timestep in units of femto-second (fs)
-        self.timestep = 1
-        # loginterval: int
-        #     The step interval for printing MD steps
-        self.loginterval = 10
-        self.printinterval = 1
-        # temperature: float
-        #     The desired temperature in units of Kelvin (K)
-        self.temperature = 2000
-        # pressure: float
-        #     The desired pressure in units of eV/Angstrom**3 (atomic unit)
-        self.pressure = 0
+    # Thermostats/barostats
+    friction: float = 0.02
+    taut: int = 50
+    compressibility: float = 4.57e-5
+    taup: int = 100
+    mask: tuple = (1, 1, 1)
 
-        self.ttime = 500   # [fs]
-        self.pfactor = None
+    # NequIP
+    rmax: float = 3.5
+    lmax: int = 2
+    nfeatures: int = 16
+    E_gs: float = 0.0
 
-        self.signal_uncert = True
+    # SO3krates
+    r_cut: float = 5.0
+    l: int = 3
+    f: int = 132
+    l_min: int = 1
+    l_max: int = 3
+    max_body_order: int = 2
+    f_body_order: int = 1
+    we: float = 0.01
+    wf: float = 1.0
+    ws: str = 'None'
+    loss_variance_scaling: str = '--no-loss-variance-scaling'
+    epochs: int = 2000
+    eval_energy_t: str = 'None'
+    mic: str = '--mic'
+    float64: str = '--no-float64'
+    lr: float = 0.001
+    lr_stop: float = 0.00001
+    lr_decay_exp_transition_steps: int = 100000
+    lr_decay_exp_decay_factor: float = 0.7
+    clip_by_global_norm: str = 'None'
+    shift_mean: str = '--shift-mean'
+    size_batch: object = 'None'
+    size_batch_training: object = 'None'
+    size_batch_validation: object = 'None'
+    seed_data: int = 0
+    seed_training: int = 0
+    wandb_name: str = 'None'
+    wandb_group: str = 'None'
+    wandb_project: str = 'None'
+    overwrite_module: str = '--no-overwrite-module'
+    ace: str = '--no-ace'
+    skin: float = 0.01
 
-        self.meta_Ediff = 0.0
-        self.meta_restart = False
-        self.meta_r_crtria = 100.0
+    # Constants and job commands
+    kB: float = 8.617333262e-5
+    job_command: str = 'sbatch'
+    job_dft_name: str = 'job-vibes.slurm'
+    job_MLIP_name: str = 'job-nequip-gpu.slurm'
+    vibes_command: str = 'vibes run singlepoint aims.in &> log.aims'
+    device: str = 'cpu'
+    test_index: int = 1
 
-        self.idx_atom = 0 
-        self.bias_A = 0.0
-        self.bias_B = 999
+    # Legacy/rare input keys kept so old input.in files fail less often.
+    steps_ther: int = 0
+    cutoff_ther: int = 0
+    wndex: int = 0
 
-        self.temp_factor = 0.0
+    # Runtime attributes filled by workflows.
+    index: int = field(init=False, default=0)
+    nval_init: int = field(init=False)
+    nval: int = field(init=False)
+    ntotal_init: int = field(init=False)
+    ntotal: int = field(init=False)
+    train_split: float = field(init=False)
+    NumAtoms: int = field(init=False, default=0)
+    calc_MLIP: object = field(init=False, default=None)
 
-        # Set the testing data
-        # test / train
-        self.npz_test = 'test'
-
-        # Usage of energy criteria
-        self.criteria_energy = True
-
-        ##[runMD default inputs]
-        # workpath: str
-        #     A path to the directory containing trained models
-        self.modelpath = './MODEL'
-        # logfile: str
-        #     A file name for MD logging
-        self.logfile = 'md.log'
-        # trajectory: str
-        #     A file name for MD trajectory
-        self.trajectory = 'md.traj'
-        # steps: int
-        #     A target simulation timesteps
-        self.steps = 500
-        # supercell_init: 2D array of floats
-        #     Tensor shape of supercell for runMD calculations
-        #     compared to primitive cell.
-        self.supercell_init = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-
-        self.MD_search = 'continue'
-        self.cell_factor = 1.0
-
-        ##[NVTLangevin setting]
-        # friction: float
-        #     Strength of the friction parameter in NVTLangevin ensemble
-        self.friction = 0.02
-
-        ##[NPTBerendsen setting]
-        # taut: float
-        #     Time constant for Berendsen temperature coupling
-        #     in NVTBerendsen and NPT Berendsen
-        self.taut = 50
-        # compressibility: float
-        #     compressibility in units of eV/Angstrom**3 in NPTBerendsen
-        self.compressibility = 4.57e-5
-        # taup: float
-        #     Time constant for Berendsen pressure coupling in NPTBerendsen
-        self.taup = 100
-        # mask: Three-element tuple
-        #     Dynamic elements of the computational box (x,y,z); 0 is false, 1 is true
-        self.mask = (1, 1, 1)
-
-        ##[NequIP setting]
-        # rmax: float
-        #     Cutoff radius in NequIP
-        self.rmax = 3.5
-        # lmax: int
-        #     Maximum angular momentum in NequIP
-        self.lmax = 2
-        # nfeatures: int
-        #     The number of features used in NequIP
-        self.nfeatures = 16
-        # E_gs: float
-        #     Reference total energy in units of eV/Unitcell
-        #     to shift the total energies of the trajectory
-        #     and avoid unusually high total energy values
-        #     that may lead to unusual weightings with force values.
-        #     Recommend to use the ground state total energy.
-        self.E_gs = 0.0
-
-        ##[so3krates setting]
-        self.r_cut = 5.0
-        self.l = 3
-        self.f = 132
-        self.l_min = 1
-        self.l_max = 3
-        self.max_body_order = 2
-        self.f_body_order = 1
-        self.we = 0.01 # weight-energy
-        self.wf = 1.00 # weight-forces
-        self.ws = 'None' # weight-stress
-        self.loss_variance_scaling = '--no-loss-variance-scaling'
-        self.epochs = 2000
-        self.eval_energy_t = 'None'
-        self.mic = '--mic'
-        self.float64 = '--no-float64'
-        self.lr = 0.001
-        self.lr_stop = 0.00001
-        self.lr_decay_exp_transition_steps = 100000
-        self.lr_decay_exp_decay_factor = 0.7
-        self.clip_by_global_norm = 'None'
-        self.shift_mean = '--shift-mean'
-        self.size_batch = 'None'
-        self.size_batch_training = 'None'
-        self.size_batch_validation = 'None'
-        # self.seed_model = 0
-        self.seed_data = 0
-        self.seed_training = 0
-        self.wandb_name = 'None'
-        self.wandb_group = 'None'
-        self.wandb_project = 'None'
-        # self.outfile_inputs = 'inputs.json'
-        self.overwrite_module = '--no-overwrite-module'
-        self.ace = '--no-ace'
-        self.skin = 0.01
-
-        ##[Constants]
-        # kB: float
-        #     Boltzmann constant in units of eV/K
-        self.kB = 8.617333262e-5
-
-        self.job_command = 'sbatch'
-        self.job_dft_name = 'job-vibes.slurm'
-        self.job_MLIP_name = 'job-nequip-gpu.slurm'
-        # Prepare the command line for FHI-vibes
-        self.vibes_command = 'vibes run singlepoint aims.in &> log.aims'
-
-        ### Implement reading the input file
-        # Read input variables from the input file
+    def __post_init__(self, input_file):
         input_variables = read_input_file(input_file)
-        
-        # Update instance attributes with the input variables
-        self.__dict__.update(input_variables)
-        
+        self._apply_input_variables(input_variables)
+        self._derive_values()
+        self._validate()
 
-        ### Perform postprocessing of inputs
-        # Validation steps are currently fixed for 16.67% (1/6) of total data.
-        # nval_init: The number of validation data for first iterative step
+    def _apply_input_variables(self, input_variables):
+        valid_names = {item.name for item in fields(self) if item.init}
+        valid_names.discard('input_file')
+
+        if 'anharmoic_F' in input_variables:
+            input_variables['anharmonic_F'] = input_variables.pop('anharmoic_F')
+
+        unknown = sorted(set(input_variables) - valid_names)
+        if unknown:
+            raise ValueError(
+                'Unknown input key(s): '
+                + ', '.join(unknown)
+                + '. Check input.in for typos or add the key to libs/lib_input.py.'
+            )
+
+        for name, value in input_variables.items():
+            setattr(self, name, value)
+
+    def _derive_values(self):
         self.nval_init = int(self.ntrain_init / 5)
-        # nval: The number of added validation data for each iterative step
         self.nval = int(self.ntrain / 5)
-        # ntotal_init: Total number of training and valdiation data for all subsamplings for first iteractive step
         self.ntotal_init = (self.ntrain_init + self.nval_init) * self.nstep
-        # ntotal: Total number of added training and valdiation data for all subsamplings for each iteractive step
         self.ntotal = (self.ntrain + self.nval) * self.nstep
-
-        self.train_split = self.ntrain/(self.ntrain + self.nval)
-
-        ### Initization of parameters
-        # index: int
-        #     The index of AL interactive steps
+        self.train_split = self.ntrain / (self.ntrain + self.nval)
         self.index = 0
 
+    def _validate(self):
+        _validate_choice(self.calc_type, {'active', 'random', 'period', 'converge'}, 'calc_type')
+        _validate_choice(
+            self.al_type,
+            {'energy', 'energy_max', 'force', 'force_max', 'sigma', 'sigma_max', 'all', 'EorFmax'},
+            'al_type',
+        )
+        _validate_choice(self.uncert_type, {'absolute', 'relative'}, 'uncert_type')
+        _validate_choice(self.MLIP, {'nequip', 'so3krates'}, 'MLIP')
 
-        # # Extract MPI infos
-        # from mpi4py import MPI
+        positive_ints = {
+            'nstep': self.nstep,
+            'nmodel': self.nmodel,
+            'ntrain_init': self.ntrain_init,
+            'ntrain': self.ntrain,
+            'loginterval': self.loginterval,
+            'num_calc': self.num_calc,
+            'num_mdl_calc': self.num_mdl_calc,
+        }
+        for name, value in positive_ints.items():
+            if int(value) <= 0:
+                raise ValueError(f'{name} must be positive, got {value!r}')
 
-        # self.comm = MPI.COMM_WORLD
-        # self.size = self.comm.Get_size()
-        # self.rank = self.comm.Get_rank()
+        if self.ntrain + self.nval <= 0:
+            raise ValueError('ntrain + nval must be positive.')
+
+
+def _validate_choice(value, valid_values, name):
+    if value not in valid_values:
+        raise ValueError(
+            f'{name} must be one of {sorted(valid_values)}, got {value!r}'
+        )
+
+
+ALmoMDConfig = inputs

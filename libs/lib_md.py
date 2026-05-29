@@ -2,8 +2,7 @@ import ase.units as units
 
 
 from libs.lib_util import single_print, Structure
-from libs.lib_nvtlangevin import NVTLangevin
-from libs.lib_nvtlangevin_meta import NVTLangevin_meta
+from libs.lib_nvtlangevin import NVTLangevin, NVTLangevin_meta
 from libs.lib_nptisoiso import NPTisoiso
 
 def runMD(
@@ -121,8 +120,8 @@ def runMD(
             signal_uncert = signal_uncert,
             signal_append = signal_append
         )
-    else:        
-        single_print('The ensemble model is not determined.', inputs.rank)
+    else:
+        single_print('The ensemble model is not determined.')
 
 
 def cont_runMD(
@@ -191,7 +190,7 @@ def cont_runMD(
             signal_append = signal_append
         )
     elif inputs.ensemble == 'NVTLangevin_meta':
-        from libs.lib_cont_nvtlangevin_meta import cont_NVTLangevin_meta
+        from libs.lib_cont_nvtlangevin import cont_NVTLangevin_meta
         cont_NVTLangevin_meta(
             inputs = inputs,
             struc = struc,
@@ -205,7 +204,7 @@ def cont_runMD(
             signal_append = signal_append
         )
     elif inputs.ensemble == 'NVTLangevin_bias':
-        from libs.lib_cont_nvtlangevin_bias import cont_NVTLangevin_bias
+        from libs.lib_cont_nvtlangevin import cont_NVTLangevin_bias
         cont_NVTLangevin_bias(
             inputs = inputs,
             struc = Structure.from_atoms(struc),
@@ -219,7 +218,7 @@ def cont_runMD(
             signal_append = signal_append
         )
     elif inputs.ensemble == 'NVTLangevin_temp':
-        from libs.lib_cont_nvtlangevin_temp import cont_NVTLangevin_temp
+        from libs.lib_cont_nvtlangevin import cont_NVTLangevin_temp
         cont_NVTLangevin_temp(
             inputs = inputs,
             struc = struc,
@@ -233,7 +232,7 @@ def cont_runMD(
             signal_append = signal_append
         )
     elif inputs.ensemble == 'NVTLangevin_bias_temp':
-        from libs.lib_cont_nvtlangevin_bias_temp import cont_NVTLangevin_bias_temp
+        from libs.lib_cont_nvtlangevin import cont_NVTLangevin_bias_temp
         cont_NVTLangevin_bias_temp(
             inputs = inputs,
             struc = struc,
@@ -262,5 +261,5 @@ def cont_runMD(
             signal_uncert = signal_uncert,
             signal_append = signal_append
         )
-    else:        
-        single_print('The ensemble model is not determined.', inputs.rank)
+    else:
+        single_print('The ensemble model is not determined.')

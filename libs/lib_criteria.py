@@ -1,10 +1,9 @@
-import os
 import sys
 import numpy as np
 import pandas as pd
 from decimal import Decimal
 from scipy import special
-from libs.lib_util import single_print, timeit, Structure
+from libs.lib_util import timeit, Structure
 
 def eval_uncert(
     struc_step:Structure, nstep, nmodel, E_ref, calculator, al_type, harmonic_F
@@ -120,14 +119,11 @@ def eval_uncert_all(
     """
 
     # from mpi4py import MPI
-    from libs.lib_util import eval_sigma
-
     # Prepare empty lists for potential and total energies
     Epot_step = []
     F_step = []
     prd_struc = []
     zndex = 0
-    natoms = len(struc_step)
 
     # Get predicted energies and forces shifted by E_ref (ground state energy).
     # For the common total-energy path, reuse the ensemble forward helper so
@@ -236,7 +232,7 @@ def get_criteria(
 
     # Read all uncertainty results
     result_data = pd.read_csv(
-        f'result.txt',
+        '',
         index_col=False, delimiter='\t'
         )
 

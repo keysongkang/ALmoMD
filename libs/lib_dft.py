@@ -1,5 +1,4 @@
 from ase.io.trajectory import Trajectory
-from ase.io import write as atoms_write
 
 import os
 import subprocess
@@ -42,21 +41,20 @@ def run_DFT(inputs):
         import torch
         torch.set_default_dtype(torch.float64)
 
-        dply_model = f'deployed-model_0_0.pth'
+        dply_model = ''
         if os.path.exists(f'REFER/{dply_model}'):
             single_print(f'\t\tFound the deployed model: {dply_model}')
             refer_MLIP = nequip_calculator.NequIPCalculator.from_deployed_model(
                 f'REFER/{dply_model}', device=inputs.device
                 )
         else:
-            # If there is no model, turn on the termination signal
             single_print(f'\t\tCannot find the model: {dply_model}')
-            signal = 1
+            raise FileNotFoundError(f'REFER/{dply_model}')
 
     # Set the path to folders implementing DFT calculations
     calcpath = f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}'
     # Create these folders
-    check_mkdir(f'CALC')
+    check_mkdir('')
     check_mkdir(calcpath)
 
     # Get the current path
@@ -121,15 +119,14 @@ def run_DFT(inputs):
                 refer_atom = traj_DFT[jtem]
                 refer_atom.calc = refer_MLIP
 
-                # refer_E = refer_atom.get_potential_energy() - E_gs
-                refer_E = refer_atom.get_potential_energy()
-                refer_F = refer_atom.get_forces()
+                refer_atom.get_potential_energy()
+                refer_atom.get_forces()
                 write_geo.write(refer_atom)
                 write_geo.close()
                 os.chdir(calcpath_cwd)
             else:
                 # Check if a previous calculation exists
-                if os.path.exists(f'aims/calculations/aims.out'):
+                if os.path.exists(''):
                     # Check whether calculation is finished
                     if 'Have a nice day.' in open('aims/calculations/aims.out').read():
                         os.chdir(calcpath_cwd)
@@ -182,13 +179,12 @@ def aims_write(filename, atoms):
 
     # There is a ratio difference of velocities
     # between trajectory.son and geometry.in
-    velo_unit_conv = 98.22694788
     trajfile = open(filename, 'w')
 
     # Write lattice parameters
     for jndex in range(3):
         trajfile.write(
-            f'lattice_vector ' +
+            '' +
             '{:.14f}'.format(Decimal(str(atoms.get_cell()[jndex,0]))) +
             ' ' +
             '{:.14f}'.format(Decimal(str(atoms.get_cell()[jndex,1]))) +
@@ -200,7 +196,7 @@ def aims_write(filename, atoms):
     # Write atomic positions with velocities
     for kndex in range(len(atoms)):
         trajfile.write(
-            f'atom ' +
+            '' +
             '{:.14f}'.format(Decimal(str(atoms.get_positions()[kndex,0]))) +
             ' ' +
             '{:.14f}'.format(Decimal(str(atoms.get_positions()[kndex,1]))) +
@@ -211,7 +207,7 @@ def aims_write(filename, atoms):
             '\n'
         )
         # trajfile.write(
-        #     f'    velocity ' +
+        #     '' +
         #     '{:.14f}'.format(Decimal(str(atoms.get_velocities()[kndex,0]*velo_unit_conv))) +
         #     ' ' +
         #     '{:.14f}'.format(Decimal(str(atoms.get_velocities()[kndex,1]*velo_unit_conv))) +

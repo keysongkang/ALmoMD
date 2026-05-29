@@ -9,11 +9,9 @@ from nequip.ase import nequip_calculator
 from ase import Atoms
 
 import matplotlib.pyplot as plt
-import matplotlib.ticker as tck
-from matplotlib.ticker import MultipleLocator
 from sklearn.metrics import r2_score, mean_absolute_error
 
-from libs.lib_util  import output_init, single_print, check_mkdir
+from libs.lib_util  import output_init, single_print
 
 import torch
 torch.set_default_dtype(torch.float64)
@@ -25,12 +23,12 @@ def run_dft_test(inputs):
     """
 
     output_init('test', inputs.version)
-    single_print(f'[test]\tInitiate the validation test process')
+    single_print('')
 
     # Read testing data
-    npz_test = f'./MODEL/data-test.npz' # Path
+    npz_test = '' # Path
     data_test = np.load(npz_test)         # Load
-    single_print(f'[test]\tRead the testing data: data-test.npz')
+    single_print('')
 
     single_print(f'\t\tDevice: {inputs.device}')
 
@@ -68,7 +66,7 @@ def run_dft_test(inputs):
         outputfile.write('index   \tUncertAbs\tRealErrorAbs\tRealE\tPredictE\n')
         outputfile.close()
         
-        single_print(f'[test]\tGo through all configurations in the testing data ...')
+        single_print('')
         # Go through all configurations in the testing data
         config_idx = 1
         for id_E, id_F, id_R, id_z, id_CELL, id_PBC in zip(
@@ -128,7 +126,7 @@ def run_dft_test(inputs):
 
             config_idx += 1
 
-        single_print(f'[test]\tPlot the results ...')
+        single_print('')
         ## Plot the energy and force prediction results
         # Read the energy data
         data = pd.read_csv(f'result-test_{test_idx}_energy.txt', sep="\t")
@@ -179,8 +177,8 @@ def run_dft_test(inputs):
         MAE_F = mean_absolute_error(data[0], data[1])
 
         # Print out the statistic results
-        single_print(f'[test]\t[[Statistic results]]')
-        single_print(f'[test]\tEnergy_R2\tEnergy_MAE\tForces_R2\tForces_MAE')
+        single_print('')
+        single_print('')
         single_print(f'[test]\t{R2_E}\t{MAE_E}\t{R2_F}\t{MAE_F}')
 
-    single_print(f'[test]\t!! Finish the testing process')
+    single_print('')

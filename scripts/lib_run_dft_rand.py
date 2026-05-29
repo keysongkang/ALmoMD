@@ -18,11 +18,11 @@ def run_dft_rand(inputs):
 
     # Print the head
     output_init('rand', inputs.version)
-    single_print(f'[rand]\tInitiate the random sampling process')
+    single_print('')
 
     # Read aiMD trajectory file of training data
     metadata, traj = son.load('trajectory_train.son')
-    single_print(f'[rand]\tRead the initial trajectory data: trajectory_train.son')
+    single_print('')
 
     # As it is an initialization step,
     # the total number of training and validation data matches the initial settings
@@ -62,7 +62,7 @@ def run_dft_rand(inputs):
         # Go to the next step
         inputs.index += 1
     else:
-        single_print(f'[rand]\tExtract index of training data')
+        single_print('')
         traj_idx = []
         for idx in range(inputs.index):
             for jdx in range(inputs.nstep):
@@ -97,5 +97,5 @@ def run_dft_rand(inputs):
         # Go to the next step
         inputs.index += 1
 
-    single_print(f'[rand]\t!! Finish the random sampling process')
+    single_print('')
 

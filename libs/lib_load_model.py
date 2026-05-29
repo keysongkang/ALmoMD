@@ -2,6 +2,7 @@ import os
 import sys
 import threading
 import warnings
+import copy
 
 from libs.lib_util import single_print
 
@@ -23,6 +24,17 @@ def ensemble_calculate(calculators, atoms):
     underlying nequip calculator populated (energy, free_energy,
     energies, forces, stress, stresses, ...).
     """
+    if not calculators:
+        return []
+
+    if not hasattr(calculators[0], 'r_max'):
+        results = []
+        for calc in calculators:
+            atoms_copy = atoms.copy()
+            calc.calculate(atoms_copy)
+            results.append(copy.deepcopy(calc.results))
+        return results
+
     from nequip.data import AtomicData
 
     # Build the neighbor list once; every call to from_ase inside the
@@ -41,14 +53,24 @@ def ensemble_calculate(calculators, atoms):
     AtomicData.from_ase = _cached
     try:
         atoms_copies = [atoms.copy() for _ in calculators]
+        errors = []
+
+        def _calculate(calc, atoms_copy):
+            try:
+                calc.calculate(atoms_copy)
+            except Exception as exc:
+                errors.append(exc)
+
         threads = [
-            threading.Thread(target=calc.calculate, args=(ac,))
+            threading.Thread(target=_calculate, args=(calc, ac))
             for calc, ac in zip(calculators, atoms_copies)
         ]
         for t in threads:
             t.start()
         for t in threads:
             t.join()
+        if errors:
+            raise errors[0]
     finally:
         AtomicData.from_ase = original
 
@@ -62,7 +84,7 @@ def ensemble_calculate(calculators, atoms):
             RuntimeWarning,
         )
 
-    return [calc.results for calc in calculators]
+    return [copy.deepcopy(calc.results) for calc in calculators]
 
 
 def load_model(inputs):

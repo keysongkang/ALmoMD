@@ -1,261 +1,241 @@
-from ase.io.trajectory import Trajectory
-from ase.io.trajectory import TrajectoryWriter
-import ase.units as units
-from ase.io.cif        import write_cif
-
-import time
 import os
-import numpy as np
 from decimal import Decimal
 
-from libs.lib_util    import single_print
-from libs.lib_MD_util import get_forces, get_MDinfo_temp, get_masses
-from libs.lib_criteria import eval_uncert, uncert_strconvter
+import ase.units as units
+import numpy as np
+from ase.io.trajectory import Trajectory, TrajectoryWriter
 
 import torch
+
+from libs.lib_criteria import eval_uncert, get_criteria, uncert_strconvter
+from libs.lib_MD_util import get_forces, get_MDinfo_temp, get_masses
+
 torch.set_default_dtype(torch.float64)
+
+
+MODE_NORMAL = 'normal'
+MODE_META = 'meta'
+
 
 def NVTLangevin(
     struc, timestep, temperature, friction, steps, loginterval,
     nstep, nmodel, calculator, E_ref, al_type, trajectory, harmonic_F=False,
-    anharmonic_F=False, logfile=None, signal_uncert=False, signal_append=True, fix_com=True,
+    anharmonic_F=False, logfile=None, signal_uncert=False,
+    signal_append=True, fix_com=True,
 ):
-    """Function [NVTLangevin]
-    Evalulate the absolute and relative uncertainties of
-    predicted energies and forces.
-    This script is adopted from ASE Langevin function 
-    and modified to use averaged forces from trained model.
-
-    Parameters:
-
-    struc: ASE atoms
-        A structral configuration of a starting point
-    timestep: float
-        The step interval for printing MD steps
-    temperature: float
-        The desired temperature in units of Kelvin (K)
-
-    friction: float
-        Strength of the friction parameter in NVTLangevin ensemble
-    steps: int
-        The length of the Molecular Dynamics steps
-    loginterval: int
-        The step interval for printing MD steps
-
-    nstep: int
-        The number of subsampling sets
-    nmodel: int
-        The number of ensemble model sets with different initialization
-    calculator: ASE calculator
-        Any calculator
-    E_ref: flaot
-        The energy of reference state (Here, ground state)
-    al_type: str
-        Type of active learning: 'energy', 'force', 'force_max'
-    trajectory: str
-        A name of MD trajectory file
-
-    logfile: str (optional)
-        A name of MD logfile. With None, it will not print a log file.
-    signal_uncert: bool (optional)
+    _run_nvtlangevin(
+        MODE_NORMAL, struc, timestep, temperature, friction, steps,
+        loginterval, nstep, nmodel, calculator, E_ref, al_type, trajectory,
+        None, harmonic_F, anharmonic_F, logfile, signal_uncert,
+        signal_append, fix_com,
+    )
 
 
-    fixcm: bool (optional)
-        If True, the position and momentum of the center of mass is
-        kept unperturbed.  Default: True.
-    """
+def NVTLangevin_meta(
+    struc, timestep, temperature, friction, steps, loginterval,
+    nstep, nmodel, calculator, E_ref, al_type, trajectory, meta_Ediff,
+    harmonic_F=False, anharmonic_F=False, logfile=None,
+    signal_uncert=False, signal_append=True, fix_com=True,
+):
+    _run_nvtlangevin(
+        MODE_META, struc, timestep, temperature, friction, steps,
+        loginterval, nstep, nmodel, calculator, E_ref, al_type, trajectory,
+        meta_Ediff, harmonic_F, anharmonic_F, logfile, signal_uncert,
+        signal_append, fix_com,
+    )
 
-    time_init = time.time()
 
-    # Initialization of index
-    Langevin_idx = 0
+def _run_nvtlangevin(
+    mode, struc, timestep, temperature, friction, steps, loginterval,
+    nstep, nmodel, calculator, E_ref, al_type, trajectory, meta_Ediff,
+    harmonic_F, anharmonic_F, logfile, signal_uncert, signal_append,
+    fix_com,
+):
+    langevin_idx, struc, file_traj = _open_trajectory(
+        mode, trajectory, struc, loginterval, signal_append,
+    )
+    if langevin_idx == 0:
+        _initialize_log(
+            logfile, struc, nstep, nmodel, calculator, E_ref,
+            al_type, harmonic_F, signal_uncert,
+        )
 
-    # mpi_print(f'Step 1: {time.time()-time_init}', rank)
-    if signal_append and os.path.exists(trajectory) and os.path.getsize(trajectory) != 0: # If appending and the file exists,
-        # Read the previous trajectory
-        traj_old = Trajectory(
-            trajectory,
-            properties=['forces', 'velocities', 'temperature']
-            )
-        # Get the index
-        Langevin_idx = (len(traj_old)-1) * loginterval
-        # Get the last structure
-        struc = traj_old[-1]
-        file_traj = TrajectoryWriter(filename=trajectory, mode='a')
-    else: # New start
-        file_traj = TrajectoryWriter(filename=trajectory, mode='w')
-        # Add new configuration to the trajectory file
-        file_traj.write(atoms=struc)
-            
-        if isinstance(logfile, str):
-            file_log = open(logfile, 'w')
-            file_log.write(
-                'Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \t'
-                + 'Temperature[K]'
-                )
-            if signal_uncert:
-                file_log.write(
-                    '\tUncertAbs_E\tUncertRel_E\t'
-                    + 'UncertAbs_F\tUncertRel_F\t'
-                    + 'UncertAbs_S\tUncertRel_S\tS_average\n'
-                    )
-            else:
-                file_log.write('\n')
-            file_log.close()
-        
-            # Get MD information at the current step
-            info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-                struc, nstep, nmodel, calculator, harmonic_F
-                )
+    criteria = None
+    if mode == MODE_META:
+        criteria = get_criteria(temperature, 0, 0, 300, al_type)
 
-            if signal_uncert:
-                # Get absolute and relative uncertainties of energy and force
-                # and also total energy
-                uncerts, Epot_step, S_step =\
-                eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
+    forces = _calculate_forces(
+        mode, struc, nstep, nmodel, calculator, E_ref,
+        harmonic_F, anharmonic_F, criteria, meta_Ediff,
+    )
 
-            # Log MD information at the current step in the log file
-            file_log = open(logfile, 'a')
-            file_log.write(
-                '{:.5f}'.format(Decimal(str(0.0))) + '   \t' +
-                '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                '{:.2f}'.format(Decimal(str(info_T)))
-                )
-            if signal_uncert:
-                file_log.write(
-                    '      \t' +
-                    uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
-                    uncert_strconvter(uncerts.UncertRel_E) + '\t' +
-                    uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
-                    uncert_strconvter(uncerts.UncertRel_F) + '\t' +
-                    uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                    uncert_strconvter(uncerts.UncertRel_S) + '\t' +
-                    uncert_strconvter(S_step) + '\n'
-                    )
-            else:
-                file_log.write('\n')
-            file_log.close()
-
-    # mpi_print(f'Step 2: {time.time()-time_init}', rank)
-
-    # Get averaged force from trained models
-    try:
-        forces = struc.get_forces()
-    except Exception as e:
-        forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
-
-    # mpi_print(f'Step 3: {time.time()-time_init}', rank)
-    # Go trough steps until the requested number of steps
-    # If appending, it starts from Langevin_idx. Otherwise, Langevin_idx = 0
-    for idx in range(Langevin_idx, steps):
-
-        # mpi_print(f'Step 4: {time.time()-time_init}', rank)
-        # Get essential properties
+    for idx in range(langevin_idx, steps):
         natoms = len(struc)
         masses = get_masses(struc.get_masses(), natoms)
-        sigma = np.sqrt(2 * temperature * friction / masses)
+        c1, c2, c3, c4, c5 = _langevin_coefficients(
+            timestep, temperature, friction, masses,
+        )
 
-        # mpi_print(f'Step 5: {time.time()-time_init}', rank)
-        # Get Langevin coefficients
-        c1 = timestep / 2. - timestep * timestep * friction / 8.
-        c2 = timestep * friction / 2 - timestep * timestep * friction * friction / 8.
-        c3 = np.sqrt(timestep) * sigma / 2. - timestep**1.5 * friction * sigma / 8.
-        c5 = timestep**1.5 * sigma / (2 * np.sqrt(3))
-        c4 = friction / 2. * c5
-
-        # mpi_print(f'Step 6: {time.time()-time_init}', rank)
-        # Get averaged forces and velocities
         if forces is None:
-            forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
-        # Velocity is already calculated based on averaged forces
-        # in the previous step
+            forces = _calculate_forces(
+                mode, struc, nstep, nmodel, calculator, E_ref,
+                harmonic_F, anharmonic_F, criteria, meta_Ediff,
+            )
+
         velocity = struc.get_velocities()
-        
-        # mpi_print(f'Step 7: {time.time()-time_init}', rank)
-        # Sample the random numbers for the temperature fluctuation
-        # xi = np.empty(shape=(natoms, 3))
-        # eta = np.empty(shape=(natoms, 3))
         xi = np.random.standard_normal(size=(natoms, 3))
         eta = np.random.standard_normal(size=(natoms, 3))
-        
-        # mpi_print(f'Step 8: {time.time()-time_init}', rank)
-        # Get get changes of positions and velocities
         rnd_pos = c5 * eta
         rnd_vel = c3 * xi - c4 * eta
-        
-        # Check the center of mass
+
         if fix_com:
             rnd_pos -= rnd_pos.sum(axis=0) / natoms
             rnd_vel -= (rnd_vel * masses).sum(axis=0) / (masses * natoms)
-            
-        # First halfstep in the velocity.
-        velocity += (c1 * forces / masses - c2 * velocity + rnd_vel)
-        
-        # mpi_print(f'Step 9: {time.time()-time_init}', rank)
-        # Full step in positions
-        position = struc.get_positions()
-        
-        # Step: x^n -> x^(n+1) - this applies constraints if any.
-        struc.set_positions(position + timestep * velocity + rnd_pos)
 
-        # mpi_print(f'Step 10: {time.time()-time_init}', rank)
-        # recalc velocities after RATTLE constraints are applied
+        velocity += c1 * forces / masses - c2 * velocity + rnd_vel
+        position = struc.get_positions()
+        struc.set_positions(position + timestep * velocity + rnd_pos)
         velocity = (struc.get_positions() - position - rnd_pos) / timestep
 
-        # mpi_print(f'Step 10-1: {time.time()-time_init}', rank)
-        forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
-        
-        # mpi_print(f'Step 10-2: {time.time()-time_init}', rank)
-        # Update the velocities
-        velocity += (c1 * forces / masses - c2 * velocity + rnd_vel)
-
-        # mpi_print(f'Step 10-3: {time.time()-time_init}', rank)
-        # Second part of RATTLE taken care of here
+        forces = _calculate_forces(
+            mode, struc, nstep, nmodel, calculator, E_ref,
+            harmonic_F, anharmonic_F, criteria, meta_Ediff,
+        )
+        velocity += c1 * forces / masses - c2 * velocity + rnd_vel
         struc.set_momenta(velocity * masses)
-        
-        # mpi_print(f'Step 11: {time.time()-time_init}', rank)
-        # Log MD information at regular intervals
-        if (idx+1) % loginterval == 0:
-            if isinstance(logfile, str):
-                # mpi_print(f'Step 12: {time.time()-time_init}', rank)
-                info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
-                    struc, nstep, nmodel, calculator, harmonic_F
-                    )
 
-                # mpi_print(f'Step 13: {time.time()-time_init}', rank)
-                if signal_uncert:
-                    # Get absolute and relative uncertainties of energy and force
-                    # and also total energy
-                    uncerts, Epot_step, S_step =\
-                    eval_uncert(struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F)
-
-                # mpi_print(f'Step 14: {time.time()-time_init}', rank)
-                file_log = open(logfile, 'a')
-                simtime = timestep*(idx+loginterval)/units.fs/1000
-                file_log.write(
-                    '{:.5f}'.format(Decimal(str(simtime))) + '   \t' +
-                    '{:.5e}'.format(Decimal(str(info_TE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_PE))) + '\t' +
-                    '{:.5e}'.format(Decimal(str(info_KE))) + '\t' +
-                    '{:.2f}'.format(Decimal(str(info_T)))
-                    )
-                if signal_uncert:
-                    file_log.write(
-                        '      \t' +
-                        uncert_strconvter(uncerts.UncertAbs_E) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_E) + '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_F) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_F) + '\t' +
-                        uncert_strconvter(uncerts.UncertAbs_S) + '\t' +
-                        uncert_strconvter(uncerts.UncertRel_S) + '\t' +
-                        uncert_strconvter(S_step) + '\n'
-                        )
-                else:
-                    file_log.write('\n')
-                file_log.close()
-                # mpi_print(f'Step 15: {time.time()-time_init}', rank)
-            
+        if (idx + 1) % loginterval == 0:
+            _append_step_log(
+                logfile, struc, timestep, idx, loginterval, nstep,
+                nmodel, calculator, E_ref, al_type, harmonic_F,
+                signal_uncert,
+            )
             file_traj.write(atoms=struc)
-            # mpi_print(f'Step 16: {time.time()-time_init}', rank)
+
+    file_traj.close()
+
+
+def _open_trajectory(mode, trajectory, struc, loginterval, signal_append):
+    if signal_append and os.path.exists(trajectory) and os.path.getsize(trajectory) != 0:
+        traj_old = Trajectory(
+            trajectory,
+            properties=['forces', 'velocities', 'temperature'],
+        )
+        idx_factor = len(traj_old) if mode == MODE_META else len(traj_old) - 1
+        langevin_idx = idx_factor * loginterval
+        struc = traj_old[-1]
+        del traj_old
+        return langevin_idx, struc, TrajectoryWriter(filename=trajectory, mode='a')
+
+    file_traj = TrajectoryWriter(filename=trajectory, mode='w')
+    file_traj.write(atoms=struc)
+    return 0, struc, file_traj
+
+
+def _initialize_log(
+    logfile, struc, nstep, nmodel, calculator, E_ref,
+    al_type, harmonic_F, signal_uncert,
+):
+    if not isinstance(logfile, str):
+        return
+
+    with open(logfile, 'w') as file_log:
+        file_log.write('Time[ps]   \tEtot[eV]   \tEpot[eV]    \tEkin[eV]   \tTemperature[K]')
+        if signal_uncert:
+            file_log.write(
+                '\tUncertAbs_E\tUncertRel_E\tUncertAbs_F\tUncertRel_F\t'
+                'UncertAbs_S\tUncertRel_S\tS_average\n'
+            )
+        else:
+            file_log.write('\n')
+
+    info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
+        struc, nstep, nmodel, calculator, harmonic_F, E_ref,
+    )
+    if signal_uncert:
+        uncerts, _, S_step = eval_uncert(
+            struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F,
+        )
+
+    with open(logfile, 'a') as file_log:
+        file_log.write(_format_md_log_line(0.0, info_TE, info_PE, info_KE, info_T))
+        if signal_uncert:
+            file_log.write(_format_uncert_log_suffix(uncerts, S_step))
+        else:
+            file_log.write('\n')
+
+
+def _append_step_log(
+    logfile, struc, timestep, idx, loginterval, nstep, nmodel,
+    calculator, E_ref, al_type, harmonic_F, signal_uncert,
+):
+    if not isinstance(logfile, str):
+        return
+
+    info_TE, info_PE, info_KE, info_T = get_MDinfo_temp(
+        struc, nstep, nmodel, calculator, harmonic_F, E_ref,
+    )
+    if signal_uncert:
+        uncerts, _, S_step = eval_uncert(
+            struc, nstep, nmodel, E_ref, calculator, al_type, harmonic_F,
+        )
+
+    simtime = timestep * (idx + loginterval) / units.fs / 1000
+    with open(logfile, 'a') as file_log:
+        file_log.write(_format_md_log_line(simtime, info_TE, info_PE, info_KE, info_T))
+        if signal_uncert:
+            file_log.write(_format_uncert_log_suffix(uncerts, S_step))
+        else:
+            file_log.write('\n')
+
+
+def _format_md_log_line(simtime, info_TE, info_PE, info_KE, info_T):
+    return (
+        '{:.5f}'.format(Decimal(str(simtime))) + '   \t'
+        + '{:.5e}'.format(Decimal(str(info_TE))) + '\t'
+        + '{:.5e}'.format(Decimal(str(info_PE))) + '\t'
+        + '{:.5e}'.format(Decimal(str(info_KE))) + '\t'
+        + '{:.2f}'.format(Decimal(str(info_T)))
+    )
+
+
+def _format_uncert_log_suffix(uncerts, S_step):
+    return (
+        '      \t'
+        + uncert_strconvter(uncerts.UncertAbs_E) + '\t'
+        + uncert_strconvter(uncerts.UncertRel_E) + '\t'
+        + uncert_strconvter(uncerts.UncertAbs_F) + '\t'
+        + uncert_strconvter(uncerts.UncertRel_F) + '\t'
+        + uncert_strconvter(uncerts.UncertAbs_S) + '\t'
+        + uncert_strconvter(uncerts.UncertRel_S) + '\t'
+        + uncert_strconvter(S_step) + '\n'
+    )
+
+
+def _calculate_forces(
+    mode, struc, nstep, nmodel, calculator, E_ref,
+    harmonic_F, anharmonic_F, criteria, meta_Ediff,
+):
+    if mode == MODE_META:
+        from libs.lib_cont_nvtlangevin import get_forces_meta
+        return get_forces_meta(
+            struc, nstep, nmodel, calculator, harmonic_F,
+            anharmonic_F, criteria, meta_Ediff, E_ref,
+        )
+
+    try:
+        return struc.get_forces()
+    except Exception:
+        return get_forces(
+            struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F,
+        )
+
+
+def _langevin_coefficients(timestep, temperature, friction, masses):
+    sigma = np.sqrt(2 * temperature * friction / masses)
+    c1 = timestep / 2.0 - timestep * timestep * friction / 8.0
+    c2 = timestep * friction / 2.0 - timestep * timestep * friction * friction / 8.0
+    c3 = np.sqrt(timestep) * sigma / 2.0 - timestep**1.5 * friction * sigma / 8.0
+    c5 = timestep**1.5 * sigma / (2 * np.sqrt(3))
+    c4 = friction / 2.0 * c5
+    return c1, c2, c3, c4, c5

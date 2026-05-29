@@ -1,15 +1,11 @@
 from ase.io.trajectory import Trajectory
-from ase.io.trajectory import TrajectoryWriter
 from ase.io.bundletrajectory import BundleTrajectory
 
 import os
 from vibes import son
-import copy
-import random
 import numpy as np
 import pandas as pd
 from ase import Atoms
-from decimal import Decimal
 from ase.build import make_supercell
 from ase.io import read as atoms_read
 from ase.data   import atomic_numbers
@@ -17,7 +13,6 @@ from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 
 from libs.lib_util    import check_mkdir, single_print, read_aims
 from libs.lib_md       import cont_runMD, runMD
-from libs.lib_criteria import eval_uncert, uncert_strconvter, get_criteria, get_criteria_prob
 
 
 def MLMD_main(
@@ -87,25 +82,15 @@ def MLMD_main(
 
     condition = f'{inputs.temperature}K-{inputs.pressure}bar'
 
-    # Extract the criteria information from the initialization step
-    criteria_collected = get_criteria(inputs.temperature, inputs.pressure, inputs.index, inputs.steps_init, inputs.al_type)
-
-    # Open a trajectory file to store the sampled configurations
     check_mkdir('TEMPORARY')
     check_mkdir('TRAJ')
-    write_traj = TrajectoryWriter(
-        filename=f'TRAJ/traj-{condition}_{inputs.index+1}.traj',
-        mode='a'
-        )
 
-    # summary_msg = f'[MLMD] Calculate it from index {inputs.index}, MD_index {MD_index}'
-    # summary_msg += f', MD_step_index {MD_step_index}' if inputs.calc_type == 'period' else ''
     single_print(f'[MLMD] Calculate it from index {inputs.index}, MD_index {MD_index}, MD_step_index {MD_step_index}')
     # When this initialization starts from scratch,
     if MD_index == 0:
         # Even when it is very first iterative step,
         if os.path.exists('start.in'):
-            single_print(f'[MLMD] Read a configuration from start.in')
+            single_print('')
             # Read the ground state structure with the primitive cell
             struc_init = atoms_read('start.in', format='aims')
             # Make it supercell
@@ -113,7 +98,7 @@ def MLMD_main(
             MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
 
         elif os.path.exists('start.traj'):
-            single_print(f'[runMD]\tFound the start.traj file. MD starts from this.')
+            single_print('')
             # Read the ground state structure with the primitive cell
             struc_init = Trajectory('start.traj')[-1]
             struc_step = make_supercell(struc_init, inputs.supercell_init)
@@ -124,8 +109,7 @@ def MLMD_main(
                 MaxwellBoltzmannDistribution(struc_step, temperature_K=inputs.temperature, force_temp=True)
 
         elif os.path.exists('start.bundle'):
-            from ase.io.bundletrajectory import BundleTrajectory
-            single_print(f'[runMD]\tFound the start.bundle file. MD starts from this.')
+            single_print('')
             file_traj_read = BundleTrajectory(filename='start.bundle', mode='r')
             file_traj_read[0]; #ASE bug
             struc_init = file_traj_read[-1]
@@ -145,7 +129,7 @@ def MLMD_main(
                 # Start from the configuration with the largest real error
                 if inputs.output_format == 'nequip':
                     traj_temp     = f'TRAJ/traj-{condition}_{inputs.index}.traj'
-                    single_print(f'[MLMD] Read a configuration from traj file', inputs.rank)
+                    single_print('')
                     # Read the trajectory from previous trajectory file
                     traj_previous = Trajectory(traj_temp, properties=\
                                                ['forces', 'velocities', 'temperature'])
@@ -156,7 +140,7 @@ def MLMD_main(
                 
                 # Open the uncertainty file for current step
                 check_mkdir('UNCERT')
-                single_print(f'[MLMD] Read a configuration from previous sampled traj file')
+                single_print('')
                 uncert_file_next = f'UNCERT/uncertainty-{condition}_{inputs.index}.txt'
                 trajfile = open(uncert_file_next, 'w')
                 title = 'Temperature[K]\t'
@@ -170,7 +154,7 @@ def MLMD_main(
 
             else: # If there is no privous uncertainty file
                 traj_temp     = f'TEMPORARY/temp-{condition}_{inputs.index}.traj'
-                single_print(f'[MLMD] Read a configuration from traj file')
+                single_print('')
                 # Read the trajectory from previous trajectory file
                 traj_previous = Trajectory(traj_temp, properties=\
                                            ['forces', 'velocities', 'temperature'])
@@ -178,11 +162,9 @@ def MLMD_main(
                 struc_step    = traj_previous[-1]; del traj_previous;
 
         else:
-            single_print(f'[MLMD] Read a configuration from trajectory_train.son')
+            single_print('')
             # Read the trajectory file from 'trajectory_train.son'
-            metadata, traj = son.load('trajectory_train.son')
-            # Take the last configuration from 'trajectory_train.son'
-            traj_ther = traj[-1]
+            _, traj = son.load('trajectory_train.son')
             # Convert 'trajectory.son' format to ASE atoms
             struc_step = Atoms(
                 [atomic_numbers[item[1]] for item in traj[-1]['atoms']['symbols'] for xdx in range(item[0])],
@@ -193,7 +175,7 @@ def MLMD_main(
             )
     else: # If it starts from terminated point,
         # Read the trajectory from previous trajectory file
-        single_print(f'[MLMD] Read a configuration from temp file')
+        single_print('')
         if inputs.ensemble[:3] == 'NPT':
             traj_temp     = f'TEMPORARY/temp-{condition}_{inputs.index}.bundle'
             traj_previous = BundleTrajectory(traj_temp)
@@ -202,8 +184,14 @@ def MLMD_main(
             traj_previous = Trajectory(traj_temp)
         struc_step = traj_previous[-1]; del traj_previous;
 
-    if os.path.exists('start.in') and (inputs.ensemble == 'NVTLangevin_meta' or inputs.ensemble == 'NVTLangevin_temp' or inputs.ensemble == 'NVTLangevin_bias' or inputs.ensemble == 'NVTLangevin_bias_temp') and MD_index == 0:
-        single_print(f'[MLMD] Read a configuration from start.in')
+    restart_from_start = inputs.ensemble in (
+        'NVTLangevin_meta',
+        'NVTLangevin_temp',
+        'NVTLangevin_bias',
+        'NVTLangevin_bias_temp',
+    )
+    if os.path.exists('start.in') and restart_from_start and MD_index == 0:
+        single_print('')
         # Read the ground state structure with the primitive cell
         struc_init = atoms_read('start.in', format='aims')
         # Make it supercell
@@ -359,8 +347,7 @@ def MLMD_random(
         # Even when it is very first iterative step,
         if inputs.index == 0:
             # Read the trajectory file from 'trajectory_train.son'
-            metadata, traj = son.load('trajectory_train.son')
-            traj_ther = traj[-1]
+            _, traj = son.load('trajectory_train.son')
             # Convert 'trajectory.son' format to ASE atoms
             struc_step = Atoms(
                 [atomic_numbers[item[1]] for item in traj[-1]['atoms']['symbols'] for jdx in range(item[0])],
@@ -392,7 +379,7 @@ def MLMD_random(
     trajectory   = f'TRAJ/traj-{condition}_{inputs.index+1}.traj'
     runMD(
         inputs, struc_step, inputs.steps_random,
-        logfile, trajectory, calculator,
+        logfile, trajectory, calculator, E_ref,
         signal_uncert=False, signal_append=False
     )
 

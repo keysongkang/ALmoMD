@@ -1,15 +1,9 @@
 import sys
 
-from ase.io import read as atoms_read
-
-from libs.lib_util  import output_init, single_print, check_mkdir, job_dependency
+from libs.lib_util  import output_init, single_print, check_mkdir
 from libs.lib_npz   import generate_npz_DFT
 from libs.lib_train import execute_train_job
-from libs.lib_load_model  import load_model
 from libs.lib_progress    import check_progress, check_progress_rand, check_index
-
-import torch
-torch.set_default_dtype(torch.float64)
 
 
 def run_dft_gen(inputs):
@@ -17,13 +11,7 @@ def run_dft_gen(inputs):
     Extract DFT results, generate the training data, and execute NequIP.
     """
     output_init('gen', inputs.version)
-    single_print(f'[gen]\tGenerate the NequIP inputs from DFT results')
-
-    ## Prepare the ground state structure
-    # Read the ground state structure with the primitive cell
-    struc_init = atoms_read('geometry.in.supercell', format='aims')
-
-    single_print(f'[gen]\tRead the reference structure: geometry.in.supercell')
+    single_print('')
 
     ### Initizlization step
     ##!! We need to check whether this one is needed or not.
@@ -52,7 +40,7 @@ def run_dft_gen(inputs):
 
     # If we get the signal from check_progress, the script will be terminated.
     if signal == 1:
-        single_print(f'[gen]\tCalculation is terminated during the check_progress')
+        single_print('')
         sys.exit()
 
     single_print(f'[gen]\tCurrent iteration index: {inputs.index}')
@@ -72,7 +60,7 @@ def run_dft_gen(inputs):
     generate_npz_DFT(inputs, workpath)
 
     # Training process: Run NequIP
-    single_print(f'[gen]\tSubmit the NequIP training processes')
+    single_print('')
     execute_train_job(inputs, total_ntrain, total_nval, workpath)
 
     # Auto-chaining disabled by default. Uncomment to have almomd submit

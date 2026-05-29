@@ -1,17 +1,15 @@
 import os
 import re
-import sys
 import ast
 from vibes import son
-from vibes.trajectory import reader, Trajectory
+from vibes.trajectory import reader
 from vibes.helpers.converters import atoms2dict
 import random
-import argparse
 import collections
 import numpy as np
-import ase.units as units
 from ase import Atoms
 from ase.data import atomic_numbers
+from ase.io import read as atoms_read
 from ase.io.trajectory import Trajectory
 from ase.md.velocitydistribution import MaxwellBoltzmannDistribution
 from libs.lib_util import check_mkdir, rm_file, single_print, output_init
@@ -46,7 +44,7 @@ def aims2son(temperature):
 
     # print the head
     output_init('aims2son', version)
-    single_print(f'[aims2son]\tconvert aims.out to trajectory.son')
+    single_print('')
 
     # tracking the reading line for the specific contents
     index_struc = 0             # read a structral information
@@ -64,10 +62,10 @@ def aims2son(temperature):
     mass = []
     stress_whole = []
     stress_individual = []
-    pbc = [true, true, true]    # currently, always periodic 
+    pbc = [True, True, True]    # currently, always periodic
     numatoms = 0
 
-    single_print(f'[aims2son]\tread aims.out file ...')
+    single_print('')
     with open('aims.out', "r") as file_one: # open aims.out file
         for line in file_one: # go through whole contents line by line
 
@@ -155,14 +153,14 @@ def aims2son(temperature):
             # end of each md step
             if signal:
                 # create the ase atoms
-                atom = atoms(
+                atom = Atoms(
                     numbers,
                     positions=positions,
                     cell=cell,
                     pbc=pbc
                 )
                 # assign the velocities at target temperature based on the maxwell-boltzmann distribution
-                maxwellboltzmanndistribution(atom, temperature_k=temperature, force_temp=true)
+                MaxwellBoltzmannDistribution(atom, temperature_K=temperature, force_temp=True)
 
                 # convert the format of symbols and masses for trajectory.son
                 symbols = []
@@ -215,9 +213,9 @@ def aims2son(temperature):
                 stress_individual = []
 
                 # dump extracted atom info summary of current md step into trajectory.son
-                son.dump(atom_dict, 'trajectory.son', is_metadata=false)
+                son.dump(atom_dict, 'trajectory.son', is_metadata=False)
 
-    single_print(f'[aims2son]\t!! finish converting aims.out to trajectory.son')
+    single_print('')
 
 
 def split_son(num_split, E_gs, harmonic_F=False):
@@ -253,7 +251,7 @@ def split_son(num_split, E_gs, harmonic_F=False):
     single_print(f'[split_son]\tInitiate splitting {trajname}')
 
     if harmonic_F:
-        single_print(f'[split_son]\tharmoic_F = True: Harmonic term will be excluded')
+        single_print('')
 
     # take any inputs converted it to float
     E_gs = str(E_gs)
@@ -422,25 +420,25 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
 
     # Print the head
     output_init('harmo_run', version)
-    single_print(f'[harmo_run]\tInitiate DFT calc. with harmonic samples')
+    single_print('')
 
     # Prepare the index inputs
     index_temp = '{:0>4.0f}'.format(temperature)
     index_calc_list = [f'{i:03d}' for i in range(num_sample)]
 
     # Create the calculation directory
-    check_mkdir(f'raw')
+    check_mkdir('')
 
     # Get the current path
     mainpath_cwd = os.getcwd()
 
     # Move to the calculation directory
-    os.chdir(f'raw')
+    os.chdir('')
 
     # Get the full path to the calculation directotry
     calcpath_cwd = os.getcwd()
 
-    single_print(f'[harmo_run]\tGet the template of the inputs')
+    single_print('')
     # Get the template of the job script
     with open('../DFT_INPUTS/job.slurm', 'r') as job_script_DFT_initial:
         job_script_DFT_default = job_script_DFT_initial.read()
@@ -453,7 +451,7 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
     # Prepare an empty list for the calculation paths
     execute_cwd = []
 
-    single_print(f'[harmo_run]\tDeploy all DFT calculations')
+    single_print('')
     for idx in range(num_sample):
         # Create a folder for each structral configuration
         check_mkdir(f'{idx}')
@@ -461,7 +459,7 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
         os.chdir(f'{idx}')
 
         if DFT_calc == 'aims':
-            if os.path.exists(f'aims.out'):
+            if os.path.exists(''):
                 # Check whether calculation is finished
                 if 'Have a nice day.' in open('aims.out').read():
                     os.chdir(calcpath_cwd)
@@ -483,7 +481,7 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
                 # Move back to 'calc' folder
                 os.chdir(calcpath_cwd)
         elif DFT_calc == 'vibes':
-            if os.path.exists(f'aims/calculations/aims.out'):
+            if os.path.exists(''):
                 # Check whether calculation is finished
                 if 'Have a nice day.' in open('aims/calculations/aims.out').read():
                     os.chdir(calcpath_cwd)
@@ -506,7 +504,7 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
                 # Move back to 'calc' folder
                 os.chdir(calcpath_cwd)
 
-    single_print(f'[harmo_run]\tSubmit all job scripts for all DFT calculations')
+    single_print('')
     # Create job scripts and submit them
     for index_calc in range(num_calc):
         job_script = f'job_{index_calc}.slurm'
@@ -521,7 +519,7 @@ def harmonic_run(temperature, num_sample, DFT_calc, num_calc):
 
     # Move back to the original position
     os.chdir(mainpath_cwd)
-    single_print(f'[harmo_run]\t!! Finish the DFT calculations with harmonic samples')
+    single_print('')
 
 
 def harmonic2son(temperature, num_sample, output_format):
@@ -539,22 +537,17 @@ def harmonic2son(temperature, num_sample, output_format):
 
     # Print the head
     output_init('harmo2son', version)
-    single_print(f'[harmo2son]\tCollect all DFT results and convert them to SON file')
+    single_print('')
 
-    # Prepare the index inputs
-    index_temp = '{:0>4.0f}'.format(temperature)
     index_calc_list = [f'{i:03d}' for i in range(num_sample)]
 
-    # Get the current path
-    mainpath_cwd = os.getcwd()
-
     # Move to the calculation directory
-    os.chdir(f'raw')
+    os.chdir('')
 
     # Get the full path to the calculation directotry
     calcpath_cwd = os.getcwd()
 
-    single_print(f'[harmo2son]\tGo through all DFT results')
+    single_print('')
     for idx in range(num_sample):
         # Create a folder for each structral configuration
         print(f'Sample {idx}')
@@ -563,7 +556,7 @@ def harmonic2son(temperature, num_sample, output_format):
         os.chdir(f'{idx}')
 
         if output_format == 'aims':
-            if os.path.exists(f'aims/calculations/aims.out'):
+            if os.path.exists(''):
                 # Check whether calculation is finished
                 if 'Have a nice day.' in open('aims/calculations/aims.out').read():
                     # Tracking the reading line for the specific contents
@@ -749,7 +742,7 @@ def harmonic2son(temperature, num_sample, output_format):
                 os.chdir(calcpath_cwd)
 
         elif output_format == 'vibes':
-            if os.path.exists(f'aims/trajectory.son'):
+            if os.path.exists(''):
                 metadata, data = son.load('aims/trajectory.son')
                 son.dump(data[0], './../../trajectory.son', is_metadata=False)
 
@@ -762,7 +755,7 @@ def harmonic2son(temperature, num_sample, output_format):
                 os.chdir(calcpath_cwd)
 
 
-    single_print(f'[harmo2son]\t!! Finish converting')
+    single_print('')
 
 
 
@@ -789,7 +782,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
 
     # Print the head
     output_init('traj_run', version)
-    single_print(f'[traj_run]\tInitiate DFT calc. for configurations from a trajectory file')
+    single_print('')
 
     single_print(f'[traj_run]\tRead {traj_path} file and truncate the thermalization steps {thermal_cutoff}')
     # Read the trajectory file
@@ -803,7 +796,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
     selected_traj_index = random.sample(range(len(traj)), k=num_traj)
 
     # Set the path to folders implementing DFT calculations
-    calcpath = f'raw'
+    calcpath = ''
     # Create this folder
     check_mkdir(calcpath)
 
@@ -815,7 +808,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
     # Get the new path
     calcpath_cwd = os.getcwd()
 
-    single_print(f'[traj_run]\tGet the template of the inputs')
+    single_print('')
     # Get the template of the job script
     with open('../DFT_INPUTS/job.slurm', 'r') as job_script_DFT_initial:
         job_script_DFT_default = job_script_DFT_initial.read()
@@ -827,7 +820,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
     # Prepare an empty list for the calculation paths
     execute_cwd = []
 
-    single_print(f'[traj_run]\tGo through all sampled structral configurations')
+    single_print('')
     # Go through all sampled structral configurations
     # Collect the calculations and deploy all inputs for FHI-vibes or FHI-aims
     for jndex, jtem in enumerate(selected_traj_index):
@@ -840,7 +833,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
             
             if DFT_calc == 'aims':
                 # Check if a previous calculation exists
-                if os.path.exists(f'aims.out'):
+                if os.path.exists(''):
                     # Check whether calculation is finished
                     if 'Have a nice day.' in open('aims.out').read():
                         os.chdir(calcpath_cwd)
@@ -859,7 +852,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
                     os.chdir(calcpath_cwd)
             elif DFT_calc == 'vibes':
                 # Check if a previous calculation exists
-                if os.path.exists(f'aims/calculations/aims.out'):
+                if os.path.exists(''):
                     # Check whether calculation is finished
                     if 'Have a nice day.' in open('aims/calculations/aims.out').read():
                         os.chdir(calcpath_cwd)
@@ -877,7 +870,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
                     # Move back to 'calc' folder
                     os.chdir(calcpath_cwd)
 
-    single_print(f'[traj_run]\tCreate job scripts and submit them')
+    single_print('')
     # Create job scripts and submit them
     for index_calc in range(num_calc):
         job_script = f'job_{index_calc}.slurm'
@@ -892,7 +885,7 @@ def traj_run(traj_path, thermal_cutoff, num_traj, DFT_calc, num_calc):
 
     # Move back to the original position
     os.chdir(mainpath_cwd)
-    single_print(f'[traj_run]\t!! Finish DFT calc. with the trajectory file')
+    single_print('')
 
 
 
@@ -933,9 +926,8 @@ def cnvg_post(nmodel, nstep):
                 prd_Estd_matrix[index_nmodel, index_nstep] = np.std(prd_E_matrix[:(index_nmodel + 1), :(index_nstep + 1)])
         prd_Eavg_matrix_list.append(prd_Eavg_matrix)
         prd_Estd_matrix_list.append(prd_Estd_matrix)
-    prd_Eavg = np.average(prd_Eavg_matrix_list, axis=0)
     prd_Estd = np.average(prd_Estd_matrix_list, axis=0)
-    Z_Estd = prd_Estd / NumAtom * 1000
+    Z_Estd = prd_Estd / NumAtoms * 1000
 
     fig, ax = plt.subplots(1, 1)
     cp = ax.contourf(X, Y, Z_Estd)
@@ -966,7 +958,6 @@ def cnvg_post(nmodel, nstep):
         prd_Favg_matrix_list.append(prd_Favg_matrix)
         prd_Fstd_matrix_list.append(prd_Fstd_matrix)
 
-    prd_Favg = np.average(prd_Favg_matrix_list, axis=0)
     prd_Fstd = np.average(prd_Fstd_matrix_list, axis=0)
     Z_Fstd = prd_Fstd
 
@@ -998,7 +989,6 @@ def cnvg_post(nmodel, nstep):
                 prd_Sstd_matrix[index_nmodel, index_nstep] = np.std(prd_S_matrix[:(index_nmodel + 1), :(index_nstep + 1)])
         prd_Savg_matrix_list.append(prd_Savg_matrix)
         prd_Sstd_matrix_list.append(prd_Sstd_matrix)
-    prd_Savg = np.average(prd_Savg_matrix_list, axis=0)
     prd_Sstd = np.average(prd_Sstd_matrix_list, axis=0)
     Z_Sstd = prd_Sstd
 

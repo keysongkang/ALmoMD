@@ -1,712 +1,320 @@
 import os
 import random
-import numpy as np
-from tqdm import tqdm
-from ase.data   import atomic_numbers
-from ase.io     import read as atoms_read
+from dataclasses import dataclass
+from typing import Optional
 
-from libs.lib_util   import read_aims, single_print, Structure
+import numpy as np
+from ase.data import atomic_numbers
+from ase.io.trajectory import Trajectory
+from tqdm import tqdm
 from vibes import son
 
+from libs.lib_util import read_aims, single_print, Structure
+
+
+@dataclass
+class Sample:
+    energy: float
+    forces: np.ndarray
+    positions: np.ndarray
+    atomic_numbers: np.ndarray
+    cell: np.ndarray
+    pbc: np.ndarray
+    sigma_forces: np.ndarray
+    stress: Optional[np.ndarray] = None
+
+
+def _needs_stress(inputs):
+    return inputs.ensemble == 'NPTisoiso' or inputs.train_stress
+
+
+def _new_sets(inputs):
+    keys = ('E', 'F', 'R', 'z', 'CELL', 'PBC')
+    sets = {key: [[] for _ in range(inputs.nstep)] for key in keys}
+    if inputs.npz_sigma:
+        sets['sigma'] = [[] for _ in range(inputs.nstep)]
+    if _needs_stress(inputs):
+        sets['stress'] = [[] for _ in range(inputs.nstep)]
+    return sets
+
+
+def _cell_keys(inputs):
+    if inputs.MLIP == 'so3krates':
+        return 'unit_cell', 'pbc'
+    return 'CELL', 'PBC'
+
+
+def _son_numbers(symbols):
+    return np.array([
+        atomic_numbers[symbol]
+        for count, symbol in symbols
+        for _ in range(count)
+    ])
+
+
+def _apply_harmonic(inputs, positions, energy, forces):
+    forces = np.array(forces)
+    energy = np.array(energy)
+    if not inputs.harmonic_F:
+        return energy - inputs.E_gs, forces
+
+    from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
+    displacements = get_displacements(positions, 'geometry.in.supercell')
+    F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
+    E_ha = get_E_ha(displacements, F_ha)
+    return energy - inputs.E_gs - E_ha, forces - F_ha
+
+
+def _sample_from_son(inputs, frame):
+    atoms = frame['atoms']
+    calc = frame['calculator']
+    energy, forces = _apply_harmonic(
+        inputs,
+        atoms['positions'],
+        calc['energy'],
+        calc['forces'],
+    )
+    return Sample(
+        energy=energy,
+        forces=forces,
+        positions=np.array(atoms['positions']),
+        atomic_numbers=_son_numbers(atoms['symbols']),
+        cell=np.array(atoms['cell']),
+        pbc=np.array(atoms['pbc']),
+        sigma_forces=np.array(calc['forces']),
+        stress=np.array(calc['stress']) if _needs_stress(inputs) and 'stress' in calc else None,
+    )
+
+
+def _sample_from_aims(inputs, path):
+    atoms, atoms_potE, atoms_forces = read_aims(path)
+    atoms = Structure.from_atoms(atoms)
+    energy, forces = _apply_harmonic(
+        inputs,
+        atoms.get_positions(),
+        atoms_potE,
+        atoms_forces,
+    )
+    stress = None
+    if _needs_stress(inputs):
+        try:
+            stress = atoms.get_stress(voigt=False)
+        except Exception:
+            stress = None
+    return Sample(
+        energy=energy,
+        forces=forces,
+        positions=np.array(atoms.get_positions()),
+        atomic_numbers=np.array(atoms.numbers),
+        cell=np.array(atoms.get_cell()),
+        pbc=np.array(atoms.get_pbc()),
+        sigma_forces=forces,
+        stress=stress,
+    )
+
+
+def _sample_from_nequip(inputs, path):
+    data = Trajectory(path)
+    atoms = data[0]
+    energy, forces = _apply_harmonic(
+        inputs,
+        atoms.get_positions(),
+        atoms.get_potential_energy(),
+        atoms.get_forces(),
+    )
+    stress = None
+    if _needs_stress(inputs):
+        try:
+            stress = atoms.get_stress(voigt=False)
+        except Exception:
+            stress = None
+    return Sample(
+        energy=energy,
+        forces=forces,
+        positions=np.array(atoms.get_positions()),
+        atomic_numbers=np.array(atoms.get_atomic_numbers()),
+        cell=np.array(atoms.get_cell()),
+        pbc=np.array(atoms.get_pbc()),
+        sigma_forces=forces,
+        stress=stress,
+    )
+
+
+def _append_sample(inputs, sets, index_nstep, sample):
+    sets['E'][index_nstep].append(sample.energy)
+    sets['F'][index_nstep].append(sample.forces)
+    sets['R'][index_nstep].append(sample.positions)
+    sets['z'][index_nstep].append(sample.atomic_numbers)
+    sets['CELL'][index_nstep].append(sample.cell)
+    sets['PBC'][index_nstep].append(sample.pbc)
+
+    if inputs.npz_sigma:
+        from libs.lib_util import eval_sigma
+        sets['sigma'][index_nstep].append(
+            eval_sigma(
+                struc_step_forces=sample.sigma_forces,
+                struc_step_positions=sample.positions,
+                al_type='sigma',
+            )
+        )
+
+    if _needs_stress(inputs):
+        sets['stress'][index_nstep].append(sample.stress)
+
+
+def _save_sets(inputs, sets, workpath, previous_dir=None, include_zero_sigma=False):
+    cell_key, pbc_key = _cell_keys(inputs)
+    for index_nstep in range(inputs.nstep):
+        arrays = {
+            'E': np.array(sets['E'][index_nstep]),
+            'F': np.array(sets['F'][index_nstep]),
+            'R': np.array(sets['R'][index_nstep]),
+            'z': np.array(sets['z'][index_nstep]),
+            cell_key: np.array(sets['CELL'][index_nstep]),
+            pbc_key: np.array(sets['PBC'][index_nstep]),
+        }
+
+        if inputs.npz_sigma:
+            arrays['sigma'] = np.array(sets['sigma'][index_nstep])
+        elif include_zero_sigma:
+            arrays['sigma'] = np.zeros_like(arrays['E'])
+
+        if _needs_stress(inputs):
+            arrays['stress'] = np.array(sets['stress'][index_nstep])
+
+        if previous_dir is not None:
+            previous_npz = f'{previous_dir}/data-train_{index_nstep}.npz'
+            if os.path.exists(previous_npz):
+                with np.load(previous_npz) as previous:
+                    merged = {
+                        'E': np.concatenate((previous['E'], arrays['E']), axis=0),
+                        'F': np.concatenate((previous['F'], arrays['F']), axis=0),
+                        'R': np.concatenate((previous['R'], arrays['R']), axis=0),
+                        'z': np.concatenate((previous['z'], arrays['z']), axis=0),
+                        cell_key: np.concatenate((previous[cell_key], arrays[cell_key]), axis=0),
+                        pbc_key: np.concatenate((previous[pbc_key], arrays[pbc_key]), axis=0),
+                    }
+                    if inputs.npz_sigma and 'sigma' in previous:
+                        merged['sigma'] = np.concatenate((previous['sigma'], arrays['sigma']), axis=0)
+                    elif include_zero_sigma:
+                        merged['sigma'] = arrays['sigma']
+                    if _needs_stress(inputs) and 'stress' in previous:
+                        merged['stress'] = np.concatenate((previous['stress'], arrays['stress']), axis=0)
+                    arrays = merged
+
+        np.savez(f'{workpath}/data-train_{index_nstep}.npz', **arrays)
+
+
+def _subsample_index(step, per_set, nstep):
+    index_nstep = step // per_set
+    return index_nstep if 0 <= index_nstep < nstep else None
+
+
+def _collect_from_son_trajectory(inputs, traj, indices, per_set, sets, traj_idx=None):
+    for i, step in zip(indices, tqdm(range(len(indices)))):
+        index_nstep = _subsample_index(step, per_set, inputs.nstep)
+        if index_nstep is None:
+            continue
+        _append_sample(inputs, sets, index_nstep, _sample_from_son(inputs, traj[i]))
+        if traj_idx is not None:
+            traj_idx.append(i)
+
+
+def _all_npz_exist(inputs, workpath):
+    return all(
+        os.path.exists(f'{workpath}/data-train_{index_nstep}.npz')
+        for index_nstep in range(inputs.nstep)
+    )
+
+
 def generate_npz_DFT_init(inputs, traj, workpath):
-    """Function [generate_npz_DFT_init]
-    Generate the initial training data sets from trajectory
+    """Generate the initial training data sets from trajectory."""
 
-    Parameters:
+    sets = _new_sets(inputs)
+    per_set = inputs.ntrain_init + inputs.nval_init
 
-    traj: ASE trajectory
-        Training data will be randomly sampled from this trajectory
-    ntrain: int
-        The total number of training data
-    nval: int
-        The total number of validating data
-    nstep: int
-        The number of subsampling sets
-    E_gs: float
-        Reference total energy in units of eV/Unitcell
-        to shift the total energies of the trajectory
-        and avoid unusually high total energy values
-        that may lead to unusual weightings with force values.
-        Recommend to use the ground state total energy.
-    workpath: str
-        The path to the working directory
-    """
-
-    # Prepare the empty list of propreties for each subsampling set
-    E_train      = [[] for i in range(inputs.nstep)]
-    F_train      = [[] for i in range(inputs.nstep)]
-    R_train      = [[] for i in range(inputs.nstep)]
-    z_train      = [[] for i in range(inputs.nstep)]
-    CELL_train   = [[] for i in range(inputs.nstep)]
-    PBC_train    = [[] for i in range(inputs.nstep)]
-    if inputs.npz_sigma:
-        sigma_train  = [[] for i in range(inputs.nstep)]
-    if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-        stress_train = [[] for i in range(inputs.nstep)]
-    
     single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
-    # Random sampling for the structural configurations from trajectory
-    for i, step in zip(
-        random.sample(range(0,len(traj)),inputs.ntotal_init),
-        tqdm(range(inputs.ntotal_init))
-        ):
-        for index_nstep in range(inputs.nstep):
-            if step < (inputs.ntrain_init+inputs.nval_init) * (index_nstep + 1) and step >= (inputs.ntrain_init+inputs.nval_init) * (index_nstep):
-                # Energy is shifted by the reference energy
-                # to avoid the unsual weighting with forces in NequIP
-
-                if inputs.harmonic_F:
-                    from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-                    displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
-                    F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-                    F_step = np.array(traj[i]['calculator']['forces']) - F_ha
-                    E_ha = get_E_ha(displacements, F_ha)
-                    E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs - E_ha
-                else:
-                    F_step = np.array(traj[i]['calculator']['forces'])
-                    E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs
-
-                E_train[index_nstep].append(E_step)
-                F_train[index_nstep].append(F_step);
-                R_train[index_nstep].append(traj[i]['atoms']['positions']);
-                z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for jdx in range(item[0])]);
-                CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
-                PBC_train[index_nstep].append(traj[i]['atoms']['pbc'])
-                if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                    stress_train[index_nstep].append(traj[i]['calculator']['stress'])
-
-                if inputs.npz_sigma:
-                    from libs.lib_util     import eval_sigma
-                    sigma_train[index_nstep].append(
-                        eval_sigma(
-                            struc_step_forces = traj[i]['calculator']['forces'],
-                            struc_step_positions = traj[i]['atoms']['positions'],
-                            al_type = 'sigma'
-                            )
-                        )
-
-                break
-
-    # Split the sampled data into individual files for each subsampling set
-    for index_nstep in range(inputs.nstep):
-        E_train_store    = E_train[index_nstep]
-        F_train_store    = F_train[index_nstep]
-        R_train_store    = R_train[index_nstep]
-        z_train_store    = z_train[index_nstep]
-        CELL_train_store = CELL_train[index_nstep]
-        PBC_train_store  = PBC_train[index_nstep]
-        if inputs.npz_sigma:
-            sigma_train_store  = sigma_train[index_nstep]
-        if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-            stress_train_store = stress_train[index_nstep]
-
-        # Save each subsampling data
-        npz_name = f'{workpath}/data-train_{index_nstep}'
-        arrays_to_save = {
-            'E': np.array(E_train_store),
-            'F': np.array(F_train_store),
-            'R': np.array(R_train_store),
-            'z': np.array(z_train_store)
-        }
-
-        if inputs.MLIP == 'nequip':
-            arrays_to_save['CELL'] = np.array(CELL_train_store)
-            arrays_to_save['PBC'] = np.array(PBC_train_store)
-        elif inputs.MLIP == 'so3krates':
-            arrays_to_save['unit_cell'] = np.array(CELL_train_store)
-            arrays_to_save['pbc'] = np.array(PBC_train_store)
-        else:
-            arrays_to_save['CELL'] = np.array(CELL_train_store)
-            arrays_to_save['PBC'] = np.array(PBC_train_store)
-
-        if inputs.npz_sigma:
-            arrays_to_save['sigma'] = np.array(sigma_train_store)
-        else:
-            arrays_to_save['sigma'] = np.zeros_like(np.array(E_train_store))
-        if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-            arrays_to_save['stress'] = np.array(stress_train_store)
-
-        np.savez(npz_name, **arrays_to_save)
+    indices = random.sample(range(len(traj)), inputs.ntotal_init)
+    _collect_from_son_trajectory(inputs, traj, indices, per_set, sets)
+    _save_sets(inputs, sets, workpath, include_zero_sigma=True)
 
     single_print('[npz]\tFinish the sampling process: data-train_*.npz')
-    
-    
+
+
 def generate_npz_DFT(inputs, workpath):
-    """Function [generate_npz_DFT]
-    Generate training data sets
-    by adding new data from the trajectory file (DFT results)
-    to previous training data sets
+    """Generate training data sets by adding new DFT results."""
 
-    Parameters:
-
-    ntrain: int
-        The total number of training data
-    nval: int
-        The total number of validating data
-    nstep: int
-        The number of subsampling sets
-    E_gs: float
-        Reference total energy in units of eV/Unitcell
-        to shift the total energies of the trajectory
-        and avoid unusually high total energy values
-        that may lead to unusual weightings with force values.
-        Recommend to use the ground state total energy.
-    index: int
-        The index of AL interactive step
-
-    temperature: float
-        The desired temperature in units of Kelvin (K)
-    output_format: str
-        The format of output file that be read to add new data
-        'aims.out' or 'trajectory.son'
-    pressure: float
-        The desired pressure in units of eV/Angstrom**3
-    workpath: str
-        The path to the working directory
-    """
-
-    # Prepare the empty list of propreties for each subsampling set
-    E_train      = [[] for i in range(inputs.nstep)]
-    F_train      = [[] for i in range(inputs.nstep)]
-    R_train      = [[] for i in range(inputs.nstep)]
-    z_train      = [[] for i in range(inputs.nstep)]
-    CELL_train   = [[] for i in range(inputs.nstep)]
-    PBC_train    = [[] for i in range(inputs.nstep)]
-    if inputs.npz_sigma:
-        sigma_train  = [[] for i in range(inputs.nstep)]
-    if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-        stress_train = [[] for i in range(inputs.nstep)]
-
-    # Check the existence of NPZ files containing previous data
-    npz_check = [os.path.exists(f'{workpath}/data-train_{index_nstep}.npz')\
-                 for index_nstep in range(inputs.nstep)];
-
-    # For first run, of course there is no NPZ file
-    if all(npz_check) == False: # If there is any missing NPZ file,
-        del npz_check
-        single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
-
-        # Randomly sample the new data
-        for i, step in zip(
-            random.sample(range(0,inputs.ntotal),inputs.ntotal),
-            tqdm(range(inputs.ntotal))
-            ):
-            # Collect these new data for each subsampling
-            for index_nstep in range(inputs.nstep):
-                if step < (inputs.ntrain+inputs.nval) * (index_nstep + 1) and step >= (inputs.ntrain+inputs.nval) * (index_nstep):
-                    if inputs.output_format == 'aims.out':
-                        # Convert 'aims.out' format to ASE trajectory format
-                        atoms, atoms_potE, atoms_forces = read_aims(
-                            f'./CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}/{i}/aims/calculations/aims.out'
-                            )
-                        atoms = Structure.from_atoms(atoms)
-                        # Energy is shifted by the reference energy
-                        # to avoid the unsual weighting with forces in NequIP
-
-                        if inputs.harmonic_F:
-                            from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-                            displacements = atoms.get_displacements(atoms.get_positions(), 'geometry.in.supercell')
-                            F_ha = atoms.get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-                            F_step = np.array(atoms_forces) - F_ha
-                            E_ha = atoms.get_E_ha(displacements, F_ha)
-                            E_step = atoms_potE - inputs.E_gs - E_ha
-                        else:
-                            F_step = np.array(atoms_forces)
-                            E_step = atoms_potE - inputs.E_gs
-
-                        E_train[index_nstep].append(E_step);
-                        F_train[index_nstep].append(F_step);
-                        R_train[index_nstep].append(atoms.get_positions());
-                        z_train[index_nstep].append(atoms.numbers);
-                        CELL_train[index_nstep].append(atoms.get_cell());
-                        PBC_train[index_nstep].append(atoms.get_pbc());
-
-                        if inputs.npz_sigma:
-                            from libs.lib_util     import eval_sigma
-                            sigma_train[index_nstep].append(
-                                atoms.eval_sigma(
-                                    struc_step_forces = F_step,
-                                    struc_step_positions = atoms.get_positions(),
-                                    al_type = 'sigma'
-                                    )
-                                )
-
-                        if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                            stress_train[index_nstep].append(atoms.get_stress(voigt=False))
-                        break
-                    elif inputs.output_format == 'trajectory.son':
-                        # Convert 'trajectory.son' format to ASE trajectory format
-                        metadata, data = son.load(
-                            f'./CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}/{i}/aims/trajectory.son'
-                            )
-                        atom_numbers = []
-                        for items in data[0]['atoms']['symbols']:
-                            for jndex in range(items[0]):
-                                atom_numbers.append(atomic_numbers[items[1]])
-                        # Energy is shifted by the reference energy
-                        # to avoid the unsual weighting with forces in NequIP
-
-                        if inputs.harmonic_F:
-                            from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-                            displacements = get_displacements(data[0]['atoms']['positions'], 'geometry.in.supercell')
-                            F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-                            F_step = np.array(data[0]['calculator']['forces']) - F_ha
-                            E_ha = get_E_ha(displacements, F_ha)
-                            E_step = np.array(data[0]['calculator']['energy']) - inputs.E_gs - E_ha
-                        else:
-                            F_step = np.array(data[0]['calculator']['forces'])
-                            E_step = np.array(data[0]['calculator']['energy']) - inputs.E_gs
-
-                        E_train[index_nstep].append(E_step);
-                        F_train[index_nstep].append(F_step);
-                        R_train[index_nstep].append(data[0]['atoms']['positions']);
-                        z_train[index_nstep].append(np.array(atom_numbers));
-                        CELL_train[index_nstep].append(data[0]['atoms']['cell']);
-                        PBC_train[index_nstep].append(data[0]['atoms']['pbc']);
-
-                        if inputs.npz_sigma:
-                            from libs.lib_util     import eval_sigma
-                            sigma_train[index_nstep].append(
-                                eval_sigma(
-                                    struc_step_forces = data[0]['calculator']['forces'],
-                                    struc_step_positions = data[0]['atoms']['positions'],
-                                    al_type = 'sigma'
-                                    )
-                                )
-
-                        if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                            stress_train[index_nstep].append(data[0]['calculator']['stress'])
-                        break
-                    elif inputs.output_format == 'nequip':
-                        from ase.io.trajectory import Trajectory
-                        data = Trajectory(
-                            f'./CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}/{i}/geometry.traj'
-                            )
-
-                        # Energy is shifted by the reference energy
-                        # to avoid the unsual weighting with forces in NequIP
-
-                        if inputs.harmonic_F:
-                            from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-                            displacements = get_displacements(data[0].get_positions(), 'geometry.in.supercell')
-                            F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-                            F_step = np.array(data[0].get_forces()) - F_ha
-                            E_ha = get_E_ha(displacements, F_ha)
-                            E_step = data[0].get_potential_energy() - inputs.E_gs - E_ha
-                        else:
-                            F_step = np.array(data[0].get_forces())
-                            E_step = data[0].get_potential_energy() - inputs.E_gs
-
-                        E_train[index_nstep].append(E_step);
-                        F_train[index_nstep].append(F_step);
-                        R_train[index_nstep].append(data[0].get_positions());
-                        z_train[index_nstep].append(data[0].get_atomic_numbers());
-                        CELL_train[index_nstep].append(data[0].get_cell());
-                        PBC_train[index_nstep].append(data[0].get_pbc());
-
-                        if inputs.npz_sigma:
-                            from libs.lib_util     import eval_sigma
-                            sigma_train[index_nstep].append(
-                                eval_sigma(
-                                    struc_step_forces = F_step,
-                                    struc_step_positions = data[0].get_positions(),
-                                    al_type = 'sigma'
-                                    )
-                                )
-
-                        if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                            stress_train[index_nstep].append(data[0]['calculator']['stress'])
-                        break
-                    else:
-                        single_print('[npz]\tYou need to define the output format.')
-
-        # Merge new data with previous data
-        # Split the sampled data into individual files for each subsampling set
-        for index_nstep in range(inputs.nstep):
-            # Path to previous data
-            npz_previous = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index-1}'\
-                           + f'/data-train_{index_nstep}.npz'
-            
-            # When there is previous data, merge them together
-            if os.path.exists(npz_previous):
-                data_train       = np.load(npz_previous)
-                E_train_store    = np.concatenate\
-                ((data_train['E'], E_train[index_nstep]), axis=0)
-                F_train_store    = np.concatenate\
-                ((data_train['F'], F_train[index_nstep]), axis=0)
-                R_train_store    = np.concatenate\
-                ((data_train['R'], R_train[index_nstep]), axis=0)
-                z_train_store    = np.concatenate\
-                ((data_train['z'], z_train[index_nstep]), axis=0)
-                
-                if inputs.MLIP == 'nequip':
-                    CELL_train_store = np.concatenate\
-                    ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
-                    PBC_train_store  = np.concatenate\
-                    ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
-                elif inputs.MLIP == 'so3krates':
-                    CELL_train_store = np.concatenate\
-                    ((data_train['unit_cell'], CELL_train[index_nstep]), axis=0)
-                    PBC_train_store  = np.concatenate\
-                    ((data_train['pbc'], PBC_train[index_nstep]), axis=0)
-                else:
-                    CELL_train_store = np.concatenate\
-                    ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
-                    PBC_train_store  = np.concatenate\
-                    ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
-
-                if inputs.npz_sigma:
-                    sigma_train_store  = np.concatenate\
-                    ((data_train['sigma'], sigma_train[index_nstep]), axis=0)
-                if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                    stress_train_store  = np.concatenate\
-                    ((data_train['stress'], stress_train[index_nstep]), axis=0)
-            else: ##!! I don't think this part is no longer needed
-                E_train_store    = E_train[index_nstep]
-                F_train_store    = F_train[index_nstep]
-                R_train_store    = R_train[index_nstep]
-                z_train_store    = z_train[index_nstep]
-                CELL_train_store = CELL_train[index_nstep]
-                PBC_train_store  = PBC_train[index_nstep]
-                if inputs.npz_sigma:
-                    sigma_train_store  = sigma_train[index_nstep]
-                if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                    stress_train_store = stress_train[index_nstep]
-
-            # Path to new data
-            npz_name = f'{workpath}/data-train_{index_nstep}.npz'
-            # Save each subsampling data
-            arrays_to_save = {
-                'E': np.array(E_train_store),
-                'F': np.array(F_train_store),
-                'R': np.array(R_train_store),
-                'z': np.array(z_train_store)
-            }
-
-            if inputs.MLIP == 'nequip':
-                arrays_to_save['CELL'] = np.array(CELL_train_store)
-                arrays_to_save['PBC'] = np.array(PBC_train_store)
-            elif inputs.MLIP == 'so3krates':
-                arrays_to_save['unit_cell'] = np.array(CELL_train_store)
-                arrays_to_save['pbc'] = np.array(PBC_train_store)
-            else:
-                arrays_to_save['CELL'] = np.array(CELL_train_store)
-                arrays_to_save['PBC'] = np.array(PBC_train_store)
-
-            if inputs.npz_sigma:
-                arrays_to_save['sigma'] = np.array(sigma_train_store)
-
-            if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                arrays_to_save['stress'] = np.array(stress_train_store)
-
-            np.savez(npz_name[:-4], **arrays_to_save)
-
-        single_print('[npz]\tFinish the sampling process: data-train_*.npz')
-    else:
+    if _all_npz_exist(inputs, workpath):
         single_print('[npz]\tFound all sampled training data: data-train_*.npz')
+        return
 
-        
-        
-def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
-    """Function [generate_npz_DFT_rand_init]
-    Generate the initial training data sets from trajectory.
-    The main distinction from the function [generate_npz_DFT_init] is
-    that this function returnsa list of randomly selected sample indices
-    (traj_idx).
-
-    Parameters:
-
-    traj: ASE trajectory
-        Training data will be randomly sampled from this trajectory
-    ntrain: int
-        The total number of training data
-    nval: int
-        The total number of validating data
-    nstep: int
-        The number of subsampling sets
-    E_gs: float
-        Reference total energy in units of eV/Unitcell
-        to shift the total energies of the trajectory
-        and avoid unusually high total energy values
-        that may lead to unusual weightings with force values.
-        Recommend to use the ground state total energy.
-    workpath: str
-        The path to the working directory ##!! this or temperature/pressrue/index might be removed
-
-    Returns:
-    traj_idx: list of int
-        The list of randomly selected sample indices
-    """
-
-    # Prepare the empty list of propreties for each subsampling set
-    E_train      = [[] for i in range(inputs.nstep)];
-    F_train      = [[] for i in range(inputs.nstep)];
-    R_train      = [[] for i in range(inputs.nstep)];
-    z_train      = [[] for i in range(inputs.nstep)];
-    CELL_train   = [[] for i in range(inputs.nstep)];
-    PBC_train    = [[] for i in range(inputs.nstep)];
-    if inputs.npz_sigma:
-        sigma_train    = [[] for i in range(inputs.nstep)];
-    if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-        stress_train = [[] for i in range(inputs.nstep)]
-    traj_idx     = [];
+    sets = _new_sets(inputs)
+    per_set = inputs.ntrain + inputs.nval
 
     single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
-    # Random sampling for the structural configurations from trajectory
-    for i, step in zip(
-        random.sample(range(0,len(traj)),inputs.ntotal),
-        tqdm(range(inputs.ntotal))
-        ):
-        for index_nstep in range(inputs.nstep):
-            if step < (inputs.ntrain+inputs.nval) * (index_nstep + 1) and step >= (inputs.ntrain+inputs.nval) * (index_nstep):
-                # Energy is shifted by the reference energy
-                # to avoid the unsual weighting with forces in NequIP
+    indices = random.sample(range(inputs.ntotal), inputs.ntotal)
+    condition = f'{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}'
 
-                if inputs.harmonic_F:
-                    from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-                    displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
-                    F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-                    F_step = np.array(traj[i]['calculator']['forces']) - F_ha
-                    E_ha = get_E_ha(displacements, F_ha)
-                    E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs - E_ha
-                    
-                else:
-                    F_step = np.array(traj[i]['calculator']['forces'])
-                    E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs
+    for i, step in zip(indices, tqdm(range(inputs.ntotal))):
+        index_nstep = _subsample_index(step, per_set, inputs.nstep)
+        if index_nstep is None:
+            continue
 
-                E_train[index_nstep].append(E_step);
-                F_train[index_nstep].append(F_step);
-                R_train[index_nstep].append(traj[i]['atoms']['positions']);
-                z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for idx in range(item[0])]);
-                CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
-                PBC_train[index_nstep].append(traj[i]['atoms']['pbc'])
-
-                if inputs.npz_sigma:
-                    from libs.lib_util     import eval_sigma
-                    sigma_train[index_nstep].append(
-                        eval_sigma(
-                            struc_step_forces = F_step,
-                            struc_step_positions = traj[i]['atoms']['positions'],
-                            al_type = 'sigma'
-                            )
-                        )
-
-                if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                    stress_train[index_nstep].append(traj[i]['calculator']['stress'])
-                traj_idx.append(i)
-                break
-
-    # Split the sampled data into individual files for each subsampling set
-    for index_nstep in range(inputs.nstep):
-        E_train_store    = E_train[index_nstep]
-        F_train_store    = F_train[index_nstep]
-        R_train_store    = R_train[index_nstep]
-        z_train_store    = z_train[index_nstep]
-        CELL_train_store = CELL_train[index_nstep]
-        PBC_train_store  = PBC_train[index_nstep]
-        if inputs.npz_sigma:
-            sigma_train_store  = sigma_train[index_nstep]
-        if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-            stress_train_store = stress_train[index_nstep]
-
-        # Save each subsampling data
-        npz_name = f'{workpath}/data-train_{index_nstep}.npz'
-        arrays_to_save = {
-            'E': np.array(E_train_store),
-            'F': np.array(F_train_store),
-            'R': np.array(R_train_store),
-            'z': np.array(z_train_store)
-        }
-
-        if inputs.MLIP == 'nequip':
-            arrays_to_save['CELL'] = np.array(CELL_train_store)
-            arrays_to_save['PBC'] = np.array(PBC_train_store)
-        elif inputs.MLIP == 'so3krates':
-            arrays_to_save['unit_cell'] = np.array(CELL_train_store)
-            arrays_to_save['pbc'] = np.array(PBC_train_store)
+        if inputs.output_format == 'aims.out':
+            sample = _sample_from_aims(
+                inputs,
+                f'./CALC/{condition}/{i}/aims/calculations/aims.out',
+            )
+        elif inputs.output_format == 'trajectory.son':
+            _, data = son.load(f'./CALC/{condition}/{i}/aims/trajectory.son')
+            sample = _sample_from_son(inputs, data[0])
+        elif inputs.output_format == 'nequip':
+            sample = _sample_from_nequip(inputs, f'./CALC/{condition}/{i}/geometry.traj')
         else:
-            arrays_to_save['CELL'] = np.array(CELL_train_store)
-            arrays_to_save['PBC'] = np.array(PBC_train_store)
+            single_print('[npz]\tYou need to define the output format.')
+            continue
 
-        if inputs.npz_sigma:
-            arrays_to_save['sigma'] = np.array(sigma_train_store)
-        if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-            arrays_to_save['stress'] = np.array(stress_train_store)
+        _append_sample(inputs, sets, index_nstep, sample)
 
-        np.savez(npz_name[:-4], **arrays_to_save)
+    previous_dir = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index-1}'
+    _save_sets(inputs, sets, workpath, previous_dir=previous_dir)
 
     single_print('[npz]\tFinish the sampling process: data-train_*.npz')
-    
+
+
+def generate_npz_DFT_rand_init(inputs, traj, ntrain, nval, workpath):
+    """Generate initial random-sampling training data and return sampled indices."""
+
+    sets = _new_sets(inputs)
+    traj_idx = []
+    per_set = inputs.ntrain + inputs.nval
+
+    single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
+    indices = random.sample(range(len(traj)), inputs.ntotal)
+    _collect_from_son_trajectory(inputs, traj, indices, per_set, sets, traj_idx)
+    _save_sets(inputs, sets, workpath)
+
+    single_print('[npz]\tFinish the sampling process: data-train_*.npz')
     return traj_idx
-    
-    
 
-def generate_npz_DFT_rand(
-    inputs, traj, workpath, traj_idx
-):
-    """Function [generate_npz_DFT_rand]
-    Generate training data sets
-    by adding new data from the trajectory to previous training data sets.
-    The main distinction from the function [generate_npz_DFT] is
-    that this function returnsa list of randomly selected sample indices
-    (traj_idx).
 
-    Parameters:
+def generate_npz_DFT_rand(inputs, traj, workpath, traj_idx):
+    """Generate random-sampling training data and return all sampled indices."""
 
-    traj: ASE trajectory
-        Training data will be randomly sampled from this trajectory
-    ntrain: int
-        The total number of training data
-    nval: int
-        The total number of validating data
-    nstep: int
-        The number of subsampling sets
-    E_gs: float
-        Reference total energy in units of eV/Unitcell
-        to shift the total energies of the trajectory
-        and avoid unusually high total energy values
-        that may lead to unusual weightings with force values.
-        Recommend to use the ground state total energy.
-    index: int
-        The index of AL interactive step
-
-    temperature: float
-        The desired temperature in units of Kelvin (K)
-    output_format: str
-        The format of output file that be read to add new data
-        'aims.out' or 'trajectory.son'
-    pressure: float
-        The desired pressure in units of eV/Angstrom**3
-    workpath: str
-        The path to the working directory
-    traj_idx: list of int
-        The list of randomly selected sample indices until previous step
-
-    Returns:
-    traj_idx: list of int
-        The list of randomly selected sample indices until current step
-    """
-
-    # Prepare the empty list of propreties for each subsampling set
-    E_train      = [[] for i in range(inputs.nstep)];
-    F_train      = [[] for i in range(inputs.nstep)];
-    R_train      = [[] for i in range(inputs.nstep)];
-    z_train      = [[] for i in range(inputs.nstep)];
-    CELL_train   = [[] for i in range(inputs.nstep)];
-    PBC_train    = [[] for i in range(inputs.nstep)];
-    if inputs.npz_sigma:
-        sigma_train    = [[] for i in range(inputs.nstep)];
-    if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-        stress_train = [[] for i in range(inputs.nstep)]
-
-    # Check the existence of NPZ files containing previous data
-    npz_check = [os.path.exists(f'{workpath}/data-train_{index_nstep}.npz')\
-                 for index_nstep in range(inputs.nstep)];
-
-    # For first run, of course there is no NPZ file
-    if all(npz_check) == False: # If there is any missing NPZ file,
-        del npz_check
-        single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
-
-        # Randomly sample the new data except previously sampled ones
-        for i, step in zip(
-            random.sample(list(set(range(0,len(traj)))-set(traj_idx)),inputs.ntotal),
-            tqdm(range(inputs.ntotal))
-            ):
-            # Collect these new data for each subsampling
-            for index_nstep in range(inputs.nstep):
-                if step < (inputs.ntrain+inputs.nval) * (index_nstep + 1) and step >= (inputs.ntrain+inputs.nval) * (index_nstep):
-                    if inputs.harmonic_F:
-                        from libs.lib_util import get_displacements, get_fc_ha, get_E_ha
-                        displacements = get_displacements(traj[i]['atoms']['positions'], 'geometry.in.supercell')
-                        F_ha = get_fc_ha(displacements, 'FORCE_CONSTANTS_remapped')
-                        F_step = np.array(traj[i]['calculator']['forces']) - F_ha
-                        E_ha = get_E_ha(displacements, F_ha)
-                        E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs - E_ha
-                        
-                    else:
-                        F_step = np.array(traj[i]['calculator']['forces'])
-                        E_step = np.array(traj[i]['calculator']['energy']) - inputs.E_gs
-
-                    E_train[index_nstep].append(E_step);
-                    F_train[index_nstep].append(F_step);
-                    R_train[index_nstep].append(traj[i]['atoms']['positions']);
-                    z_train[index_nstep].append([atomic_numbers[item[1]] for item in traj[i]['atoms']['symbols'] for idx in range(item[0])]);
-                    CELL_train[index_nstep].append(traj[i]['atoms']['cell']);
-                    PBC_train[index_nstep].append(traj[i]['atoms']['pbc'])
-
-                    if inputs.npz_sigma:
-                        from libs.lib_util     import eval_sigma
-                        sigma_train[index_nstep].append(
-                            eval_sigma(
-                                struc_step_forces = F_step,
-                                struc_step_positions = traj[i]['atoms']['positions'],
-                                al_type = 'sigma'
-                                )
-                            )
-
-                    if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                        stress_train[index_nstep].append(traj[i]['calculator']['stress'])
-                    traj_idx.append(i)
-                    break
-
-        # Merge new data with previous data
-        # Split the sampled data into individual files for each subsampling set   
-        for index_nstep in range(inputs.nstep):
-            npz_previous = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index-1}'\
-                           + f'/data-train_{index_nstep}.npz'
-            
-            # When there is previous data, merge them together
-            if os.path.exists(npz_previous):
-                data_train       = np.load(npz_previous)
-                E_train_store    = np.concatenate\
-                ((data_train['E'], E_train[index_nstep]), axis=0)
-                F_train_store    = np.concatenate\
-                ((data_train['F'], F_train[index_nstep]), axis=0)
-                R_train_store    = np.concatenate\
-                ((data_train['R'], R_train[index_nstep]), axis=0)
-                z_train_store    = np.concatenate\
-                ((data_train['z'], z_train[index_nstep]), axis=0)
-                CELL_train_store = np.concatenate\
-                ((data_train['CELL'], CELL_train[index_nstep]), axis=0)
-                PBC_train_store  = np.concatenate\
-                ((data_train['PBC'], PBC_train[index_nstep]), axis=0)
-                if inputs.npz_sigma:
-                    sigma_train_store  = np.concatenate\
-                    ((data_train['sigma'], sigma_train[index_nstep]), axis=0)
-                if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                    stress_train_store  = np.concatenate\
-                    ((data_train['stress'], stress_train[index_nstep]), axis=0)
-
-            # Path to new data
-            npz_name = f'{workpath}/data-train_{index_nstep}.npz'
-            # Save each subsampling data
-            arrays_to_save = {
-                'E': np.array(E_train_store),
-                'F': np.array(F_train_store),
-                'R': np.array(R_train_store),
-                'z': np.array(z_train_store)
-            }
-
-            if inputs.MLIP == 'nequip':
-                arrays_to_save['CELL'] = np.array(CELL_train_store)
-                arrays_to_save['PBC'] = np.array(PBC_train_store)
-            elif inputs.MLIP == 'so3krates':
-                arrays_to_save['unit_cell'] = np.array(CELL_train_store)
-                arrays_to_save['pbc'] = np.array(PBC_train_store)
-            else:
-                arrays_to_save['CELL'] = np.array(CELL_train_store)
-                arrays_to_save['PBC'] = np.array(PBC_train_store)
-
-            if inputs.npz_sigma:
-                arrays_to_save['sigma'] = np.array(sigma_train_store)
-            if inputs.ensemble == 'NPTisoiso' or inputs.train_stress:
-                arrays_to_save['stress'] = np.array(stress_train_store)
-
-            np.savez(npz_name[:-4], **arrays_to_save)
-        single_print('[npz]\tFinish the sampling process: data-train_*.npz')
-    else:
+    if _all_npz_exist(inputs, workpath):
         single_print('[npz]\tFound all sampled training data: data-train_*.npz')
+        return traj_idx
 
-        
+    sets = _new_sets(inputs)
+    per_set = inputs.ntrain + inputs.nval
+
+    single_print(f'[npz]\tSample {inputs.nstep} different training data\n')
+    available = list(set(range(len(traj))) - set(traj_idx))
+    indices = random.sample(available, inputs.ntotal)
+    _collect_from_son_trajectory(inputs, traj, indices, per_set, sets, traj_idx)
+
+    previous_dir = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index-1}'
+    _save_sets(inputs, sets, workpath, previous_dir=previous_dir)
+
+    single_print('[npz]\tFinish the sampling process: data-train_*.npz')
     return traj_idx

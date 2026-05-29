@@ -2,7 +2,6 @@ import os
 import re
 import sys
 import subprocess
-import threading
 import time
 import shutil
 import numpy as np
@@ -415,7 +414,7 @@ class Structure(Atoms):
                 self.ref_structure.calc = calculator[zndex]
                 try:
                     eatom_ref.append(np.array(self.ref_structure.get_potential_energies()))
-                except Exception as e:
+                except Exception:
                     # print(f"error encountered in get_potential_energies: {e}")
                     eatom_ref.append(np.array([]))
                 e_ref.append(self.ref_structure.get_potential_energy())
@@ -543,7 +542,7 @@ def get_E_ref(nmodel, nstep, calculator):
             struc_init.calc = calculator[zndex]
             try:
                 Eatom_ref.append(np.array(struc_init.get_potential_energies()))
-            except Exception as e:
+            except Exception:
                 # print(f"Error encountered in get_potential_energies: {e}")
                 Eatom_ref.append(np.array([]))
             E_ref.append(struc_init.get_potential_energy())
@@ -589,6 +588,33 @@ class empty_inputs:
     pass
 
 
+_LITERAL_INPUTS = {
+    'supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F',
+    'anharmonic_F', 'meta_restart', 'signal_uncert', 'criteria_energy',
+    'train_stress', 'npz_sigma', 'loss_var', 'pfactor',
+}
+
+_FLOAT_INPUTS = {
+    'crtria_cnvg', 'friction', 'compressibility', 'kB', 'uncert_shift',
+    'uncert_grad', 'meta_Ediff', 'meta_r_crtria', 'ttime', 'timestep',
+    'cell_factor', 'bias_A', 'bias_B', 'temp_factor', 'r_cut', 'we', 'wf',
+    'lr', 'lr_stop', 'lr_decay_exp_decay_factor', 'skin', 'E_gs',
+}
+
+_INT_INPUTS = {
+    'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature',
+    'taut', 'pressure', 'taup', 'steps_ther', 'steps_init', 'steps_random',
+    'cutoff_ther', 'lmax', 'nfeatures', 'random_index', 'wndex', 'steps',
+    'loginterval', 'num_calc', 'test_index', 'num_mdl_calc', 'printinterval',
+    'l', 'l_min', 'l_max', 'max_body_order', 'f_body_order', 'epochs',
+    'lr_decay_exp_transition_steps', 'seed_data', 'seed_training',
+}
+
+_OPTIONAL_INT_INPUTS = {
+    'size_batch', 'size_batch_training', 'size_batch_validation',
+}
+
+
 def read_input_file(file_path):
     """Function [read_input_file]
     Read 'input.in' and assign variables.
@@ -621,28 +647,13 @@ def read_input_file(file_path):
                 name = name.strip()
                 value = value.split('#')[0].strip()
 
-                # Perform type conversions for specific variables
-                if name in [
-                'supercell', 'supercell_init', 'mask', 'harmonic_F', 'anharmoic_F', 'anharmonic_F', 'meta_restart',
-                'signal_uncert', 'criteria_energy', 'train_stress', 'npz_sigma', 'E_gs', 'lr',
-                'lr_stop', 'loss_var'
-                ]:
+                if name in _LITERAL_INPUTS:
                     value = ast.literal_eval(value)
-                elif name in [
-                'crtria_cnvg', 'friction', 'compressibility', 'kB', 'uncert_shift', 'uncert_grad',
-                'meta_Ediff', 'meta_r_crtria', 'ttime', 'pfactor', 'timestep', 'cell_factor', 'bias_A',
-                'bias_B', 'temp_factor', 'r_cut', 'we', 'wf', 'ws', 'eval_energy_t',
-                'lr_decay_exp_decay_factor', 'clip_by_global_norm', 'skin'
-                ]:
+                elif name in _FLOAT_INPUTS:
                     value = float(value)
-                elif name in [
-                'ntrain_init', 'ntrain', 'nstep', 'nmodel', 'nperiod', 'temperature', 'taut', 'pressure',
-                'taup', 'steps_ther', 'steps_init', 'steps_random', 'cutoff_ther', 'lmax', 'nfeatures',
-                'random_index', 'wndex', 'steps', 'loginterval', 'num_calc', 'test_index', 'num_mdl_calc',
-                'printinterval', 'l', 'f', 'l_min', 'l_max', 'max_body_order', 'f_body_order',
-                'epochs', 'lr_decay_exp_transition_steps', 'size_batch', 'size_batch_training',
-                'size_batch_validation', 'seed_data', 'seed_training'
-                ]:
+                elif name in _INT_INPUTS:
+                    value = int(value)
+                elif name in _OPTIONAL_INT_INPUTS and value != 'None':
                     value = int(value)
                 else:
                     value = str(value)

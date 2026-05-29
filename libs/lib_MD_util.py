@@ -1,4 +1,3 @@
-import threading
 import numpy as np
 
 import torch
@@ -31,7 +30,7 @@ def get_forces(
         Averaged forces across trained models
     """
 
-    if type(calculator) == list:
+    if isinstance(calculator, list):
         from libs.lib_load_model import ensemble_calculate
         results = ensemble_calculate(calculator, struc)
         forces = np.array([r['forces'] for r in results])
@@ -74,7 +73,7 @@ def get_stress(
         Averaged forces across trained models
     """
 
-    if type(calculator) == list:
+    if isinstance(calculator, list):
         stress = []
         zndex = 0
         for index_nmodel in range(nmodel):
@@ -135,7 +134,7 @@ def get_MDinfo_temp(
     KE = struc.get_kinetic_energy()
     temp = struc.get_temperature()
 
-    if type(calculator) == list:
+    if isinstance(calculator, list):
         from libs.lib_load_model import ensemble_calculate
         results = ensemble_calculate(calculator, struc)
         info_PE = np.array([

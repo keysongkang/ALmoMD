@@ -1,5 +1,3 @@
-from ase.io.trajectory import Trajectory
-
 import os
 import numpy as np
 import pandas as pd
@@ -162,9 +160,9 @@ def check_progress(inputs, calc_step='cont'):
                     aims_check = ['Have a nice day.' in open(f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}/{jndex}/aims/calculations/aims.out').read()\
                                    if os.path.exists(f'CALC/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index+1}/{jndex}/aims/calculations/aims.out') else False for jndex in range(inputs.ntotal)];
                     if False in aims_check:
-                        single_print(f'\t[prog]\tDFT calculations have not been finished')
+                        single_print('\t[prog]\tDFT calculations have not been finished')
                     else:
-                        single_print(f'\t[prog]\tDFT calculations are done')
+                        single_print('\t[prog]\tDFT calculations are done')
 
                     if all(aims_check) == True: # If all FHI-vibes calcs are finished,
                         gen_check = [

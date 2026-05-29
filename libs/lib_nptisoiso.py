@@ -1,16 +1,12 @@
-from ase.io.trajectory import Trajectory
-from ase.io.trajectory import TrajectoryWriter
 from ase.io.bundletrajectory import BundleTrajectory
 import ase.units as units
-from ase.io.cif        import write_cif
 
-import time
 import os
 import numpy as np
 from decimal import Decimal
 
 from libs.lib_util    import single_print
-from libs.lib_MD_util import get_forces, get_stress, get_MDinfo_temp, get_masses
+from libs.lib_MD_util import get_forces, get_stress, get_MDinfo_temp
 from libs.lib_criteria import eval_uncert, uncert_strconvter
 
 import torch
@@ -57,13 +53,13 @@ def NPTisoiso(
         # Get averaged force from trained models
         try:
             forces = struc.get_forces()
-        except Exception as e:
+        except Exception:
             forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
 
         # Get averaged stress from trained models
         try:
             stress = struc.get_stress(include_ideal_gas=True)
-        except Exception as e:
+        except Exception:
             stress = get_stress(struc, nstep, nmodel, calculator)
 
         inputs_npt_dyn = file_traj_read.read_extra_data('npt_dyn', -1)
@@ -101,8 +97,6 @@ def NPTisoiso(
 
         q_past, q_future = calculate_q_past_and_future(struc, timestep, cell, inv_cell, forces, eta, zeta, q)
 
-        initialized = 1
-
         file_traj = BundleTrajectory(filename=trajectory, mode='a')
         file_traj.set_extra_data('npt_dyn', traj_extra_contents)
         file_traj.set_extra_data('npt_dyn_eta', traj_extra_contents_eta)
@@ -113,11 +107,10 @@ def NPTisoiso(
         # Add new configuration to the trajectory file
 
         NumAtoms = len(struc)
-        struc = zero_center_of_mass_momentum(struc, NumAtoms, rank, verbose=1)
+        struc = zero_center_of_mass_momentum(struc, NumAtoms, verbose=1)
         eta = np.zeros((3, 3), float)
         zeta = 0.0
         zeta_integrated = 0.0
-        initialized = 0
         cell = struc.get_cell()
         tfact, pfact, desiredEkin = calculateconstants(ttime, temperature, pfactor, NumAtoms, cell)
         externalstress = np.array([-pressure,-pressure,-pressure, 0.0, 0.0, 0.0])
@@ -138,13 +131,13 @@ def NPTisoiso(
         # Get averaged force from trained models
         try:
             forces = struc.get_forces()
-        except Exception as e:
+        except Exception:
             forces = get_forces(struc, nstep, nmodel, calculator, harmonic_F, anharmonic_F)
 
         # Get averaged stress from trained models
         try:
             stress = struc.get_stress(include_ideal_gas=True)
-        except Exception as e:
+        except Exception:
             stress = get_stress(struc, nstep, nmodel, calculator)
 
         cell_past, eta_past = initialize_eta_h(cell, timestep, eta, pfactor, pfact, stress, frac_traceless, mask)
@@ -152,8 +145,6 @@ def NPTisoiso(
         zeta_past = zeta - deltazeta
 
         q_past, q_future = calculate_q_past_and_future(struc, timestep, cell, inv_cell, forces, eta, zeta, q)
-
-        initialized = 1
 
         file_traj.set_extra_data('npt_init', traj_extra_contents_init,  once=True)
         file_traj.set_extra_data('npt_dyn', traj_extra_contents)
@@ -179,7 +170,7 @@ def NPTisoiso(
         
             # Get MD information at the current step
             info_TE, info_PE, info_KE, info_T, info_P = get_MDinfo_temp(
-                struc, nstep, nmodel, calculator, harmonic_F, signal_P = True
+                struc, nstep, nmodel, calculator, harmonic_F, E_ref, signal_P=True
                 )
 
             if signal_uncert:
@@ -226,7 +217,7 @@ def NPTisoiso(
             eta_future = eta_past + mask * makeuppertriangular(deltaeta)
         else:
             trace_part, traceless_part = separatetrace(makeuppertriangular(deltaeta))
-            eta_future = eta + trace_part + frac_traceless * tracelsss_part
+            eta_future = eta + trace_part + frac_traceless * traceless_part
 
         deltazeta = 2 * timestep * tfact * (struc.get_kinetic_energy() - desiredEkin)
         zeta_future = zeta_past + deltazeta
@@ -259,7 +250,7 @@ def NPTisoiso(
             if isinstance(logfile, str):
                 # mpi_print(f'Step 12: {time.time()-time_init}', rank)
                 info_TE, info_PE, info_KE, info_T, info_P = get_MDinfo_temp(
-                    struc, nstep, nmodel, calculator, harmonic_F, signal_P = True
+                    struc, nstep, nmodel, calculator, harmonic_F, E_ref, signal_P=True
                     )
 
                 # mpi_print(f'Step 13: {time.time()-time_init}', rank)
@@ -327,7 +318,7 @@ def initialize_eta_h(
         eta_past = eta - mask * makeuppertriangular(deltaeta)
     else:
         trace_part, traceless_part = separatetrace(makeuppertriangular(deltaeta))
-        eta_past = eta - trace_part - frac_traceless * tracelsss_part
+        eta_past = eta - trace_part - frac_traceless * traceless_part
 
     return cell_past, eta_past
 
@@ -379,7 +370,7 @@ def calculate_q_past_and_future(struc, timestep, cell, inv_cell, forces, eta, ze
     return q_past, q_future
 
 
-def zero_center_of_mass_momentum(struc, NumAtoms, rank, verbose=0):
+def zero_center_of_mass_momentum(struc, NumAtoms, verbose=0):
     "Set the center of mass momentum to zero."
     cm = struc.get_momenta().sum(0)
     abscm = np.sqrt(np.sum(cm * cm))
@@ -390,9 +381,6 @@ def zero_center_of_mass_momentum(struc, NumAtoms, rank, verbose=0):
             )
     struc.set_momenta(struc.get_momenta() - cm / NumAtoms)
     return struc
-
-
-
 
 
 

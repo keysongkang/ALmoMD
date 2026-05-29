@@ -61,8 +61,8 @@ def termination(inputs):
                 if np.absolute(result_max - result_min) < inputs.crtria_cnvg and \
                 result_max != result_min:
                     single_print(
-                        f'[term]\t!!The predicted results of trained model are'
-                        +f' converged within the selected criteria:'
+                        '[term]\t!!The predicted results of trained model are'
+                        + ' converged within the selected criteria:'
                         +f'{np.absolute(result_max-result_min)}'
                         )
                     signal = 1
@@ -91,7 +91,6 @@ def get_testerror(inputs):
     calc_type: str
         Type of sampling; 'active' (active learning), 'random'
     """
-    import sys
     from ase import Atoms
     from libs.lib_util     import eval_sigma, get_E_ref
     from libs.lib_criteria import uncert_strconvter
@@ -101,7 +100,7 @@ def get_testerror(inputs):
     if inputs.npz_test == 'train':
         npz_test = f'./MODEL/{inputs.temperature}K-{inputs.pressure}bar_{inputs.index}/data-train_0.npz' # Path
     else:
-        npz_test = f'./MODEL/data-test.npz' # Path
+        npz_test = './MODEL/data-test.npz' # Path
     data_test = np.load(npz_test)         # Load
 
     ## Prepare the ground state structure
@@ -137,8 +136,7 @@ def get_testerror(inputs):
         prd_F = []
         prd_R = []
         zndex = 0
-        natoms = len(struc)
-        
+
         if id_step % inputs.printinterval == 0:
             single_print(f'[Termi]\tTesting: sample {id_step}')
 
@@ -307,7 +305,7 @@ def get_testerror(inputs):
         UncertRel_sigma_std = '----          '
 
     if inputs.calc_type == 'active' or inputs.calc_type == 'period':
-        outputfile = open(f'result.txt', 'a')
+        outputfile = open('result.txt', 'a')
 
         result_print = f'{inputs.temperature}      \t{inputs.index}             '\
                        + '\t' + uncert_strconvter(E_MAE)\
@@ -342,7 +340,7 @@ def get_testerror(inputs):
         outputfile.write(result_print)
         outputfile.close()
     elif inputs.calc_type == 'random':
-        outputfile = open(f'result.txt', 'a')
+        outputfile = open('result.txt', 'a')
         outputfile.write(
             f'{inputs.temperature}      \t{inputs.index}             \t' +
             uncert_strconvter(E_MAE) + '\t' +

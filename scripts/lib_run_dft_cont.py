@@ -19,17 +19,17 @@ def run_dft_cont(inputs):
     single_print(f'[cont]\tContinue from the previous step (Mode: {inputs.calc_type})')
 
     # Termination check
-    single_print(f'[cont]\tConvergence check')
+    single_print('')
     signal = termination(inputs)
     if signal == 1:
-        single_print(f'[cont]\t!!!!Have a nice day. Terminate the code.')
+        single_print('')
         sys.exit()
 
     ## Prepare the ground state structure
     # Read the ground state structure with the primitive cell
     struc_init = atoms_read('geometry.in.supercell', format='aims')
     inputs.NumAtoms = len(struc_init)
-    single_print(f'[cont]\tRead the reference structure: geometry.in.supercell')
+    single_print('')
 
     ### Initizlization step
     ##!! We need to check whether this one is needed or not.
@@ -40,7 +40,7 @@ def run_dft_cont(inputs):
     single_print(f'[cont]\tLoad trained models: {inputs.temperature}K-{inputs.pressure}bar_{inputs.index}')
     inputs = load_model(inputs)
 
-    single_print(f'[cont]\tProgress check and get validation errors')
+    single_print('')
     MD_index, MD_step_index, signal = None, None, None
 
     # Retrieve the calculation index (MD_index: MLMD_main, signal: termination)
@@ -58,7 +58,7 @@ def run_dft_cont(inputs):
 
     # If we get the signal from check_progress, the script will be terminated.
     if signal == 1:
-        single_print(f'[cont]\tCalculation is terminated during the check_progress')
+        single_print('')
         sys.exit()
 
     if inputs.idx_atom == 'random':
@@ -77,9 +77,6 @@ def run_dft_cont(inputs):
         inputs.idx_atom = int(inputs.idx_atom)
 
     single_print(f'[cont]\tCurrent iteration index: {inputs.index}')
-    # Get the total number of traning and validating data at current step
-    total_ntrain = inputs.ntrain * inputs.index + inputs.ntrain_init
-    total_nval = inputs.nval * inputs.index + inputs.nval_init
 
     ### Get calculators
     # Set the path to folders finding the trained model from NequIP
@@ -106,11 +103,11 @@ def run_dft_cont(inputs):
         raise ValueError("[cont]\tInvalid calc_type. Supported values are 'active' and 'random'.")
 
     if inputs.calc_type == 'active' or inputs.calc_type == 'period':
-        single_print(f'[cont]\tRecord the results: result.txt')
+        single_print('')
         # Record uncertainty results at the current step
         get_result(inputs, 'cont')
 
-    single_print(f'[cont]\tSubmit the DFT calculations for sampled configurations')
+    single_print('')
     # Submit job-scripts for DFT calculationsions with sampled configurations and job-dependence for run_dft_gen
     
     run_DFT(inputs)

@@ -1,127 +1,10 @@
-from nequip.ase import nequip_calculator
-
 import os
-import sys
-import copy
-import subprocess
 import numpy as np
 
 from libs.lib_util        import single_print, rm_mkdir
 
 import torch
 torch.set_default_dtype(torch.float64)
-
-
-# def get_train_job(
-#     inputs, struc_relaxed, ntrain, nval, workpath
-# ):
-#     """Function [get_train_job]
-#     Get calculators from previously trained MLIP and
-#     its total energy of ground state structure.
-#     If there are unfinished trained models,
-#     resubmit the corresponding job script.
-
-#     Parameters:
-
-#     struc_relaxed: ASE atoms
-#         A structral configuration of a starting point
-#     ntrain: int
-#         The number of added training data for each iterative step
-#     nval: int
-#         The number of added validating data for each iterative step
-#     rmax: float
-#         The rmax input for NequIP
-#     lmax: int
-#         The lmax input for NequIP
-#     nfeatures: int
-#         The nfeatures input for NequIP
-#     workpath: str
-#         Path to the working directory
-#     nstep: int
-#         The number of subsampling sets
-#     nmodel: int
-#         The number of ensemble model sets with different initialization
-
-#     Returns:
-
-#     E_ref: float
-#         Predicted ground state energy
-#     calc_MLIP:
-#         Collected calculators from trained models
-#     """
-
-#     # Initialization of signal
-#     signal    = 0
-#     # Get a current path
-#     currentpath  = os.getcwd()
-
-#     calc_MLIP = []
-#     for index_nmodel in range(inputs.nmodel):
-#         job_script_input = ''
-
-#         for index_nstep in range(inputs.nstep):
-#             dply_model = f'deployed-model_{index_nmodel}_{index_nstep}.pth'
-#             if (index_nmodel*inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-#                 # Check the existence of trained models
-#                 # If yes, collect trained models
-#                 if os.path.exists(f'{workpath}/{dply_model}'):
-#                     mpi_print(f'\t\tFound the deployed model: {dply_model}', rank=0)
-#                     calc_MLIP.append(
-#                         nequip_calculator.NequIPCalculator.\
-#                         from_deployed_model(f'{workpath}/{dply_model}', device=inputs.device)
-#                     )
-#                 else: # If not, prepare the training job
-#                     rm_mkdir(f'{workpath}/train_{index_nmodel}_{index_nstep}')
-#                     job_script_input += nequip_train_job(
-#                         inputs, ntrain, nval, workpath, index_nstep, index_nmodel, dply_model
-#                     )
-#                     mpi_print(f'\t\tDeploying the model: {dply_model}', rank=0)
-#                     # Activate the termination signal
-#                     signal = 1
-#                     signal = inputs.comm.bcast(signal, root=inputs.rank)
-
-#         job_script_input = inputs.comm.gather(job_script_input, root=0)
-#         if inputs.rank == 0:
-#             if job_script_input != ['' for i in range(inputs.size)]:
-#                 # Prepare ingredients for the job script
-#                 with open('./job-nequip-gpu.slurm', 'r') as job_script_initial:
-#                     job_script_default = job_script_initial.read()
-
-#                 os.chdir(workpath)
-#                 # Write an input for NequIP
-#                 job_script   = f'./job-nequip-gpu_{index_nmodel}.slurm'
-
-#                 with open(job_script, 'w') as writing_input:
-#                     writing_input.write(job_script_default)
-#                     for job_item in job_script_input:
-#                         writing_input.write(job_item)
-
-#                 # Submit the job scripts
-#                 subprocess.run([inputs.job_command, job_script])
-#                 os.chdir(currentpath)
-
-#     # Temination check 
-#     if signal == 1:
-#         sys.exit()
-
-#     # Get ground state energies predicted by trained models
-#     E_inter   = []
-#     zndex = 0
-#     for index_nmodel in range(inputs.nmodel):
-#         for index_nstep in range(inputs.nstep):
-#             if (index_nmodel*inputs.nstep + index_nstep) % inputs.size == inputs.rank:
-#                 struc_relaxed.calc = calc_MLIP[zndex]
-#                 E_inter.append(struc_relaxed.get_potential_energy())
-#                 zndex += 1
-#     E_inter = inputs.comm.allgather(E_inter)
-    
-#     # Calculate the average of ground state energies
-#     E_ref = np.average(np.array([i for items in E_inter for i in items]), axis=0);
-#     del E_inter;
-    
-#     return E_ref, calc_MLIP
-
-
 
 def nequip_train_job(
     inputs, ntrain, nval, workpath, index_nstep, index_nmodel, dply_model
@@ -176,8 +59,8 @@ def nequip_train_job(
 
     nequip_input_extra = (
         f'root: train_{index_nmodel}_{index_nstep}/projects\n'
-        + f'run_name: train\n'
-        + f'workdir: train\n'
+        + 'run_name: train\n'
+        + 'workdir: train\n'
         + f'dataset_file_name: ./data-train_{index_nstep}.npz\n'
         + f'n_train: {ntrain}\n'
         + f'n_val: {nval}\n'
@@ -189,7 +72,7 @@ def nequip_train_job(
 
     if inputs.loss_var:
         nequip_input_extra += (
-            f'loss_coeffs:\n'
+            'loss_coeffs:\n'
             + f' total_energy: {var_E}\n'
             + f' forces: {var_F}\n'
             )
@@ -380,4 +263,3 @@ def execute_train_job(
             # Submit the job scripts
             # subprocess.run([inputs.job_command, job_script]);
             os.chdir(currentpath)
-

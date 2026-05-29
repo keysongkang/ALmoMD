@@ -6,7 +6,7 @@ from nequip.ase import nequip_calculator
 
 from ase import Atoms
 
-from libs.lib_util  import output_init, single_print, check_mkdir, eval_sigma
+from libs.lib_util  import output_init, single_print, eval_sigma
 
 import torch
 torch.set_default_dtype(torch.float64)
@@ -17,11 +17,11 @@ def run_dft_cnvg(inputs):
     Implement the convergence test with trained models
     """
 
-    output_init('cnvg', inputs.version, inputs.rank)
+    output_init('cnvg', inputs.version)
     single_print(f'[cnvg]\tGet the convergence of {inputs.nmodel}x{inputs.nstep} matrix')
 
     # Specify the path to the test data
-    npz_test = f'./MODEL/data-test.npz'
+    npz_test = ''
     data_test = np.load(npz_test)
     single_print(f'[cnvg]\tLoad testing data: {npz_test}')
 
@@ -54,7 +54,7 @@ def run_dft_cnvg(inputs):
         sys.exit()
 
     # Predict matrices of energy and forces and their R2 and MAE 
-    single_print(f'[cnvg]\tGo through all trained models for the testing data')
+    single_print('')
 
     prd_E_total = []
     prd_F_total = []
@@ -112,15 +112,15 @@ def run_dft_cnvg(inputs):
         prd_S_total.append(prd_S_matrix)
 
         # if rank == 0:
-        #     check_mkdir(f'E_matrix_prd')
+        #     check_mkdir('')
         #     np.savez(f'E_matrix_prd/E_matrix_prd_{idx}', E = [prd_E_matrix])
-        #     check_mkdir(f'F_matrix_prd')
+        #     check_mkdir('')
         #     np.savez(f'F_matrix_prd/F_matrix_prd_{idx}', F = [prd_F_matrix])
-        #     check_mkdir(f'S_matrix_prd')
+        #     check_mkdir('')
         #     np.savez(f'S_matrix_prd/S_matrix_prd_{idx}', S = [prd_S_matrix])
 
-    np.savez(f'E_matrix_prd', E = prd_E_total)
-    np.savez(f'F_matrix_prd', F = prd_F_total)
-    np.savez(f'S_matrix_prd', S = prd_S_total)
+    np.savez('', E = prd_E_total)
+    np.savez('', F = prd_F_total)
+    np.savez('', S = prd_S_total)
 
-    single_print(f'[cnvg]\tSave matrices: E_matrix, F_matrix, S_matrix')
+    single_print('')
